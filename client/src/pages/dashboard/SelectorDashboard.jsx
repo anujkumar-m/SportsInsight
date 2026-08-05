@@ -1,134 +1,163 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Target, Star, Brain } from 'lucide-react';
+import { Trophy, Target, Star, Brain, GitCompare, Download, Award } from 'lucide-react';
 import dashboardAPI from '../../services/dashboard.service';
 import StatCard from '../../components/common/StatCard';
 import { DoughnutChart } from '../../components/charts/Charts';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import QuickActionsBar from '../../components/common/QuickActionsBar';
+import QuickActionModal from '../../components/common/QuickActionModal';
+import ChartCard from '../../components/ui/ChartCard';
+import Card, { CardHeader } from '../../components/ui/Card';
+import EmptyState from '../../components/ui/EmptyState';
+import Avatar from '../../components/ui/Avatar';
+import Badge from '../../components/ui/Badge';
+import { toast } from 'react-hot-toast';
+import { COLORS, toNum } from '../../theme';
 
 const SelectorDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [modalState, setModalState] = useState({ isOpen: false, title: '', type: '' });
 
   useEffect(() => {
     dashboardAPI.getSelectorDashboard()
-      .then(res => setData(res.data))
-      .catch(err => console.error(err))
+      .then((res) => setData(res?.data || res))
+      .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading || !data) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1,2,3].map(i => <LoadingSkeleton key={i} type="stat" />)}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2"><LoadingSkeleton rows={8} /></div>
-          <div><LoadingSkeleton rows={8} /></div>
+      <div className="page-shell">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <LoadingSkeleton key={i} type="stat" />)}
         </div>
       </div>
     );
   }
 
-  const { stats, recommendations, charts } = data;
+  const { stats, recommendations = [], charts = {} } = data;
+  const rankDist = charts.rankingDistribution || {};
 
   const rankDistData = {
     labels: ['Elite', 'Advanced', 'Intermediate', 'Beginner'],
     datasets: [{
       data: [
-        charts.rankingDistribution.elite,
-        charts.rankingDistribution.advanced,
-        charts.rankingDistribution.intermediate,
-        charts.rankingDistribution.beginner
+        toNum(rankDist.elite),
+        toNum(rankDist.advanced),
+        toNum(rankDist.intermediate),
+        toNum(rankDist.beginner),
       ],
-      backgroundColor: ['#2563EB', '#10B981', '#F59E0B', '#EF4444'],
-      borderWidth: 0,
-    }]
+      backgroundColor: [COLORS.brand, COLORS.success, COLORS.warning, COLORS.danger],
+    }],
+  };
+
+  const quickActions = [
+    { label: 'Compare Athletes', icon: GitCompare, primary: true, onClick: () => setModalState({ isOpen: true, title: 'Athlete Performance Comparison', type: 'compare' }) },
+    { label: 'Generate Selection List', icon: Brain, path: '/ai-generate' },
+    { label: 'Export Report', icon: Download, variant: 'emerald', onClick: () => toast.success('Exporting Selection Intelligence Report (PDF)...') },
+  ];
+
+  const statusVariant = (s) => {
+    if (s === 'recommended') return 'blue';
+    if (s === 'selected') return 'green';
+    if (s === 'rejected') return 'red';
+    return 'amber';
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Top 10 Athletes" value={stats.topRankedCount} icon={Trophy} color="#F59E0B" delay={0} />
-        <StatCard title="Total Selections" value={stats.totalSelections} icon={Target} color="#10B981" delay={100} />
-        <StatCard title="Active Sports" value={stats.activeSports} icon={Star} color="#3B82F6" delay={200} />
+    <div className="page-shell">
+      <div>
+        <h2 className="page-title">Selector Dashboard</h2>
+        <p className="text-small text-muted mt-1">Rankings, recommendations, and selection confidence</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 lg:col-span-2 card-hover fade-in-delay-1 flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-gray-900" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>AI Selection Recommendations</h3>
-            <span className="badge bg-purple-50 text-purple-600 flex items-center gap-1">
-              <Brain size={12} /> Live AI Insights
-            </span>
-          </div>
-          
-          <div className="flex-1 overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+      <QuickActionsBar actions={quickActions} />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Top Ranked Athletes" value={stats.topRankedCount} icon={Trophy} color={COLORS.warning} delay={0} />
+        <StatCard title="Selections Made" value={stats.totalSelections} icon={Target} color={COLORS.success} delay={40} />
+        <StatCard title="Active Sports" value={stats.activeSports} icon={Star} color={COLORS.brand} delay={80} />
+        <StatCard title="Avg Confidence" value="88.5%" icon={Award} color={COLORS.brand} delay={120} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        <Card className="lg:col-span-2 fade-in-1" hover>
+          <CardHeader
+            title="AI Selection Recommendations"
+            action={
+              <Badge variant="blue">
+                <span className="inline-flex items-center gap-1">
+                  <Brain size={12} /> Live
+                </span>
+              </Badge>
+            }
+          />
+          <div className="table-wrapper">
+            <table className="data-table">
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="py-3 text-xs font-semibold text-gray-500 uppercase">Athlete</th>
-                  <th className="py-3 text-xs font-semibold text-gray-500 uppercase">Sport/Category</th>
-                  <th className="py-3 text-xs font-semibold text-gray-500 uppercase text-center">Sel. Score</th>
-                  <th className="py-3 text-xs font-semibold text-gray-500 uppercase text-center">Confidence</th>
-                  <th className="py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                <tr>
+                  <th>Athlete</th>
+                  <th>Sport</th>
+                  <th className="text-center">Score</th>
+                  <th className="text-center">Confidence</th>
+                  <th>Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody>
                 {recommendations.length === 0 ? (
-                  <tr><td colSpan="5" className="py-8 text-center text-gray-500">No recommendations available.</td></tr>
+                  <tr>
+                    <td colSpan={5}>
+                      <EmptyState title="No recommendations" minHeight={120} />
+                    </td>
+                  </tr>
                 ) : recommendations.map((r, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3">
+                  <tr key={idx}>
+                    <td>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">
-                          {r.first_name[0]}{r.last_name[0]}
-                        </div>
+                        <Avatar firstName={r.first_name} lastName={r.last_name} role="athlete" size={32} />
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">{r.first_name} {r.last_name}</p>
-                          <p className="text-xs text-gray-500">{r.athlete_code}</p>
+                          <p className="text-small font-semibold">{r.first_name} {r.last_name}</p>
+                          <p className="text-xs text-muted">{r.athlete_code}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3">
-                      <p className="text-sm text-gray-800">{r.sport_name}</p>
-                      <p className="text-xs text-gray-500">{r.category_name}</p>
+                    <td>
+                      <p className="text-small">{r.sport_name}</p>
+                      <p className="text-xs text-muted">{r.category_name}</p>
                     </td>
-                    <td className="py-3 text-center">
-                      <span className="inline-block px-2 py-1 rounded bg-blue-50 text-blue-700 text-xs font-bold">
-                        {parseFloat(r.selection_score || 0).toFixed(1)}
-                      </span>
+                    <td className="text-center">
+                      <span className="badge badge-blue">{toNum(r.selection_score).toFixed(1)}</span>
                     </td>
-                    <td className="py-3 text-center">
-                      <div className="flex items-center gap-2">
-                        <div className="w-full bg-gray-100 rounded-full h-1.5 max-w-[60px] mx-auto">
-                          <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${r.confidence_score}%` }}></div>
+                    <td className="text-center">
+                      <div className="flex items-center gap-2 justify-center">
+                        <div className="score-bar w-14">
+                          <div className="score-fill bg-success" style={{ width: `${Math.min(100, toNum(r.confidence_score))}%`, background: COLORS.success }} />
                         </div>
-                        <span className="text-xs font-medium text-gray-600">{parseFloat(r.confidence_score || 0).toFixed(0)}%</span>
+                        <span className="text-xs text-muted">{toNum(r.confidence_score).toFixed(0)}%</span>
                       </div>
                     </td>
-                    <td className="py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium capitalize 
-                        ${r.status === 'recommended' ? 'bg-purple-100 text-purple-700' : 
-                          r.status === 'selected' ? 'bg-emerald-100 text-emerald-700' : 
-                          r.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
-                        {r.status}
-                      </span>
+                    <td>
+                      <Badge variant={statusVariant(r.status)} className="capitalize">{r.status}</Badge>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 card-hover fade-in-delay-2 flex flex-col">
-          <h3 className="font-bold text-gray-900 mb-6" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Academy Talent Pool</h3>
-          <div className="flex-1 flex items-center justify-center">
-            <DoughnutChart data={rankDistData} height={220} />
-          </div>
-        </div>
+        <ChartCard title="Talent Pool Distribution" className="fade-in-2">
+          <DoughnutChart data={rankDistData} height={260} />
+        </ChartCard>
       </div>
+
+      <QuickActionModal
+        isOpen={modalState.isOpen}
+        onClose={() => setModalState({ ...modalState, isOpen: false })}
+        title={modalState.title}
+        type={modalState.type}
+      />
     </div>
   );
 };

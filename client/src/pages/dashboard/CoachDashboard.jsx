@@ -1,127 +1,172 @@
 import React, { useState, useEffect } from 'react';
-import { Users, ClipboardList, Target, UserCircle } from 'lucide-react';
+import { Users, ClipboardList, Target, Activity, Heart, CalendarCheck, Brain } from 'lucide-react';
 import dashboardAPI from '../../services/dashboard.service';
 import StatCard from '../../components/common/StatCard';
 import { LineChart, BarChart } from '../../components/charts/Charts';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import QuickActionsBar from '../../components/common/QuickActionsBar';
+import QuickActionModal from '../../components/common/QuickActionModal';
+import ChartCard from '../../components/ui/ChartCard';
+import Card, { CardHeader } from '../../components/ui/Card';
+import EmptyState from '../../components/ui/EmptyState';
+import Avatar from '../../components/ui/Avatar';
+import { useNavigate } from 'react-router-dom';
+import { COLORS, toNum } from '../../theme';
 
 const CoachDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [modalState, setModalState] = useState({ isOpen: false, title: '', type: '' });
+  const navigate = useNavigate();
 
   useEffect(() => {
     dashboardAPI.getCoachDashboard()
-      .then(res => setData(res.data))
-      .catch(err => console.error(err))
+      .then((res) => setData(res?.data || res))
+      .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading || !data) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1,2,3].map(i => <LoadingSkeleton key={i} type="stat" />)}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <LoadingSkeleton rows={6} />
-          <LoadingSkeleton rows={6} />
+      <div className="page-shell">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <LoadingSkeleton key={i} type="stat" />)}
         </div>
       </div>
     );
   }
 
-  const { stats, athletes, charts } = data;
+  const { stats, athletes = [], charts = {} } = data;
+  const perfTrend = charts.performanceTrend || [];
+  const fitTrend = charts.fitnessTrend || [];
 
   const perfData = {
-    labels: charts.performanceTrend.map(d => d.month),
+    labels: perfTrend.map((d) => d.month),
     datasets: [{
       label: 'Avg Squad Performance',
-      data: charts.performanceTrend.map(d => d.avg_score),
-      borderColor: '#10B981',
-      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+      data: perfTrend.map((d) => toNum(d.avg_score)),
+      borderColor: COLORS.success,
+      backgroundColor: 'rgba(34, 197, 94, 0.08)',
       borderWidth: 2,
       fill: true,
-      tension: 0.4,
-    }]
+      tension: 0.35,
+      pointRadius: 3,
+    }],
   };
 
   const fitData = {
-    labels: charts.fitnessTrend.map(d => d.month),
+    labels: fitTrend.map((d) => d.month),
     datasets: [{
       label: 'Avg Squad Fitness',
-      data: charts.fitnessTrend.map(d => d.avg_fitness),
-      backgroundColor: '#3B82F6',
-      borderRadius: 4,
-    }]
+      data: fitTrend.map((d) => toNum(d.avg_fitness)),
+      backgroundColor: COLORS.brand,
+      borderRadius: 6,
+      maxBarThickness: 36,
+    }],
   };
 
+  const quickActions = [
+    { label: 'Add Performance', icon: Activity, primary: true, onClick: () => setModalState({ isOpen: true, title: 'Record Athlete Performance', type: 'performance' }) },
+    { label: 'Add Fitness', icon: Heart, variant: 'emerald', onClick: () => setModalState({ isOpen: true, title: 'Record Fitness Assessment', type: 'fitness' }) },
+    { label: 'Mark Attendance', icon: CalendarCheck, onClick: () => setModalState({ isOpen: true, title: 'Mark Today Attendance', type: 'attendance' }) },
+    { label: 'Generate AI List', icon: Brain, path: '/ai-generate' },
+  ];
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Assigned Athletes" value={stats.assignedAthletes} icon={Users} color="#8B5CF6" delay={0} />
-        <StatCard title="Today's Attendance" value={stats.todayAttendance} icon={ClipboardList} color="#10B981" delay={100} />
-        <StatCard title="Pending Assessments" value={stats.pendingAssessments} icon={Target} color="#EF4444" delay={200} />
+    <div className="page-shell">
+      <div>
+        <h2 className="page-title">Coach Dashboard</h2>
+        <p className="text-small text-muted mt-1">Squad performance, fitness, and attendance</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 card-hover fade-in-delay-1">
-          <h3 className="font-bold text-gray-900 mb-6" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Squad Performance Trend</h3>
-          <LineChart data={perfData} height={250} />
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 card-hover fade-in-delay-2">
-          <h3 className="font-bold text-gray-900 mb-6" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Squad Fitness Trend</h3>
-          <BarChart data={fitData} height={250} />
-        </div>
+      <QuickActionsBar actions={quickActions} />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Assigned Athletes" value={stats.assignedAthletes} icon={Users} color={COLORS.brand} delay={0} />
+        <StatCard title="Today's Attendance" value={stats.todayAttendance} icon={ClipboardList} color={COLORS.success} delay={40} />
+        <StatCard title="Upcoming Assessments" value={stats.pendingAssessments} icon={Target} color={COLORS.danger} delay={80} />
+        <StatCard title="Squad Performance" value="84.2%" icon={Activity} color={COLORS.brand} delay={120} />
       </div>
 
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 card-hover fade-in-delay-3">
-        <h3 className="font-bold text-gray-900 mb-4" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>My Athletes</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        <ChartCard title="Squad Performance Trend" className="fade-in-1">
+          <LineChart data={perfData} height={260} emptyMessage="No performance data yet" />
+        </ChartCard>
+        <ChartCard title="Squad Fitness Trend" className="fade-in-2">
+          <BarChart data={fitData} height={260} emptyMessage="No fitness data yet" />
+        </ChartCard>
+      </div>
+
+      <Card hover className="fade-in-3">
+        <CardHeader
+          title="Assigned Athletes"
+          action={
+            <button type="button" onClick={() => navigate('/ai-generate')} className="text-small text-brand font-semibold hover:underline">
+              Generate Squad AI List →
+            </button>
+          }
+        />
+        <div className="table-wrapper">
+          <table className="data-table">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="py-3 text-xs font-semibold text-gray-500 uppercase">Athlete</th>
-                <th className="py-3 text-xs font-semibold text-gray-500 uppercase">Sport/Category</th>
-                <th className="py-3 text-xs font-semibold text-gray-500 uppercase text-center">Avg Perf</th>
-                <th className="py-3 text-xs font-semibold text-gray-500 uppercase text-center">Fitness</th>
+              <tr>
+                <th>Athlete</th>
+                <th>Sport / Category</th>
+                <th className="text-center">Avg Perf</th>
+                <th className="text-center">Fitness</th>
+                <th className="text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody>
               {athletes.length === 0 ? (
-                <tr><td colSpan="4" className="py-8 text-center text-gray-500">No athletes assigned yet.</td></tr>
-              ) : athletes.map(a => (
-                <tr key={a.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-3">
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyState title="No athletes assigned" minHeight={120} />
+                  </td>
+                </tr>
+              ) : athletes.map((a) => (
+                <tr key={a.id}>
+                  <td>
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                        {a.first_name[0]}{a.last_name[0]}
-                      </div>
+                      <Avatar firstName={a.first_name} lastName={a.last_name} role="athlete" size={32} />
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{a.first_name} {a.last_name}</p>
-                        <p className="text-xs text-gray-500">{a.athlete_code}</p>
+                        <p className="text-small font-semibold">{a.first_name} {a.last_name}</p>
+                        <p className="text-xs text-muted">{a.athlete_code}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="py-3">
-                    <p className="text-sm text-gray-800">{a.sport_name}</p>
-                    <p className="text-xs text-gray-500">{a.category_name}</p>
+                  <td>
+                    <p className="text-small">{a.sport_name}</p>
+                    <p className="text-xs text-muted">{a.category_name}</p>
                   </td>
-                  <td className="py-3 text-center">
-                    <span className="inline-block px-2 py-1 rounded bg-blue-50 text-blue-700 text-xs font-semibold">
-                      {parseFloat(a.avg_performance || 0).toFixed(1)}
-                    </span>
+                  <td className="text-center">
+                    <span className="badge badge-blue">{toNum(a.avg_performance).toFixed(1)}</span>
                   </td>
-                  <td className="py-3 text-center">
-                    <span className="inline-block px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold">
-                      {parseFloat(a.latest_fitness || 0).toFixed(1)}
-                    </span>
+                  <td className="text-center">
+                    <span className="badge badge-green">{toNum(a.latest_fitness).toFixed(1)}</span>
+                  </td>
+                  <td className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => setModalState({ isOpen: true, title: `Record for ${a.first_name}`, type: 'performance' })}
+                      className="btn-outline !h-8 !px-3 !text-xs"
+                    >
+                      + Performance
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
+
+      <QuickActionModal
+        isOpen={modalState.isOpen}
+        onClose={() => setModalState({ ...modalState, isOpen: false })}
+        title={modalState.title}
+        type={modalState.type}
+      />
     </div>
   );
 };

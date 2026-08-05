@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const CardSkeleton = ({ rows = 3, height = 'h-4' }) => (
-  <div className="bg-white rounded-2xl p-5 space-y-3" style={{ border: '1px solid #F1F5F9' }}>
+  <div className="card p-5 space-y-3">
     <div className="skeleton h-4 w-32" />
     {Array.from({ length: rows }).map((_, i) => (
       <div key={i} className={`skeleton ${height} w-full`} />
@@ -10,21 +10,21 @@ export const CardSkeleton = ({ rows = 3, height = 'h-4' }) => (
 );
 
 export const StatCardSkeleton = () => (
-  <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #F1F5F9' }}>
+  <div className="card stat-card">
     <div className="flex items-start justify-between">
-      <div className="flex-1 space-y-3">
-        <div className="skeleton h-3 w-24" />
-        <div className="skeleton h-8 w-20" />
-        <div className="skeleton h-3 w-28" />
-      </div>
-      <div className="skeleton w-12 h-12 rounded-xl" />
+      <div className="skeleton w-10 h-10 rounded-xl" />
+      <div className="skeleton h-6 w-12 rounded-lg" />
+    </div>
+    <div className="space-y-2">
+      <div className="skeleton h-7 w-20" />
+      <div className="skeleton h-3 w-28" />
     </div>
   </div>
 );
 
 export const TableSkeleton = ({ rows = 5, cols = 5 }) => (
-  <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1px solid #F1F5F9' }}>
-    <div className="p-5 border-b border-gray-50">
+  <div className="card overflow-hidden">
+    <div className="p-5 border-b border-border">
       <div className="skeleton h-5 w-40" />
     </div>
     <div className="divide-y divide-gray-50">

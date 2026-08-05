@@ -2,10 +2,12 @@ import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RoleRoute from './routes/RoleRoute';
+import ModulePlaceholder from './components/common/ModulePlaceholder';
+import { COLORS } from './theme';
 
-// Lazy loading pages
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
@@ -18,14 +20,12 @@ const SelectorDashboard = React.lazy(() => import('./pages/dashboard/SelectorDas
 const AthleteDashboard = React.lazy(() => import('./pages/dashboard/AthleteDashboard'));
 const AIGenerateList = React.lazy(() => import('./pages/dashboard/AIGenerateList'));
 
-// Loading component
 const Loader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-slate-50">
-    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+  <div className="min-h-screen flex items-center justify-center bg-bg">
+    <div className="w-11 h-11 border-4 border-brand border-t-transparent rounded-full animate-spin" />
   </div>
 );
 
-// Dynamic dashboard router component
 const DashboardRouter = () => {
   const { role } = useAuth();
   switch (role) {
@@ -37,71 +37,89 @@ const DashboardRouter = () => {
   }
 };
 
+const PlaceholderRoute = ({ title, description }) => (
+  <ProtectedRoute>
+    <DashboardLayout title={title}>
+      <ModulePlaceholder title={title} description={description} />
+    </DashboardLayout>
+  </ProtectedRoute>
+);
+
 const App = () => {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Suspense fallback={<Loader />}>
-          <Routes>
-            {/* Public Auth Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
+      <ThemeProvider>
+        <AuthProvider>
+          <Suspense fallback={<Loader />}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
 
-            {/* Dashboard Root */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <DashboardLayout title="Dashboard Overview">
-                  <DashboardRouter />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-
-            {/* AI Generate List (Admin, Coach, Selector) */}
-            <Route path="/ai-generate" element={
-              <ProtectedRoute>
-                <RoleRoute roles={['admin', 'coach', 'selector']}>
-                  <DashboardLayout title="AI Selection Intelligence">
-                    <AIGenerateList />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <DashboardLayout title="Dashboard Overview">
+                    <DashboardRouter />
                   </DashboardLayout>
-                </RoleRoute>
-              </ProtectedRoute>
-            } />
+                </ProtectedRoute>
+              } />
 
-            {/* Placeholder routes for future modules (Prompt 2) */}
-            <Route path="/athletes" element={<ProtectedRoute><DashboardLayout title="Athletes"><div className="p-8 text-center text-gray-500">Athlete Management Module (Next Phase)</div></DashboardLayout></ProtectedRoute>} />
-            <Route path="/coaches" element={<ProtectedRoute><DashboardLayout title="Coaches"><div className="p-8 text-center text-gray-500">Coach Management Module (Next Phase)</div></DashboardLayout></ProtectedRoute>} />
-            <Route path="/selectors" element={<ProtectedRoute><DashboardLayout title="Selectors"><div className="p-8 text-center text-gray-500">Selector Management Module (Next Phase)</div></DashboardLayout></ProtectedRoute>} />
-            <Route path="/sports" element={<ProtectedRoute><DashboardLayout title="Sports & Categories"><div className="p-8 text-center text-gray-500">Sports Management Module (Next Phase)</div></DashboardLayout></ProtectedRoute>} />
-            
-            {/* Catch all */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Suspense>
-        
-        {/* Toast Notifications Provider */}
-        <Toaster 
-          position="top-right" 
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#333',
-              color: '#fff',
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '14px',
-            },
-            success: {
-              iconTheme: { primary: '#10B981', secondary: '#fff' },
-            },
-            error: {
-              iconTheme: { primary: '#EF4444', secondary: '#fff' },
-            },
-          }} 
-        />
-      </AuthProvider>
+              <Route path="/ai-generate" element={
+                <ProtectedRoute>
+                  <RoleRoute roles={['admin', 'coach', 'selector']}>
+                    <DashboardLayout title="AI Selection Intelligence">
+                      <AIGenerateList />
+                    </DashboardLayout>
+                  </RoleRoute>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/athletes" element={<PlaceholderRoute title="Athletes" description="Manage athlete profiles, assignments, and eligibility across sports and categories." />} />
+              <Route path="/coaches" element={<PlaceholderRoute title="Coaches" description="Coach roster, sport assignments, and squad oversight tools." />} />
+              <Route path="/selectors" element={<PlaceholderRoute title="Selectors" description="Selector accounts, trial access, and selection permissions." />} />
+              <Route path="/sports" element={<PlaceholderRoute title="Sports & Categories" description="Configure sports, age/gender categories, and performance metrics." />} />
+              <Route path="/performance" element={<PlaceholderRoute title="Performance" description="Record and review performance metrics, scores, and trends." />} />
+              <Route path="/fitness" element={<PlaceholderRoute title="Fitness" description="Fitness assessments, strength/endurance tracking, and history." />} />
+              <Route path="/attendance" element={<PlaceholderRoute title="Attendance" description="Daily attendance logs, leave tracking, and participation rates." />} />
+              <Route path="/injuries" element={<PlaceholderRoute title="Injuries" description="Injury register, recovery status, and return-to-play notes." />} />
+              <Route path="/rankings" element={<PlaceholderRoute title="Rankings" description="Academy rankings by sport, category, and overall performance." />} />
+              <Route path="/selections" element={<PlaceholderRoute title="Selections" description="Selection trials, shortlists, and confirmation workflows." />} />
+              <Route path="/analytics" element={<PlaceholderRoute title="Analytics" description="Cross-module analytics, comparisons, and academy insights." />} />
+              <Route path="/reports" element={<PlaceholderRoute title="Reports" description="Exportable PDF/CSV reports for coaches, selectors, and admins." />} />
+              <Route path="/notifications" element={<PlaceholderRoute title="Notifications" description="System alerts, feedback, and selection notifications." />} />
+              <Route path="/compare" element={<PlaceholderRoute title="Compare Athletes" description="Side-by-side athlete comparison for selection decisions." />} />
+              <Route path="/profile" element={<PlaceholderRoute title="My Profile" description="Personal profile, sport details, and account preferences." />} />
+              <Route path="/feedback" element={<PlaceholderRoute title="Coach Feedback" description="Coach remarks, ratings, and suggested improvements." />} />
+              <Route path="/settings" element={<PlaceholderRoute title="Settings" description="Account security, preferences, and notification settings." />} />
+
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Suspense>
+
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#111827',
+                color: '#fff',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '14px',
+                borderRadius: '8px',
+              },
+              success: {
+                iconTheme: { primary: COLORS.success, secondary: '#fff' },
+              },
+              error: {
+                iconTheme: { primary: COLORS.danger, secondary: '#fff' },
+              },
+            }}
+          />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 };
