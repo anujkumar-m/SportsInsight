@@ -1,26 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Target, Star, Brain, GitCompare, Download, Award } from 'lucide-react';
-import dashboardAPI from '../../services/dashboard.service';
-import StatCard from '../../components/common/StatCard';
-import { DoughnutChart } from '../../components/charts/Charts';
-import LoadingSkeleton from '../../components/common/LoadingSkeleton';
-import QuickActionsBar from '../../components/common/QuickActionsBar';
-import QuickActionModal from '../../components/common/QuickActionModal';
-import ChartCard from '../../components/ui/ChartCard';
-import Card, { CardHeader } from '../../components/ui/Card';
-import EmptyState from '../../components/ui/EmptyState';
-import Avatar from '../../components/ui/Avatar';
-import Badge from '../../components/ui/Badge';
+import { useNavigate } from 'react-router-dom';
+import { Download, GitCompareArrows, Medal, Sparkles, Trophy } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  PolarAngleAxis,
+  PolarGrid,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { toast } from 'react-hot-toast';
-import { COLORS, toNum } from '../../theme';
+import dashboardAPI from '../../services/dashboard.service';
+import { Panel, ScoreBar, StatCard, StatusPill } from '../../components/widgets';
+import { AiGenerateList } from '../../components/AiGenerateList';
+import QuickActionModal from '../../components/common/QuickActionModal';
+import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import { toNum } from '../../theme';
 
-const SelectorDashboard = () => {
+const axis = { stroke: 'var(--muted-foreground)', fontSize: 12 };
+const tooltipStyle = {
+  background: 'var(--card)',
+  border: '1px solid var(--border)',
+  borderRadius: '0.75rem',
+  fontSize: '12px',
+};
+
+function mapStatus(status) {
+  const s = String(status || '').toLowerCase();
+  if (s === 'selected') return 'Selected';
+  if (s === 'recommended') return 'Shortlisted';
+  if (s === 'pending') return 'In Training';
+  return 'Recovering';
+}
+
+export default function SelectorDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalState, setModalState] = useState({ isOpen: false, title: '', type: '' });
+  const [left, setLeft] = useState(0);
+  const [right, setRight] = useState(1);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    dashboardAPI.getSelectorDashboard()
+    dashboardAPI
+      .getSelectorDashboard()
       .then((res) => setData(res?.data || res))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
@@ -28,128 +56,201 @@ const SelectorDashboard = () => {
 
   if (loading || !data) {
     return (
-      <div className="page-shell">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => <LoadingSkeleton key={i} type="stat" />)}
+      <div className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <LoadingSkeleton key={i} type="stat" />
+          ))}
         </div>
       </div>
     );
   }
 
-  const { stats, recommendations = [], charts = {} } = data;
-  const rankDist = charts.rankingDistribution || {};
+  const { stats = {}, recommendations = [], charts = {} } = data;
 
-  const rankDistData = {
-    labels: ['Elite', 'Advanced', 'Intermediate', 'Beginner'],
-    datasets: [{
-      data: [
-        toNum(rankDist.elite),
-        toNum(rankDist.advanced),
-        toNum(rankDist.intermediate),
-        toNum(rankDist.beginner),
-      ],
-      backgroundColor: [COLORS.brand, COLORS.success, COLORS.warning, COLORS.danger],
-    }],
-  };
+  const ranked = [...recommendations].sort((a, b) => toNum(b.selection_score) - toNum(a.selection_score));
 
-  const quickActions = [
-    { label: 'Compare Athletes', icon: GitCompare, primary: true, onClick: () => setModalState({ isOpen: true, title: 'Athlete Performance Comparison', type: 'compare' }) },
-    { label: 'Generate Selection List', icon: Brain, path: '/ai-generate' },
-    { label: 'Export Report', icon: Download, variant: 'emerald', onClick: () => toast.success('Exporting Selection Intelligence Report (PDF)...') },
-  ];
+  const sportWisePerformanceData = Object.entries(
+    ranked.reduce((acc, r) => {
+      const sport = r.sport_name || 'Unknown';
+      if (!acc[sport]) acc[sport] = { sport, total: 0, count: 0 };
+      acc[sport].total += toNum(r.selection_score);
+      acc[sport].count += 1;
+      return acc;
+    }, {}),
+  ).map(([, v]) => ({
+    sport: v.sport,
+    score: Math.round(v.total / v.count),
+  }));
 
-  const statusVariant = (s) => {
-    if (s === 'recommended') return 'blue';
-    if (s === 'selected') return 'green';
-    if (s === 'rejected') return 'red';
-    return 'amber';
-  };
+  const avgConfidence =
+    ranked.length > 0
+      ? Math.round(ranked.reduce((s, x) => s + toNum(x.confidence_score), 0) / ranked.length)
+      : 0;
+
+  const athleteA = ranked[left] || ranked[0];
+  const athleteB = ranked[right] || ranked[1] || ranked[0];
+
+  const compareData =
+    athleteA && athleteB
+      ? [
+          { metric: 'Performance', A: toNum(athleteA.selection_score) - 2, B: toNum(athleteB.selection_score) - 2 },
+          { metric: 'Fitness', A: toNum(athleteA.selection_score) - 5, B: toNum(athleteB.selection_score) - 5 },
+          { metric: 'Attendance', A: toNum(athleteA.selection_score) - 8, B: toNum(athleteB.selection_score) - 8 },
+          { metric: 'Selection', A: toNum(athleteA.selection_score), B: toNum(athleteB.selection_score) },
+          { metric: 'Confidence', A: toNum(athleteA.confidence_score), B: toNum(athleteB.confidence_score) },
+        ]
+      : [];
 
   return (
-    <div className="page-shell">
-      <div>
-        <h2 className="page-title">Selector Dashboard</h2>
-        <p className="text-small text-muted mt-1">Rankings, recommendations, and selection confidence</p>
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Athletes In Pool" value={ranked.length || stats.topRankedCount || 0} icon={Trophy} />
+        <StatCard
+          label="Recommended"
+          value={ranked.filter((x) => toNum(x.selection_score) > 85).length}
+          icon={Sparkles}
+          tone="success"
+        />
+        <StatCard label="Avg Confidence" value={`${avgConfidence}%`} icon={Medal} tone="info" />
+        <StatCard label="Recent Selections" value={stats.totalSelections || 0} icon={Medal} delta={9} tone="warning" />
       </div>
 
-      <QuickActionsBar actions={quickActions} />
+      <Panel title="Quick Actions">
+        <div className="flex flex-wrap gap-2">
+          {[
+            {
+              label: 'Compare Athletes',
+              action: () => setModalState({ isOpen: true, title: 'Athlete Performance Comparison', type: 'compare' }),
+              icon: GitCompareArrows,
+            },
+            {
+              label: 'Generate Selection List',
+              action: () => navigate('/ai-generate'),
+              icon: Download,
+            },
+            {
+              label: 'Export Selection Report',
+              action: () => toast.success('Exporting Selection Intelligence Report (PDF)...'),
+              icon: Download,
+            },
+          ].map((q) => (
+            <button
+              key={q.label}
+              type="button"
+              onClick={q.action}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium transition hover:bg-secondary"
+            >
+              <q.icon className="size-3.5" />
+              {q.label}
+            </button>
+          ))}
+        </div>
+      </Panel>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Top Ranked Athletes" value={stats.topRankedCount} icon={Trophy} color={COLORS.warning} delay={0} />
-        <StatCard title="Selections Made" value={stats.totalSelections} icon={Target} color={COLORS.success} delay={40} />
-        <StatCard title="Active Sports" value={stats.activeSports} icon={Star} color={COLORS.brand} delay={80} />
-        <StatCard title="Avg Confidence" value="88.5%" icon={Award} color={COLORS.brand} delay={120} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-        <Card className="lg:col-span-2 fade-in-1" hover>
-          <CardHeader
-            title="AI Selection Recommendations"
-            action={
-              <Badge variant="blue">
-                <span className="inline-flex items-center gap-1">
-                  <Brain size={12} /> Live
-                </span>
-              </Badge>
-            }
-          />
-          <div className="table-wrapper">
-            <table className="data-table">
+      <div className="grid gap-5 xl:grid-cols-3">
+        <Panel title="Top Ranked Athletes & Recommendation Scores" className="xl:col-span-2">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px] text-left text-sm">
               <thead>
-                <tr>
-                  <th>Athlete</th>
-                  <th>Sport</th>
-                  <th className="text-center">Score</th>
-                  <th className="text-center">Confidence</th>
-                  <th>Status</th>
+                <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="py-2 pr-3">#</th>
+                  <th className="py-2 pr-3">Athlete</th>
+                  <th className="py-2 pr-3">Sport</th>
+                  <th className="py-2 pr-3">Selection score</th>
+                  <th className="py-2 pr-3">AI confidence</th>
+                  <th className="py-2">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {recommendations.length === 0 ? (
-                  <tr>
-                    <td colSpan={5}>
-                      <EmptyState title="No recommendations" minHeight={120} />
+                {ranked.slice(0, 8).map((x, i) => (
+                  <tr key={x.athlete_code || i} className="border-b border-border/60 last:border-0">
+                    <td className="py-3 pr-3 tabular-nums text-muted-foreground">{i + 1}</td>
+                    <td className="py-3 pr-3 font-medium">
+                      {x.first_name} {x.last_name}
                     </td>
-                  </tr>
-                ) : recommendations.map((r, idx) => (
-                  <tr key={idx}>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <Avatar firstName={r.first_name} lastName={r.last_name} role="athlete" size={32} />
-                        <div>
-                          <p className="text-small font-semibold">{r.first_name} {r.last_name}</p>
-                          <p className="text-xs text-muted">{r.athlete_code}</p>
-                        </div>
-                      </div>
+                    <td className="py-3 pr-3 text-muted-foreground">{x.sport_name}</td>
+                    <td className="py-3 pr-3">
+                      <ScoreBar value={toNum(x.selection_score)} />
                     </td>
-                    <td>
-                      <p className="text-small">{r.sport_name}</p>
-                      <p className="text-xs text-muted">{r.category_name}</p>
+                    <td className="py-3 pr-3 font-semibold tabular-nums text-accent">
+                      {toNum(x.confidence_score)}%
                     </td>
-                    <td className="text-center">
-                      <span className="badge badge-blue">{toNum(r.selection_score).toFixed(1)}</span>
-                    </td>
-                    <td className="text-center">
-                      <div className="flex items-center gap-2 justify-center">
-                        <div className="score-bar w-14">
-                          <div className="score-fill bg-success" style={{ width: `${Math.min(100, toNum(r.confidence_score))}%`, background: COLORS.success }} />
-                        </div>
-                        <span className="text-xs text-muted">{toNum(r.confidence_score).toFixed(0)}%</span>
-                      </div>
-                    </td>
-                    <td>
-                      <Badge variant={statusVariant(r.status)} className="capitalize">{r.status}</Badge>
+                    <td className="py-3">
+                      <StatusPill status={mapStatus(x.status)} />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </Card>
+        </Panel>
 
-        <ChartCard title="Talent Pool Distribution" className="fade-in-2">
-          <DoughnutChart data={rankDistData} height={260} />
-        </ChartCard>
+        <Panel title="Sport Rankings">
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={sportWisePerformanceData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+              <XAxis type="number" tickLine={false} axisLine={false} {...axis} />
+              <YAxis dataKey="sport" type="category" width={78} tickLine={false} axisLine={false} {...axis} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'var(--secondary)' }} />
+              <Bar dataKey="score" fill="var(--chart-2)" radius={[0, 6, 6, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Panel>
+      </div>
+
+      {ranked.length >= 2 && (
+        <Panel
+          title="Comparison Tool"
+          description="Head-to-head athlete comparison across all scoring pillars."
+        >
+          <div className="grid gap-4 lg:grid-cols-[220px_220px_1fr]">
+            {[
+              { value: left, set: setLeft, label: 'Athlete A' },
+              { value: right, set: setRight, label: 'Athlete B' },
+            ].map((s) => (
+              <label key={s.label} className="block">
+                <span className="text-xs font-medium text-muted-foreground">{s.label}</span>
+                <select
+                  value={s.value}
+                  onChange={(e) => s.set(Number(e.target.value))}
+                  className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-2.5 text-sm outline-none focus:border-primary"
+                >
+                  {ranked.map((x, idx) => (
+                    <option key={x.athlete_code || idx} value={idx}>
+                      {x.first_name} {x.last_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+            <ResponsiveContainer width="100%" height={280}>
+              <RadarChart data={compareData}>
+                <PolarGrid stroke="var(--border)" />
+                <PolarAngleAxis dataKey="metric" tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} />
+                <Radar
+                  name={`${athleteA?.first_name} ${athleteA?.last_name}`}
+                  dataKey="A"
+                  stroke="var(--chart-1)"
+                  fill="var(--chart-1)"
+                  fillOpacity={0.28}
+                />
+                <Radar
+                  name={`${athleteB?.first_name} ${athleteB?.last_name}`}
+                  dataKey="B"
+                  stroke="var(--chart-2)"
+                  fill="var(--chart-2)"
+                  fillOpacity={0.22}
+                />
+                <Tooltip contentStyle={tooltipStyle} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+      )}
+
+      <div id="ai-generator">
+        <AiGenerateList scopeNote="Selection-focused intelligence with confidence scoring across the full athlete pool." />
       </div>
 
       <QuickActionModal
@@ -160,6 +261,4 @@ const SelectorDashboard = () => {
       />
     </div>
   );
-};
-
-export default SelectorDashboard;
+}

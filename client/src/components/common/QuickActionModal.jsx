@@ -225,7 +225,7 @@ const QuickActionModal = ({ isOpen, onClose, title, type, data }) => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Athlete 1</label>
-                  <select required className="input-field" value={formData.athlete1Id} onChange={(e) => setFormData({...formData, athlete1Id: e.target.value})}>
+                  <select required className="input-field" value={formData.athlete1Id} onChange={(e) => setFormData({ ...formData, athlete1Id: e.target.value })}>
                     <option value="">Select Athlete 1</option>
                     <option value="1">Arjun Nair (Sprint)</option>
                     <option value="2">Sneha Patel (Swim)</option>
@@ -233,7 +233,7 @@ const QuickActionModal = ({ isOpen, onClose, title, type, data }) => {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Athlete 2</label>
-                  <select required className="input-field" value={formData.athlete2Id} onChange={(e) => setFormData({...formData, athlete2Id: e.target.value})}>
+                  <select required className="input-field" value={formData.athlete2Id} onChange={(e) => setFormData({ ...formData, athlete2Id: e.target.value })}>
                     <option value="">Select Athlete 2</option>
                     <option value="3">Rohit Sharma (Track)</option>
                     <option value="5">Kiran Rao (Football)</option>

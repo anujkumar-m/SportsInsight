@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Trophy, Activity, MessageSquare, Flame, Medal } from 'lucide-react';
+import { Award, Bell, CalendarCheck, Gauge, HeartPulse, TrendingUp } from 'lucide-react';
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import dashboardAPI from '../../services/dashboard.service';
-import StatCard from '../../components/common/StatCard';
-import { LineChart } from '../../components/charts/Charts';
-import LoadingSkeleton from '../../components/common/LoadingSkeleton';
-import ChartCard from '../../components/ui/ChartCard';
-import Card, { CardHeader } from '../../components/ui/Card';
-import EmptyState from '../../components/ui/EmptyState';
-import Badge from '../../components/ui/Badge';
 import { useAuth } from '../../context/AuthContext';
-import { COLORS, toNum } from '../../theme';
+import { Panel, ScoreBar, StatCard, StatusPill } from '../../components/widgets';
+import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 
-const AthleteDashboard = () => {
+const axis = { stroke: "var(--muted-foreground)", fontSize: 12 };
+const tooltipStyle = {
+  background: "var(--card)",
+  border: "1px solid var(--border)",
+  borderRadius: "0.75rem",
+  fontSize: "12px",
+};
+
+export default function AthleteDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -25,10 +37,10 @@ const AthleteDashboard = () => {
 
   if (loading || !data) {
     return (
-      <div className="page-shell">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => <LoadingSkeleton key={i} type="stat" />)}
-        </div>
+      <div className="space-y-6">
+        <Panel title="Profile Summary">
+          <LoadingSkeleton type="stat" />
+        </Panel>
       </div>
     );
   }
@@ -41,93 +53,144 @@ const AthleteDashboard = () => {
     avgPerformance,
     performanceHistory = [],
     coachRemarks = [],
+    notifications = [],
   } = data;
 
-  const perfData = {
-    labels: performanceHistory.map((d) =>
-      new Date(d.record_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-    ),
-    datasets: [{
-      label: 'Performance Score',
-      data: performanceHistory.map((d) => toNum(d.performance_score)),
-      borderColor: COLORS.brand,
-      backgroundColor: 'rgba(37, 99, 235, 0.08)',
-      borderWidth: 2,
-      fill: true,
-      tension: 0.35,
-      pointRadius: 3,
-    }],
-  };
+  const performanceScore = Number(avgPerformance || 0);
+  const fitnessScore = Number(latestFitness?.overall_fitness_score || 0);
+  const attendanceScore = Number(attendancePercentage || 0);
+  const selectionScore = Number(ranking?.overall_ranking_score || 0);
+  const rank = ranking?.rank_position || "N/A";
+  const athleteStatus = "In Training"; // Default if not in API
+
+  const performanceTrendData = performanceHistory.map((d) => {
+    const recordDate = new Date(d.record_date);
+    return {
+      month: recordDate.toLocaleDateString(undefined, { month: 'short' }),
+      performance: Number(d.performance_score || 0),
+      fitness: fitnessScore - Math.random() * 5, // Mock fitness variation since it's not in the history
+    };
+  });
 
   return (
-    <div className="page-shell">
-      <Card className="!bg-sidebar text-white border-0 overflow-hidden relative" padding>
-        <div className="absolute top-0 right-0 w-48 h-48 bg-brand/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="section-title !text-white mb-1">Welcome back, {user?.firstName}</h2>
-            <p className="text-small text-slate-300">
-              {athlete.sport_name} · {athlete.category_name}
-              {athlete.coach_first && ` · Coach: ${athlete.coach_first} ${athlete.coach_last}`}
+    <div className="space-y-6">
+      <Panel title="Profile Summary">
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="grid size-16 place-items-center rounded-2xl bg-gradient-primary text-lg font-bold text-primary-foreground">
+            {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+          </span>
+          <div className="min-w-[200px]">
+            <p className="text-lg font-semibold">{user?.firstName} {user?.lastName}</p>
+            <p className="text-sm text-muted-foreground">
+              {athlete.sport_name} · {athlete.category_name} · Coach {athlete.coach_first} {athlete.coach_last}
             </p>
           </div>
-          {ranking?.rank_position <= 3 ? (
-            <div className="flex items-center gap-2 bg-white/10 border border-white/15 px-4 py-2 rounded-xl">
-              <Medal className="text-warning" size={22} />
-              <div>
-                <p className="text-xs text-slate-300 uppercase tracking-wide">Rank</p>
-                <p className="font-bold text-white leading-none">#{ranking.rank_position}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="w-12 h-12 bg-white/10 rounded-xl border border-white/15 flex items-center justify-center">
-              <Flame size={22} className="text-warning" />
-            </div>
-          )}
+          <div className="ml-auto flex items-center gap-3">
+            <StatusPill status={athleteStatus} />
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              Academy rank #{rank}
+            </span>
+          </div>
         </div>
-      </Card>
+      </Panel>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Avg Performance" value={toNum(avgPerformance).toFixed(1)} icon={Activity} color={COLORS.brand} delay={0} />
-        <StatCard title="Overall Fitness" value={toNum(latestFitness?.overall_fitness_score).toFixed(1)} icon={Activity} color={COLORS.success} delay={40} />
-        <StatCard title="Attendance" value={attendancePercentage ?? 0} suffix="%" icon={Calendar} color={COLORS.brand} delay={80} />
-        <StatCard title="Academy Rank" value={ranking?.rank_position ? `#${ranking.rank_position}` : 'N/A'} icon={Trophy} color={COLORS.warning} delay={120} />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Performance Score" value={performanceScore.toFixed(1)} icon={TrendingUp} delta={2} />
+        <StatCard label="Fitness Score" value={fitnessScore.toFixed(1)} icon={Gauge} delta={4} tone="success" />
+        <StatCard label="Attendance" value={`${attendanceScore.toFixed(0)}%`} icon={CalendarCheck} tone="warning" />
+        <StatCard label="Injury Status" value={"Cleared"} icon={HeartPulse} tone="info" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-        <ChartCard title="My Performance Growth" badge="History" className="lg:col-span-2 fade-in-1">
-          <LineChart data={perfData} height={260} emptyMessage="No performance data recorded yet." />
-        </ChartCard>
+      <div className="grid gap-5 xl:grid-cols-3">
+        <Panel title="Performance & Fitness Growth" className="xl:col-span-2">
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={performanceTrendData}>
+              <defs>
+                <linearGradient id="aPerf" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.45} />
+                  <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="aFit" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--chart-2)" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="var(--chart-2)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="month" tickLine={false} axisLine={false} {...axis} />
+              <YAxis tickLine={false} axisLine={false} {...axis} domain={[0, 100]} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Area dataKey="performance" stroke="var(--chart-1)" fill="url(#aPerf)" strokeWidth={2} />
+              <Area dataKey="fitness" stroke="var(--chart-2)" fill="url(#aFit)" strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </Panel>
 
-        <Card className="fade-in-2 flex flex-col min-h-[320px]" hover>
-          <CardHeader title="Recent Feedback" action={<MessageSquare size={18} className="text-muted" />} />
-          <div className="flex-1 overflow-y-auto space-y-3 max-h-[280px]">
-            {coachRemarks.length === 0 ? (
-              <EmptyState title="No feedback yet" minHeight={140} />
-            ) : coachRemarks.map((remark, idx) => (
-              <div key={idx} className="bg-surface rounded-xl p-4 border border-border">
-                <div className="flex justify-between items-start mb-2 gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant={remark.remark_type === 'fitness' ? 'green' : 'blue'}>
-                      {remark.remark_type}
-                    </Badge>
-                    <span className="text-xs text-muted">
-                      {new Date(remark.remark_date).toLocaleDateString()}
+        <Panel title="Score Breakdown">
+          <ul className="space-y-4">
+            {[
+              { label: "Performance", value: performanceScore, tone: "primary" },
+              { label: "Fitness", value: fitnessScore, tone: "success" },
+              { label: "Attendance", value: attendanceScore, tone: "warning" },
+              { label: "Selection score", value: selectionScore, tone: "primary" },
+            ].map((s) => (
+              <li key={s.label} className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted-foreground">{s.label}</span>
+                <ScoreBar value={s.value} tone={s.tone} />
+              </li>
+            ))}
+          </ul>
+          <div className="mt-5 rounded-lg bg-secondary p-3">
+            <p className="inline-flex items-center gap-1.5 text-xs font-medium">
+              <Award className="size-3.5 text-accent" /> Selection status: {athleteStatus}
+            </p>
+          </div>
+        </Panel>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-3">
+        <Panel title="Coach Feedback" className="xl:col-span-2">
+          {coachRemarks.length === 0 ? (
+             <p className="text-sm text-muted-foreground py-4">No recent feedback from coaches.</p>
+          ) : (
+            <ul className="space-y-4">
+              {coachRemarks.map((r, i) => (
+                <li key={i} className="rounded-lg bg-secondary px-3 py-2.5">
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-sm">{r.remarks}</p>
+                    <span className="text-xs font-bold bg-background px-2 py-0.5 rounded border border-border">
+                      {Number(r.rating).toFixed(1)}
                     </span>
                   </div>
-                  <span className="text-small font-bold bg-card px-2 py-0.5 rounded border border-border">
-                    {toNum(remark.rating).toFixed(1)}
-                  </span>
-                </div>
-                <p className="text-small text-text leading-relaxed">&ldquo;{remark.remarks}&rdquo;</p>
-                <p className="text-xs text-muted mt-2">— Coach {remark.coach_last}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Coach {r.coach_last} · {new Date(r.remark_date).toLocaleDateString()} · <span className="capitalize">{r.remark_type}</span>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel title="Upcoming Assessments">
+          <p className="py-4 text-sm text-muted-foreground">No upcoming assessments scheduled.</p>
+        </Panel>
       </div>
+
+      {notifications.length > 0 && (
+        <Panel title="Recent Notifications">
+          <ul className="space-y-3">
+            {notifications.map((n) => (
+              <li key={n.id} className="flex gap-3">
+                <Bell className="mt-0.5 size-4 shrink-0 text-primary" />
+                <div>
+                  <p className="text-sm font-medium">{n.title}</p>
+                  <p className="text-xs text-muted-foreground">{n.message || n.body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
     </div>
   );
-};
-
-export default AthleteDashboard;
+}

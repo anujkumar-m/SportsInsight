@@ -90,10 +90,10 @@ const StatCard = ({
 
       <div className="flex items-end justify-between gap-2 mt-auto">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-1 truncate">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-2 truncate">
             {title}
           </p>
-          <p className="page-title !text-[28px] sm:!text-[32px] leading-none truncate">
+          <p className="text-3xl font-bold text-text leading-none truncate">
             {prefix}{displayValue}{suffix}
           </p>
         </div>

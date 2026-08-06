@@ -1,9 +1,7 @@
 import React from 'react';
 import { Construction } from 'lucide-react';
-import Card from '../ui/Card';
-import EmptyState from '../ui/EmptyState';
-import Button from '../ui/Button';
 import { useNavigate } from 'react-router-dom';
+import { Panel } from '../widgets';
 
 const ModulePlaceholder = ({
   title = 'Module Coming Soon',
@@ -12,25 +10,22 @@ const ModulePlaceholder = ({
   const navigate = useNavigate();
 
   return (
-    <div className="page-shell max-w-3xl">
-      <div>
-        <h2 className="page-title">{title}</h2>
-        <p className="text-small text-muted mt-1">Module preview</p>
+    <Panel title={title} description={description}>
+      <div className="flex min-h-[240px] flex-col items-center justify-center text-center">
+        <span className="grid size-14 place-items-center rounded-2xl bg-secondary text-muted-foreground">
+          <Construction className="size-7" />
+        </span>
+        <p className="mt-4 text-sm font-medium">{title} — coming soon</p>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard')}
+          className="mt-6 inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-medium transition hover:bg-secondary"
+        >
+          Return to dashboard
+        </button>
       </div>
-      <Card>
-        <EmptyState
-          icon={Construction}
-          title={`${title} — Next Phase`}
-          description={description}
-          minHeight={280}
-          action={
-            <Button variant="secondary" onClick={() => navigate('/dashboard')}>
-              Return to Dashboard
-            </Button>
-          }
-        />
-      </Card>
-    </div>
+    </Panel>
   );
 };
 

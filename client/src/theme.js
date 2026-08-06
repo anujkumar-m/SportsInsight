@@ -1,39 +1,45 @@
-/** Enterprise design tokens for JS (charts, badges) */
+/** Design tokens for JS (charts, badges) — mirrors CSS variables */
 export const COLORS = {
-  brand: '#2563EB',
-  primary: '#2563EB',
-  secondary: '#2563EB',
-  success: '#22C55E',
-  accent: '#22C55E',
-  warning: '#F59E0B',
-  danger: '#EF4444',
-  sidebar: '#0F172A',
-  bg: '#F8FAFC',
+  brand: '#4F6BED',
+  primary: '#4F6BED',
+  secondary: '#4F6BED',
+  success: '#2DB88A',
+  accent: '#2DB88A',
+  warning: '#E5A012',
+  danger: '#E5484D',
+  sidebar: '#1B2540',
+  bg: '#F7F8FB',
   card: '#FFFFFF',
-  text: '#111827',
-  muted: '#6B7280',
-  border: '#E5E7EB',
+  text: '#2A3348',
+  muted: '#6B7A90',
+  border: '#E4E8F0',
   gray400: '#9CA3AF',
   gray500: '#6B7280',
   gray700: '#374151',
-  info: '#2563EB',
-  purple: '#2563EB',
+  info: '#3B82C4',
+  purple: '#4F6BED',
 };
 
 export const CHART_PALETTE = [
   COLORS.brand,
   COLORS.success,
   COLORS.warning,
+  COLORS.info,
   COLORS.danger,
-  '#64748B',
-  '#0EA5E9',
 ];
 
 export const ROLE_COLORS = {
-  admin:    { primary: '#2563EB', bg: '#EFF6FF', text: '#1D4ED8' },
-  coach:    { primary: '#22C55E', bg: '#F0FDF4', text: '#15803D' },
-  selector: { primary: '#F59E0B', bg: '#FFFBEB', text: '#B45309' },
-  athlete:  { primary: '#2563EB', bg: '#EFF6FF', text: '#1D4ED8' },
+  admin: { primary: '#4F6BED', bg: '#EEF1FF', text: '#3B4FC4' },
+  coach: { primary: '#2DB88A', bg: '#E8F8F2', text: '#1E8A66' },
+  selector: { primary: '#E5A012', bg: '#FFF6E0', text: '#A87400' },
+  athlete: { primary: '#4F6BED', bg: '#EEF1FF', text: '#3B4FC4' },
+};
+
+export const ROLE_LABELS = {
+  admin: 'Academy Administrator',
+  coach: 'Head Coach',
+  selector: 'State Selector',
+  athlete: 'Athlete',
 };
 
 export const toNum = (v) => {

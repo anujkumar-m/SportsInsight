@@ -1,76 +1,79 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowLeft, KeyRound } from 'lucide-react';
+import { ArrowLeft, MailCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import authAPI from '../../services/auth.service';
-import AuthLayout from '../../layouts/AuthLayout';
-import Button from '../../components/ui/Button';
 
 const ForgotPassword = () => {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
-  const [isSent, setIsSent] = useState(false);
+  const [sent, setSent] = useState(false);
+  const { register, handleSubmit, formState } = useForm();
 
   const onSubmit = async (data) => {
     try {
       await authAPI.forgotPassword(data.email);
-      setIsSent(true);
-      toast.success('Reset link sent to your email.');
+      setSent(true);
+      toast.success('Reset link sent if the email is registered.');
     } catch (error) {
       toast.error(error.message || 'Failed to send reset link.');
     }
   };
 
   return (
-    <AuthLayout>
-      <div className="ui-card p-6 sm:p-8 fade-in">
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-green-50 text-success mx-auto mb-4 flex items-center justify-center">
-            <KeyRound size={24} />
+    <main className="grid min-h-screen place-items-center bg-background px-4 py-10">
+      <div className="surface-card w-full max-w-md p-8">
+        {sent ? (
+          <div className="text-center">
+            <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-success/15 text-success">
+              <MailCheck className="size-7" />
+            </span>
+            <h1 className="mt-5 text-xl font-bold tracking-tight">Reset link sent</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              If the address is registered, a reset link valid for 15 minutes has been dispatched.
+            </p>
+            <Link
+              to="/reset-password"
+              className="mt-6 inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
+            >
+              Open reset form
+            </Link>
           </div>
-          <h1 className="section-title mb-1">Reset Password</h1>
-          <p className="text-small text-muted">
-            {isSent ? 'Check your email for the reset link.' : 'Enter your email to receive a reset link.'}
-          </p>
-        </div>
-
-        {!isSent ? (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-            <div className="field">
-              <label htmlFor="email" className="field-label">Email Address</label>
-              <div className="auth-input-wrap">
-                <span className="auth-input-icon" aria-hidden><Mail size={16} /></span>
+        ) : (
+          <>
+            <h1 className="text-2xl font-bold tracking-tight">Forgot password</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Enter your academy email and we&apos;ll send a secure reset link.
+            </p>
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)}>
+              <div>
+                <label className="text-sm font-medium" htmlFor="email">
+                  Email address
+                </label>
                 <input
                   id="email"
                   type="email"
-                  autoComplete="email"
-                  {...register('email', {
-                    required: 'Email is required',
-                    pattern: { value: /\S+@\S+\.\S+/, message: 'Invalid email address' },
-                  })}
-                  className={`auth-input ${errors.email ? 'is-error' : ''}`}
-                  placeholder="name@example.com"
+                  className="mt-1.5 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/30"
+                  placeholder="you@academy.gov"
+                  {...register('email', { required: 'Email is required' })}
                 />
+                {formState.errors.email && (
+                  <p className="mt-1 text-xs text-destructive">{formState.errors.email.message}</p>
+                )}
               </div>
-              {errors.email && <p className="field-error" role="alert">{errors.email.message}</p>}
-            </div>
-            <Button type="submit" variant="accent" loading={isSubmitting} className="w-full !h-12">
-              Send Reset Link
-            </Button>
-          </form>
-        ) : (
-          <div className="p-4 rounded-xl bg-surface border border-border text-center text-small text-muted mb-2">
-            If an account matches that email, we have sent a password reset link. Please check your inbox and spam folder.
-          </div>
+              <button className="h-11 w-full rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:opacity-90">
+                Send reset link
+              </button>
+            </form>
+          </>
         )}
-
-        <div className="mt-6 text-center">
-          <Link to="/login" className="inline-flex items-center gap-2 text-small text-brand font-semibold hover:underline">
-            <ArrowLeft size={16} /> Back to Login
-          </Link>
-        </div>
+        <Link
+          to="/login"
+          className="mt-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
+        >
+          <ArrowLeft className="size-4" /> Back to login
+        </Link>
       </div>
-    </AuthLayout>
+    </main>
   );
 };
 

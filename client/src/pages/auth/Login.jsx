@@ -1,225 +1,153 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import {
-  Mail, Lock, Eye, EyeOff, ShieldCheck, UserCheck, Shield, Users,
-  ArrowRight, Zap, Activity, Trophy, BarChart3, CheckCircle2,
-} from 'lucide-react';
+import { Activity, BarChart3, Loader2, Lock, Sparkles } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
-import Button from '../../components/ui/Button';
-import { COLORS } from '../../theme';
 
 const DEMO_ACCOUNTS = [
-  { label: 'Admin', identifier: 'admin', password: 'Admin@123', icon: ShieldCheck, color: COLORS.brand },
-  { label: 'Coach', identifier: 'coach.rajesh', password: 'Admin@123', icon: UserCheck, color: COLORS.success },
-  { label: 'Selector', identifier: 'selector.vikram', password: 'Admin@123', icon: Shield, color: COLORS.warning },
-  { label: 'Athlete', identifier: 'athlete.arjun', password: 'Admin@123', icon: Users, color: COLORS.brand },
-];
-
-const FEATURES = [
-  { icon: Activity, text: 'Real-time performance monitoring' },
-  { icon: Trophy, text: 'AI-assisted athlete selection' },
-  { icon: BarChart3, text: 'Academy-wide analytics & reports' },
+  { label: 'Administrator', email: 'admin@sportsacademy.com', password: 'Admin@123' },
+  { label: 'Head Coach', email: 'coach.rajesh@sportsacademy.com', password: 'Admin@123' },
+  { label: 'State Selector', email: 'selector.vikram@sportsacademy.com', password: 'Admin@123' },
+  { label: 'Athlete', email: 'athlete.arjun@sportsacademy.com', password: 'Admin@123' },
 ];
 
 const Login = () => {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
-  const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
-  const [demoLoading, setDemoLoading] = useState(null);
+  const { register, handleSubmit, setValue, formState } = useForm();
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
 
-  const onSubmit = async (data) => {
+  async function onSubmit(values) {
+    setLoading(true);
     try {
-      await login(data.identifier, data.password);
+      await login(values.identifier, values.password);
       toast.success('Welcome back!');
       navigate(from, { replace: true });
     } catch (error) {
-      toast.error(error.message || 'Login failed. Please try again.');
-    }
-  };
-
-  const handleDemoLogin = async (acc) => {
-    setDemoLoading(acc.label);
-    try {
-      await login(acc.identifier, acc.password);
-      toast.success(`Logged in as ${acc.label}`);
-      navigate('/dashboard', { replace: true });
-    } catch {
-      toast.error('Demo login failed.');
+      toast.error(error.message || 'Login failed');
     } finally {
-      setDemoLoading(null);
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="login-split">
-      {/* Left — brand panel */}
-      <aside className="login-hero" aria-hidden={false}>
-        <div className="relative z-10 max-w-lg">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-11 h-11 rounded-xl bg-brand flex items-center justify-center">
-              <Zap size={22} color="#fff" />
+    <main className="grid min-h-screen lg:grid-cols-2">
+      <section className="relative hidden flex-col justify-between bg-gradient-navy p-12 text-navy-foreground lg:flex">
+        <div className="flex items-center gap-3">
+          <span className="grid size-11 place-items-center rounded-xl bg-gradient-primary text-sm font-bold text-primary-foreground">
+            AP
+          </span>
+          <div>
+            <p className="text-sm font-semibold">Athlete Intelligence</p>
+            <p className="text-xs text-navy-foreground/70">State Sports Academies</p>
+          </div>
+        </div>
+
+        <div className="max-w-lg">
+          <h1 className="text-4xl font-bold leading-tight tracking-tight">
+            Integrated athlete performance, analytics and selection intelligence.
+          </h1>
+          <p className="mt-4 text-sm leading-relaxed text-navy-foreground/75">
+            One connected system for coaches, selectors and administrators — performance monitoring,
+            fitness tracking, rankings and AI-assisted selection lists built on your academy&apos;s
+            historical data.
+          </p>
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            {[
+              { icon: Activity, label: 'Performance monitoring' },
+              { icon: BarChart3, label: 'Analytics & rankings' },
+              { icon: Sparkles, label: 'AI generated lists' },
+            ].map((f) => (
+              <div key={f.label} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <f.icon className="size-5 text-accent" />
+                <p className="mt-3 text-xs font-medium text-navy-foreground/85">{f.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-xs text-navy-foreground/50">Role-based access control · Secure sessions · Audit logged</p>
+      </section>
+
+      <section className="flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <span className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Lock className="size-6" />
+          </span>
+          <h2 className="mt-5 text-2xl font-bold tracking-tight">Sign in to your workspace</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Use your academy credentials to continue.</p>
+
+          <form className="mt-7 space-y-4" onSubmit={handleSubmit(onSubmit)}>
+            <div>
+              <label className="text-sm font-medium" htmlFor="identifier">
+                Email or username
+              </label>
+              <input
+                id="identifier"
+                type="text"
+                autoComplete="username"
+                className="mt-1.5 h-11 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/30"
+                placeholder="you@academy.gov"
+                {...register('identifier', { required: 'Email or username is required' })}
+              />
+              {formState.errors.identifier && (
+                <p className="mt-1 text-xs text-destructive">{formState.errors.identifier.message}</p>
+              )}
             </div>
             <div>
-              <p className="font-bold text-body text-white">Sports Academy</p>
-              <p className="text-small text-slate-400">Performance Intelligence Portal</p>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium" htmlFor="password">
+                  Password
+                </label>
+                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                className="mt-1.5 h-11 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/30"
+                {...register('password', { required: 'Password is required' })}
+              />
+              {formState.errors.password && (
+                <p className="mt-1 text-xs text-destructive">{formState.errors.password.message}</p>
+              )}
             </div>
-          </div>
+            <button
+              disabled={loading}
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+            >
+              {loading && <Loader2 className="size-4 animate-spin" />}
+              Sign in
+            </button>
+          </form>
 
-          <h1 className="page-title !text-white !text-[36px] mb-4">
-            Athlete Performance Monitoring & Selection
-          </h1>
-          <p className="text-body text-slate-300 mb-10 leading-relaxed">
-            A unified platform for administrators, coaches, selectors, and athletes to track performance, fitness, attendance, rankings, and selection decisions.
-          </p>
-
-          <ul className="space-y-4">
-            {FEATURES.map((f) => (
-              <li key={f.text} className="flex items-center gap-3 text-small text-slate-200">
-                <span className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
-                  <f.icon size={16} className="text-blue-400" />
-                </span>
-                {f.text}
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-12 pt-8 border-t border-white/10">
-            <p className="text-xs text-slate-500">State Sports Academy · Secure access for authorized personnel</p>
+          <div className="mt-8 rounded-xl border border-dashed border-border p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Demo accounts</p>
+            <div className="mt-3 grid gap-2">
+              {DEMO_ACCOUNTS.map((u) => (
+                <button
+                  key={u.email}
+                  type="button"
+                  onClick={() => {
+                    setValue('identifier', u.email);
+                    setValue('password', u.password);
+                  }}
+                  className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2 text-left text-xs transition hover:bg-secondary/70"
+                >
+                  <span className="font-medium">{u.label}</span>
+                  <span className="text-muted-foreground">{u.email}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </aside>
-
-      {/* Right — login card */}
-      <div className="login-panel">
-        <div className="w-full max-w-[420px] fade-in">
-          <div className="ui-card p-6 sm:p-8">
-            <div className="text-center mb-8">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 text-brand mx-auto mb-4 flex items-center justify-center">
-                <ShieldCheck size={24} />
-              </div>
-              <h2 className="section-title mb-1">Welcome back</h2>
-              <p className="text-small text-muted">Sign in to your academy account</p>
-            </div>
-
-            {/* Demo login */}
-            <div className="mb-6 p-3 rounded-xl bg-surface border border-border">
-              <p className="text-xs font-semibold text-muted uppercase tracking-wide text-center mb-3">
-                Quick Demo Login
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {DEMO_ACCOUNTS.map((acc) => {
-                  const Icon = acc.icon;
-                  const loading = demoLoading === acc.label;
-                  return (
-                    <button
-                      key={acc.label}
-                      type="button"
-                      onClick={() => handleDemoLogin(acc)}
-                      disabled={!!demoLoading || isSubmitting}
-                      className="flex flex-col items-center justify-center gap-1.5 h-16 rounded-lg border border-border bg-card hover:border-brand hover:bg-blue-50 transition-all disabled:opacity-60 text-text"
-                    >
-                      {loading
-                        ? <span className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-                        : <Icon size={16} style={{ color: acc.color }} />}
-                      <span className="text-xs font-semibold">{acc.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-muted">or continue with credentials</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-              <div className="field">
-                <label htmlFor="identifier" className="field-label">Email or Username</label>
-                <div className="auth-input-wrap">
-                  <span className="auth-input-icon" aria-hidden><Mail size={16} /></span>
-                  <input
-                    id="identifier"
-                    type="text"
-                    autoComplete="username"
-                    {...register('identifier', { required: 'Email or username is required' })}
-                    className={`auth-input ${errors.identifier ? 'is-error' : ''}`}
-                    placeholder="Enter email or username"
-                  />
-                </div>
-                {errors.identifier && (
-                  <p className="field-error" role="alert">{errors.identifier.message}</p>
-                )}
-              </div>
-
-              <div className="field">
-                <div className="flex justify-between items-center mb-1.5">
-                  <label htmlFor="password" className="field-label !mb-0">Password</label>
-                  <Link to="/forgot-password" className="text-xs font-semibold text-brand hover:underline">
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="auth-input-wrap">
-                  <span className="auth-input-icon" aria-hidden><Lock size={16} /></span>
-                  <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    {...register('password', { required: 'Password is required' })}
-                    className={`auth-input ${errors.password ? 'is-error' : ''}`}
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    className="auth-input-action"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="field-error" role="alert">{errors.password.message}</p>
-                )}
-              </div>
-
-              <label className="flex items-center gap-2 text-small text-muted cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
-                  className="w-4 h-4 rounded border-border text-brand focus:ring-brand"
-                />
-                Remember me on this device
-              </label>
-
-              <Button
-                type="submit"
-                variant="primary"
-                loading={isSubmitting}
-                disabled={!!demoLoading}
-                className="w-full !h-12"
-                rightIcon={ArrowRight}
-              >
-                Sign In
-              </Button>
-            </form>
-          </div>
-
-          <p className="text-center text-xs text-muted mt-6 flex items-center justify-center gap-1.5">
-            <CheckCircle2 size={12} className="text-success" />
-            Authorized academy personnel only
-          </p>
-        </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

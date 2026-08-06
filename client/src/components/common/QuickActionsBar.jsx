@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 
 const VARIANT_CLASS = {
   primary: 'btn-primary',
-  emerald: 'btn-accent',
-  purple: 'btn-primary',
-  default: 'btn-secondary',
+  emerald: 'btn-outline',
+  purple: 'btn-outline',
+  default: 'btn-outline',
 };
 
 const QuickActionsBar = ({ actions = [] }) => {
