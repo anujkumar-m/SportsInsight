@@ -19,6 +19,25 @@ const SelectorDashboard = React.lazy(() => import('./pages/dashboard/SelectorDas
 const AthleteDashboard = React.lazy(() => import('./pages/dashboard/AthleteDashboard'));
 const AIGenerateList = React.lazy(() => import('./pages/dashboard/AIGenerateList'));
 
+// Athlete Pages
+const AthleteList = React.lazy(() => import('./pages/athletes/AthleteList'));
+const AddAthlete = React.lazy(() => import('./pages/athletes/AddAthlete'));
+const EditAthlete = React.lazy(() => import('./pages/athletes/EditAthlete'));
+const AthleteProfile = React.lazy(() => import('./pages/athletes/AthleteProfile'));
+const ArchivedAthletes = React.lazy(() => import('./pages/athletes/ArchivedAthletes'));
+
+// Coach Pages
+const CoachList = React.lazy(() => import('./pages/coaches/CoachList'));
+const AddCoach = React.lazy(() => import('./pages/coaches/AddCoach'));
+
+// Selector Pages
+const SelectorList = React.lazy(() => import('./pages/selectors/SelectorList'));
+const AddSelector = React.lazy(() => import('./pages/selectors/AddSelector'));
+
+// Sports & Categories Pages
+const SportsList = React.lazy(() => import('./pages/sports/SportsList'));
+const CategoriesList = React.lazy(() => import('./pages/sports/CategoriesList'));
+
 const Loader = () => (
   <div className="min-h-screen bg-background p-8">
     <div className="mx-auto max-w-5xl space-y-4">
@@ -125,42 +144,20 @@ const App = () => {
                 }
               />
 
-              <Route
-                path="/athletes"
-                element={
-                  <PlaceholderRoute
-                    title="Athletes"
-                    description="Manage athlete profiles, assignments, and eligibility across sports and categories."
-                  />
-                }
-              />
-              <Route
-                path="/coaches"
-                element={
-                  <PlaceholderRoute
-                    title="Coaches"
-                    description="Coach roster, sport assignments, and squad oversight tools."
-                  />
-                }
-              />
-              <Route
-                path="/selectors"
-                element={
-                  <PlaceholderRoute
-                    title="Selectors"
-                    description="Selector accounts, trial access, and selection permissions."
-                  />
-                }
-              />
-              <Route
-                path="/sports"
-                element={
-                  <PlaceholderRoute
-                    title="Sports & Categories"
-                    description="Configure sports, age/gender categories, and performance metrics."
-                  />
-                }
-              />
+              <Route path="/athletes" element={<ProtectedRoute><DashboardLayout title="Athletes"><AthleteList /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/athletes/archived" element={<ProtectedRoute><RoleRoute roles={['admin']}><DashboardLayout title="Archived Athletes"><ArchivedAthletes /></DashboardLayout></RoleRoute></ProtectedRoute>} />
+              <Route path="/athletes/add" element={<ProtectedRoute><RoleRoute roles={['admin', 'coach']}><DashboardLayout title="Add Athlete"><AddAthlete /></DashboardLayout></RoleRoute></ProtectedRoute>} />
+              <Route path="/athletes/:id/edit" element={<ProtectedRoute><RoleRoute roles={['admin', 'coach']}><DashboardLayout title="Edit Athlete"><EditAthlete /></DashboardLayout></RoleRoute></ProtectedRoute>} />
+              <Route path="/athletes/:id" element={<ProtectedRoute><DashboardLayout title="Athlete Profile"><AthleteProfile /></DashboardLayout></ProtectedRoute>} />
+
+              <Route path="/coaches" element={<ProtectedRoute><RoleRoute roles={['admin', 'selector']}><DashboardLayout title="Coaches"><CoachList /></DashboardLayout></RoleRoute></ProtectedRoute>} />
+              <Route path="/coaches/add" element={<ProtectedRoute><RoleRoute roles={['admin']}><DashboardLayout title="Add Coach"><AddCoach /></DashboardLayout></RoleRoute></ProtectedRoute>} />
+              
+              <Route path="/selectors" element={<ProtectedRoute><RoleRoute roles={['admin']}><DashboardLayout title="Selectors"><SelectorList /></DashboardLayout></RoleRoute></ProtectedRoute>} />
+              <Route path="/selectors/add" element={<ProtectedRoute><RoleRoute roles={['admin']}><DashboardLayout title="Add Selector"><AddSelector /></DashboardLayout></RoleRoute></ProtectedRoute>} />
+
+              <Route path="/sports" element={<ProtectedRoute><DashboardLayout title="Sports & Categories"><SportsList /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/categories" element={<ProtectedRoute><DashboardLayout title="Categories"><CategoriesList /></DashboardLayout></ProtectedRoute>} />
               <Route
                 path="/performance"
                 element={

@@ -19,4 +19,21 @@ const requireRole = (...roles) => {
 
 const requireAnyRole = (...roles) => requireRole(...roles);
 
-module.exports = { requireRole, requireAnyRole };
+const authorize = (rolesArray) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Authentication required.' });
+    }
+    const userRole = req.user.role;
+    if (!rolesArray.includes(userRole)) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied. Required role(s): ${rolesArray.join(', ')}. Your role: ${userRole}`,
+        code: 'FORBIDDEN',
+      });
+    }
+    next();
+  };
+};
+
+module.exports = { requireRole, requireAnyRole, authorize };

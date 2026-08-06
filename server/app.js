@@ -7,6 +7,11 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const athleteRoutes = require('./routes/athlete.routes');
+const coachRoutes = require('./routes/coach.routes');
+const selectorRoutes = require('./routes/selector.routes');
+const sportRoutes = require('./routes/sport.routes');
+const categoryRoutes = require('./routes/category.routes');
 const { errorHandler, notFound } = require('./middleware/error.middleware');
 
 const app = express();
@@ -61,6 +66,11 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/dashboard', generalLimiter, dashboardRoutes);
+app.use('/api/athletes', generalLimiter, athleteRoutes);
+app.use('/api/coaches', generalLimiter, coachRoutes);
+app.use('/api/selectors', generalLimiter, selectorRoutes);
+app.use('/api/sports', generalLimiter, sportRoutes);
+app.use('/api/categories', generalLimiter, categoryRoutes);
 
 // ─── Error Handling ───────────────────────────────────────
 app.use(notFound);
