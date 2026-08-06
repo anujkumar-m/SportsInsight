@@ -33,6 +33,7 @@ import { Panel, ScoreBar, StatCard, StatusPill } from '../../components/widgets'
 import { AiGenerateList } from '../../components/AiGenerateList';
 import QuickActionModal from '../../components/common/QuickActionModal';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import PageHeader from '../../components/common/PageHeader';
 
 const pieColors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
 
@@ -126,8 +127,14 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="fade-in space-y-6">
+      <PageHeader
+        title="Academy Command Centre"
+        subtitle="Academy-wide performance, selection and AI intelligence overview."
+        breadcrumb="Admin Overview"
+      />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
         <StatCard label="Total Athletes" value={stats.totalAthletes || 0} icon={Users} delta={5} />
         <StatCard label="Total Coaches" value={stats.totalCoaches || 0} icon={ShieldCheck} delta={2} tone="info" />
         <StatCard label="Total Selectors" value={stats.totalSelectors || 0} icon={Medal} tone="success" />

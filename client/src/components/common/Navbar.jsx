@@ -150,27 +150,5 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
   );
 };
 
-export function PageHeader({ title, subtitle, role }) {
-  const location = useLocation();
-  const crumb = BREADCRUMB_MAP[location.pathname] || 'Dashboard';
-
-  return (
-    <>
-      <nav className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Link to="/dashboard" className="hover:text-primary">
-          Home
-        </Link>
-        <ChevronRight className="size-3" />
-        <span className="capitalize">{role}</span>
-        <ChevronRight className="size-3" />
-        <span className="font-medium text-foreground">{crumb}</span>
-      </nav>
-      <div className="mt-3 mb-6">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
-      </div>
-    </>
-  );
-}
-
 export default Navbar;
+

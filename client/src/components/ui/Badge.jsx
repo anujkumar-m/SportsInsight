@@ -9,7 +9,10 @@ const VARIANTS = {
   success: 'badge-green',
   warning: 'badge-amber',
   danger: 'badge-red',
+  destructive: 'badge-red',
   primary: 'badge-blue',
+  info: 'badge-info',
+  secondary: 'badge-gray',
 };
 
 const Badge = ({ children, variant = 'gray', className = '', ...props }) => (
@@ -19,3 +22,4 @@ const Badge = ({ children, variant = 'gray', className = '', ...props }) => (
 );
 
 export default Badge;
+

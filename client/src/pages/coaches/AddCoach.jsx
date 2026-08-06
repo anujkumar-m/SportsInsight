@@ -1,33 +1,37 @@
 // ─── pages/coaches/AddCoach.jsx ──────────────────────────────
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, ChevronLeft } from 'lucide-react';
+import { UserPlus, ChevronLeft, User, Briefcase, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { coachService } from '../../services/coachService';
 import { sportService } from '../../services/sportService';
 import Button from '../../components/ui/Button';
 import PageHeader from '../../components/common/PageHeader';
 
-const FormSection = ({ title, children }) => (
-  <div className="ui-card p-6 space-y-4">
-    <h3 className="section-title text-base border-b border-border pb-3">{title}</h3>
+const FormSection = ({ title, icon: Icon, children }) => (
+  <div className="ui-card p-6 space-y-5">
+    <div className="flex items-center gap-2 border-b border-border pb-3">
+      {Icon && <Icon className="size-5 text-primary" />}
+      <h3 className="section-title text-base font-bold">{title}</h3>
+    </div>
     {children}
   </div>
 );
 
 const Field = ({ label, required, error, children }) => (
-  <div>
+  <div className="space-y-1.5">
     <label className="field-label">
       {label}
-      {required && <span className="ml-0.5 text-destructive">*</span>}
+      {required && <span className="ml-1 text-destructive font-bold">*</span>}
     </label>
     {children}
-    {error && <p className="field-error">{error}</p>}
+    {error && <p className="field-error flex items-center gap-1">{error}</p>}
   </div>
 );
 
-const inputCls = 'h-9 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow';
-const selectCls = `${inputCls} cursor-pointer`;
+const inputCls = (error) =>
+  `input-field ${error ? '!border-destructive focus:!ring-destructive/20' : ''}`;
+const selectCls = (error) => `${inputCls(error)} cursor-pointer`;
 
 const AddCoach = () => {
   const navigate = useNavigate();
@@ -73,7 +77,7 @@ const AddCoach = () => {
   };
 
   return (
-    <div className="fade-in space-y-5">
+    <div className="fade-in space-y-6">
       <PageHeader
         title="Add Coach"
         subtitle="Register a new coach to the academy."
@@ -85,26 +89,26 @@ const AddCoach = () => {
         }
       />
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <FormSection title="Personal Information">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <FormSection title="Personal Information" icon={User}>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="First Name" required error={errors.first_name}>
-              <input className={inputCls} placeholder="First name" value={form.first_name} onChange={set('first_name')} />
+              <input className={inputCls(errors.first_name)} placeholder="First name" value={form.first_name} onChange={set('first_name')} />
             </Field>
             <Field label="Last Name" required error={errors.last_name}>
-              <input className={inputCls} placeholder="Last name" value={form.last_name} onChange={set('last_name')} />
+              <input className={inputCls(errors.last_name)} placeholder="Last name" value={form.last_name} onChange={set('last_name')} />
             </Field>
             <Field label="Email" required error={errors.email}>
-              <input type="email" className={inputCls} placeholder="coach@email.com" value={form.email} onChange={set('email')} />
+              <input type="email" className={inputCls(errors.email)} placeholder="coach@email.com" value={form.email} onChange={set('email')} />
             </Field>
             <Field label="Phone">
-              <input className={inputCls} placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={set('phone')} />
+              <input className={inputCls()} placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={set('phone')} />
             </Field>
             <Field label="Date of Birth">
-              <input type="date" className={inputCls} value={form.date_of_birth} onChange={set('date_of_birth')} />
+              <input type="date" className={inputCls()} value={form.date_of_birth} onChange={set('date_of_birth')} />
             </Field>
             <Field label="Gender">
-              <select className={selectCls} value={form.gender} onChange={set('gender')}>
+              <select className={selectCls()} value={form.gender} onChange={set('gender')}>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
@@ -113,36 +117,36 @@ const AddCoach = () => {
           </div>
         </FormSection>
 
-        <FormSection title="Professional Details">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <FormSection title="Professional Details" icon={Briefcase}>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Sport" required error={errors.sport_id}>
-              <select className={selectCls} value={form.sport_id} onChange={set('sport_id')}>
+              <select className={selectCls(errors.sport_id)} value={form.sport_id} onChange={set('sport_id')}>
                 <option value="">Select Sport</option>
                 {sports.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </Field>
             <Field label="Qualification">
-              <input className={inputCls} placeholder="e.g. NIS Diploma, AFC License" value={form.qualification} onChange={set('qualification')} />
+              <input className={inputCls()} placeholder="e.g. NIS Diploma, AFC License" value={form.qualification} onChange={set('qualification')} />
             </Field>
             <Field label="Specialization">
-              <input className={inputCls} placeholder="e.g. Strength & Conditioning" value={form.specialization} onChange={set('specialization')} />
+              <input className={inputCls()} placeholder="e.g. Strength & Conditioning" value={form.specialization} onChange={set('specialization')} />
             </Field>
             <Field label="Experience (Years)">
-              <input type="number" className={inputCls} placeholder="5" value={form.experience_years} onChange={set('experience_years')} />
+              <input type="number" className={inputCls()} placeholder="5" value={form.experience_years} onChange={set('experience_years')} />
             </Field>
             <Field label="Joining Date">
-              <input type="date" className={inputCls} value={form.joining_date} onChange={set('joining_date')} />
+              <input type="date" className={inputCls()} value={form.joining_date} onChange={set('joining_date')} />
             </Field>
           </div>
         </FormSection>
 
-        <FormSection title="Address">
+        <FormSection title="Address Details" icon={MapPin}>
           <Field label="Full Address">
-            <textarea className={`${inputCls} h-20 py-2`} placeholder="Residential address" value={form.address} onChange={set('address')} />
+            <textarea className={`${inputCls()} h-24 py-2 text-sm`} placeholder="Residential address" value={form.address} onChange={set('address')} />
           </Field>
         </FormSection>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
           <Button variant="outline" type="button" onClick={() => navigate('/coaches')}>Cancel</Button>
           <Button type="submit" leftIcon={UserPlus} loading={loading}>Create Coach</Button>
         </div>
@@ -152,3 +156,4 @@ const AddCoach = () => {
 };
 
 export default AddCoach;
+

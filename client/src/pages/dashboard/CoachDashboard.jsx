@@ -16,6 +16,7 @@ import { Panel, ScoreBar, StatCard, StatusPill } from '../../components/widgets'
 import { AiGenerateList } from '../../components/AiGenerateList';
 import QuickActionModal from '../../components/common/QuickActionModal';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import PageHeader from '../../components/common/PageHeader';
 import { toNum } from '../../theme';
 
 const axis = { stroke: 'var(--muted-foreground)', fontSize: 12 };
@@ -70,11 +71,8 @@ export default function CoachDashboard() {
 
   const performanceTrendData = trendLabels.map((m) => {
     const [y, mo] = String(m).split('-');
-    const label = m.includes('-')
-      ? new Date(Number(y), Number(mo) - 1).toLocaleDateString('en', { month: 'short' })
-      : m;
     return {
-      month: label,
+      month: new Date(Number(y), Number(mo) - 1).toLocaleDateString('en', { month: 'short' }),
       performance: perfByMonth[m] || 0,
       fitness: fitByMonth[m] || 0,
     };
@@ -82,11 +80,13 @@ export default function CoachDashboard() {
 
   const squadPerf =
     athletes.length > 0
-      ? Math.round(athletes.reduce((s, a) => s + toNum(a.avg_performance), 0) / athletes.length)
+      ? (
+          athletes.reduce((acc, a) => acc + toNum(a.avg_performance), 0) / athletes.length
+        ).toFixed(1)
       : 0;
   const squadFit =
     athletes.length > 0
-      ? Math.round(athletes.reduce((s, a) => s + toNum(a.latest_fitness), 0) / athletes.length)
+      ? (athletes.reduce((acc, a) => acc + toNum(a.avg_fitness), 0) / athletes.length).toFixed(1)
       : 0;
   const avgAttendance =
     stats.assignedAthletes > 0
@@ -116,7 +116,12 @@ export default function CoachDashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="fade-in space-y-6">
+      <PageHeader
+        title="Coach Workspace"
+        subtitle="Monitor your assigned squad and act on AI-flagged priorities."
+        breadcrumb="Coach Dashboard"
+      />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Assigned Athletes" value={stats.assignedAthletes || athletes.length} icon={Users} />
         <StatCard label="Squad Performance" value={squadPerf || '—'} icon={Activity} delta={5} tone="info" />

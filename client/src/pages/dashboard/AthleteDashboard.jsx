@@ -14,6 +14,7 @@ import dashboardAPI from '../../services/dashboard.service';
 import { useAuth } from '../../context/AuthContext';
 import { Panel, ScoreBar, StatCard, StatusPill } from '../../components/widgets';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import PageHeader from '../../components/common/PageHeader';
 
 const axis = { stroke: "var(--muted-foreground)", fontSize: 12 };
 const tooltipStyle = {
@@ -73,8 +74,14 @@ export default function AthleteDashboard() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="fade-in space-y-6">
+      <PageHeader
+        title="My Performance"
+        subtitle="Your progress, fitness, attendance and selection status."
+        breadcrumb="Athlete Dashboard"
+      />
       <Panel title="Profile Summary">
+
         <div className="flex flex-wrap items-center gap-4">
           <span className="grid size-16 place-items-center rounded-2xl bg-gradient-primary text-lg font-bold text-primary-foreground">
             {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}

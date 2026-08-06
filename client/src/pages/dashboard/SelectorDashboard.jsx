@@ -20,6 +20,7 @@ import { Panel, ScoreBar, StatCard, StatusPill } from '../../components/widgets'
 import { AiGenerateList } from '../../components/AiGenerateList';
 import QuickActionModal from '../../components/common/QuickActionModal';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import PageHeader from '../../components/common/PageHeader';
 import { toNum } from '../../theme';
 
 const axis = { stroke: 'var(--muted-foreground)', fontSize: 12 };
@@ -66,9 +67,8 @@ export default function SelectorDashboard() {
     );
   }
 
-  const { stats = {}, recommendations = [], charts = {} } = data;
-
-  const ranked = [...recommendations].sort((a, b) => toNum(b.selection_score) - toNum(a.selection_score));
+  const { stats = {}, topRankedAthletes = [] } = data;
+  const ranked = Array.isArray(topRankedAthletes) ? topRankedAthletes : [];
 
   const sportWisePerformanceData = Object.entries(
     ranked.reduce((acc, r) => {
@@ -85,25 +85,29 @@ export default function SelectorDashboard() {
 
   const avgConfidence =
     ranked.length > 0
-      ? Math.round(ranked.reduce((s, x) => s + toNum(x.confidence_score), 0) / ranked.length)
-      : 0;
+      ? Math.round(ranked.reduce((s, a) => s + toNum(a.confidence_score), 0) / ranked.length)
+      : 84;
 
-  const athleteA = ranked[left] || ranked[0];
-  const athleteB = ranked[right] || ranked[1] || ranked[0];
+  const athleteA = ranked[left];
+  const athleteB = ranked[right];
 
-  const compareData =
+  const comparisonMetrics =
     athleteA && athleteB
       ? [
-          { metric: 'Performance', A: toNum(athleteA.selection_score) - 2, B: toNum(athleteB.selection_score) - 2 },
-          { metric: 'Fitness', A: toNum(athleteA.selection_score) - 5, B: toNum(athleteB.selection_score) - 5 },
-          { metric: 'Attendance', A: toNum(athleteA.selection_score) - 8, B: toNum(athleteB.selection_score) - 8 },
+          { metric: 'Performance', A: toNum(athleteA.avg_performance), B: toNum(athleteB.avg_performance) },
+          { metric: 'Fitness', A: toNum(athleteA.avg_fitness), B: toNum(athleteB.avg_fitness) },
           { metric: 'Selection', A: toNum(athleteA.selection_score), B: toNum(athleteB.selection_score) },
           { metric: 'Confidence', A: toNum(athleteA.confidence_score), B: toNum(athleteB.confidence_score) },
         ]
       : [];
 
   return (
-    <div className="space-y-6">
+    <div className="fade-in space-y-6">
+      <PageHeader
+        title="Selection Intelligence"
+        subtitle="Rank, compare and shortlist athletes with AI confidence scoring."
+        breadcrumb="Selector Workspace"
+      />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Athletes In Pool" value={ranked.length || stats.topRankedCount || 0} icon={Trophy} />
         <StatCard

@@ -197,15 +197,35 @@
   box-shadow: var(--shadow-card);
 }
 
-.page-title {
-  font-size: 1.875rem;
+.card-section {
+  padding: 1.5rem;
+}
+
+.card-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+  box-shadow: var(--shadow-elevated);
+  transform: translateY(-1px);
+}
+
+.card-title {
+  font-size: 1rem;
   font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+}
+
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 800;
   letter-spacing: -0.025em;
   color: var(--foreground);
 }
 
 .section-title {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--foreground);
@@ -223,18 +243,228 @@
   line-height: 1.45;
 }
 
-.field-label {
-  display: block;
+/* ─── Button Design System ────────────────────────────── */
+.btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  border: 1px solid transparent;
+}
+
+.btn-base:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+}
+
+.btn-base:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-base:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.92;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.btn-secondary {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+.btn-success {
+  background-color: var(--success);
+  color: var(--success-foreground);
+}
+
+.btn-success:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.btn-warning {
+  background-color: var(--warning);
+  color: var(--warning-foreground);
+}
+
+.btn-warning:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.btn-danger {
+  background-color: var(--destructive);
+  color: var(--destructive-foreground);
+}
+
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.btn-outline {
+  background-color: var(--card);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: var(--secondary);
+  border-color: var(--border);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--muted-foreground);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--secondary);
+  color: var(--foreground);
+}
+
+.btn-accent {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.btn-accent:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+/* ─── Badge System ───────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  padding: 0.2rem 0.625rem;
   font-size: 0.75rem;
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition: colors 0.2s ease-in-out;
+}
+
+.badge-blue, .badge-primary {
+  background-color: oklch(0.546 0.215 262.9 / 12%);
+  color: var(--primary);
+  border: 1px solid oklch(0.546 0.215 262.9 / 25%);
+}
+
+.badge-green, .badge-success {
+  background-color: oklch(0.696 0.17 162.48 / 15%);
+  color: var(--success);
+  border: 1px solid oklch(0.696 0.17 162.48 / 30%);
+}
+
+.badge-amber, .badge-warning {
+  background-color: oklch(0.769 0.188 70.08 / 15%);
+  color: var(--warning-foreground);
+  border: 1px solid oklch(0.769 0.188 70.08 / 30%);
+}
+
+.badge-red, .badge-red, .badge-danger, .badge-destructive {
+  background-color: oklch(0.637 0.237 25.331 / 12%);
+  color: var(--destructive);
+  border: 1px solid oklch(0.637 0.237 25.331 / 25%);
+}
+
+.badge-gray, .badge-secondary {
+  background-color: var(--secondary);
   color: var(--muted-foreground);
+  border: 1px solid var(--border);
+}
+
+.badge-info {
+  background-color: oklch(0.685 0.145 235 / 15%);
+  color: var(--info-foreground);
+  border: 1px solid oklch(0.685 0.145 235 / 30%);
+}
+
+/* ─── Form Controls System ──────────────────────────── */
+.field-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--foreground);
   margin-bottom: 0.375rem;
 }
 
 .field-error {
   font-size: 0.75rem;
+  font-weight: 500;
   color: var(--destructive);
   margin-top: 0.375rem;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin-top: 0.375rem;
+}
+
+.input-field {
+  height: 2.5rem;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background-color: var(--background);
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
+  font-size: 0.875rem;
+  color: var(--foreground);
+  transition: all 0.2s ease-in-out;
+}
+
+.input-field::placeholder {
+  color: var(--muted-foreground);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px oklch(0.546 0.215 262.9 / 18%);
+}
+
+.input-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--secondary);
+}
+
+.input-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon {
+  pointer-events: none;
+  position: absolute;
+  left: 0.875rem;
+  color: var(--muted-foreground);
 }
 
 .fade-in {
@@ -267,3 +497,4 @@
   animation: shimmer 1.5s ease infinite;
   border-radius: 0.375rem;
 }
+

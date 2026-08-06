@@ -11,16 +11,17 @@ const Input = forwardRef(({
   rightElement,
   className = '',
   id,
+  required,
   ...props
 }, ref) => {
   const inputId = id || props.name;
 
   return (
-    <div className={`field ${className}`}>
+    <div className={`space-y-1 ${className}`}>
       {label && (
         <label htmlFor={inputId} className="field-label">
           {label}
-          {props.required && <span className="text-danger" aria-hidden> *</span>}
+          {required && <span className="ml-1 text-destructive font-bold" aria-hidden>*</span >}
         </label>
       )}
       <div className={Icon || rightElement ? 'input-icon-wrap' : ''}>
@@ -32,9 +33,14 @@ const Input = forwardRef(({
         <input
           ref={ref}
           id={inputId}
-          className={`input-field ${error ? 'border-danger' : ''}`}
+          className={`input-field ${Icon ? 'pl-9' : ''} ${
+            error
+              ? '!border-destructive focus:!ring-destructive/20'
+              : ''
+          }`}
           aria-invalid={!!error}
           aria-describedby={error ? `${inputId}-error` : undefined}
+          required={required}
           {...props}
         />
         {rightElement}
@@ -52,3 +58,4 @@ const Input = forwardRef(({
 Input.displayName = 'Input';
 
 export default Input;
+
