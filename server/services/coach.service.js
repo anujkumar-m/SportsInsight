@@ -105,10 +105,18 @@ const createCoach = async (data, createdBy) => {
 const updateCoach = async (id, data, updatedBy) => {
   const allowed = ['sport_id','qualification','experience_years','specialization','date_of_birth','gender','address','joining_date','current_status','is_active'];
   const fields = []; const vals = [];
-  for (const k of allowed) { if (data[k] !== undefined) { fields.push(`${k}=?`); vals.push(data[k]); } }
-  if (!fields.length) return;
-  vals.push(id);
-  await pool.query(`UPDATE coaches SET ${fields.join(',')} WHERE id=?`, vals);
+  for (const k of allowed) {
+    if (data[k] !== undefined) {
+      let val = data[k];
+      if (val === '') val = null;
+      fields.push(`${k}=?`);
+      vals.push(val);
+    }
+  }
+  if (fields.length) {
+    vals.push(id);
+    await pool.query(`UPDATE coaches SET ${fields.join(',')} WHERE id=?`, vals);
+  }
 
   const uFields = []; const uVals = [];
   for (const k of ['first_name','last_name','phone','profile_photo']) {

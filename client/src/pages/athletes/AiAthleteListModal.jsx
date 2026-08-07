@@ -1,5 +1,5 @@
 // ─── pages/athletes/AiAthleteListModal.jsx ───────────────
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   X, Sparkles, Download, Save, Filter, Search, TrendingUp,
   ChevronDown, ChevronUp,
@@ -10,13 +10,14 @@ import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 
 const AI_LIST_TYPES = [
-  { value: 'top_performing', label: 'Top Performing Athletes', icon: '🏆', color: 'from-yellow-400/20 to-amber-500/10' },
-  { value: 'most_improved', label: 'Most Improved Athletes', icon: '📈', color: 'from-emerald-400/20 to-green-500/10' },
-  { value: 'best_fitness', label: 'Best Fitness Athletes', icon: '💪', color: 'from-blue-400/20 to-cyan-500/10' },
+  { value: 'top_performers', label: 'Top Performers', icon: '🏆', color: 'from-yellow-400/20 to-amber-500/10' },
+  { value: 'most_improved', label: 'Most Improved', icon: '📈', color: 'from-emerald-400/20 to-green-500/10' },
   { value: 'highest_attendance', label: 'Highest Attendance', icon: '📅', color: 'from-purple-400/20 to-violet-500/10' },
+  { value: 'best_fitness', label: 'Best Fitness', icon: '💪', color: 'from-blue-400/20 to-cyan-500/10' },
+  { value: 'injury_free', label: 'Injury Free', icon: '🛡️', color: 'from-emerald-400/20 to-teal-500/10' },
+  { value: 'recovery_ready', label: 'Recovery Ready', icon: '🩺', color: 'from-pink-400/20 to-rose-500/10' },
+  { value: 'selection_ready', label: 'Selection Ready', icon: '🎯', color: 'from-teal-400/20 to-cyan-500/10' },
   { value: 'high_potential', label: 'High Potential Athletes', icon: '⚡', color: 'from-orange-400/20 to-red-500/10' },
-  { value: 'selection_ready', label: 'Selection Ready Athletes', icon: '🎯', color: 'from-teal-400/20 to-cyan-500/10' },
-  { value: 'recovery_ready', label: 'Recovery Ready Athletes', icon: '🩺', color: 'from-pink-400/20 to-rose-500/10' },
   { value: 'underperforming', label: 'Underperforming Athletes', icon: '⚠️', color: 'from-red-400/20 to-orange-500/10' },
   { value: 'future_medal', label: 'Future Medal Winners', icon: '🥇', color: 'from-gold-400/20 to-yellow-500/10' },
   { value: 'future_national', label: 'Future National Players', icon: '🇮🇳', color: 'from-indigo-400/20 to-blue-500/10' },
@@ -34,8 +35,8 @@ const ConfidenceBar = ({ score }) => {
   );
 };
 
-const AiAthleteListModal = ({ open, onClose, sports = [] }) => {
-  const [listType, setListType] = useState('top_performing');
+const AiAthleteListModal = ({ open, onClose, sports = [], initialListType = 'top_performers' }) => {
+  const [listType, setListType] = useState(initialListType);
   const [sportId, setSportId] = useState('');
   const [resultLimit, setResultLimit] = useState(20);
   const [generating, setGenerating] = useState(false);
@@ -44,16 +45,12 @@ const AiAthleteListModal = ({ open, onClose, sports = [] }) => {
   const [sortDir, setSortDir] = useState('desc');
   const [expandedId, setExpandedId] = useState(null);
 
-  if (!open) return null;
-
-  const selectedType = AI_LIST_TYPES.find((t) => t.value === listType);
-
-  const handleGenerate = async () => {
+  const handleGenerate = useCallback(async (targetType = listType) => {
     setGenerating(true);
     setResults(null);
     try {
       const res = await athleteService.generateList({
-        list_type: listType,
+        list_type: targetType,
         sport_id: sportId || undefined,
         limit: resultLimit,
       });
@@ -64,7 +61,21 @@ const AiAthleteListModal = ({ open, onClose, sports = [] }) => {
     } finally {
       setGenerating(false);
     }
-  };
+  }, [listType, sportId, resultLimit]);
+
+  useEffect(() => {
+    if (open) {
+      const targetType = initialListType || 'top_performers';
+      setListType(targetType);
+      handleGenerate(targetType);
+    } else {
+      setResults(null);
+    }
+  }, [open, initialListType]);
+
+  if (!open) return null;
+
+  const selectedType = AI_LIST_TYPES.find((t) => t.value === listType) || AI_LIST_TYPES[0];
 
   const filteredResults = (results || [])
     .filter((a) => !search || a.full_name?.toLowerCase().includes(search.toLowerCase()))

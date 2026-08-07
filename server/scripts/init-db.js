@@ -20,6 +20,7 @@ async function initDB() {
   };
 
   const databaseDir = path.join(__dirname, '../../database');
+  const completeSchemaPath = path.join(databaseDir, 'complete_schema.sql');
   const schemaPath = path.join(databaseDir, 'schema.sql');
   const seedPath = path.join(databaseDir, 'seed.sql');
 
@@ -27,8 +28,12 @@ async function initDB() {
     console.log('⏳ Connecting to MySQL server...');
     const connection = await mysql.createConnection(dbConfig);
 
-    await runSqlFile(connection, schemaPath);
-    await runSqlFile(connection, seedPath);
+    if (fs.existsSync(completeSchemaPath)) {
+      await runSqlFile(connection, completeSchemaPath);
+    } else {
+      await runSqlFile(connection, schemaPath);
+      await runSqlFile(connection, seedPath);
+    }
 
     console.log('\n✅ Database initialized successfully!');
     console.log(`   Database: ${process.env.DB_NAME || 'sports_acadmey'}`);
