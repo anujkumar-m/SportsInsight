@@ -77,8 +77,7 @@ const SelectorList = () => {
       key: 'actions', label: '',
       render: (_, row) => (
         <div className="flex justify-end gap-2">
-          <Button size="sm" variant="ghost" onClick={() => navigate(`/selectors/${row.id}`)}><Eye size={14}/></Button>
-          <Button size="sm" variant="ghost" onClick={() => navigate(`/selectors/${row.id}/edit`)}><Pencil size={14}/></Button>
+          {/* <Button size="sm" variant="ghost" onClick={() => navigate(`/selectors/${row.id}`)}><Eye size={14}/></Button> */}
           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setConfirmDelete(row)}><Trash2 size={14}/></Button>
         </div>
       ),

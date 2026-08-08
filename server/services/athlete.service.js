@@ -169,12 +169,7 @@ const updateAthlete = async (id, data, updatedBy) => {
       'joining_date','medical_status','current_status',
     ];
     for (const k of allowed) {
-      if (data[k] !== undefined) {
-        let val = data[k];
-        if (val === '') val = null;
-        fields.push(`${k} = ?`);
-        vals.push(val);
-      }
+      if (data[k] !== undefined) { fields.push(`${k} = ?`); vals.push(data[k]); }
     }
     if (!fields.length) return false;
 
@@ -322,7 +317,6 @@ const scoreAndRank = (athletes, list_type, limit) => {
     let suggestion = '';
 
     switch (list_type) {
-      case 'top_performers':
       case 'top_performing':
         confidence_score = (perf * 0.5 + fitness * 0.2 + att * 0.15 + coaching * 0.15);
         reason = `Avg performance score: ${perf.toFixed(1)}, Fitness: ${fitness.toFixed(1)}`;
@@ -342,15 +336,6 @@ const scoreAndRank = (athletes, list_type, limit) => {
         confidence_score = att;
         reason = `Attendance rate: ${att.toFixed(0)}% over last 30 days`;
         suggestion = att < 80 ? 'Improve session consistency' : 'Excellent commitment';
-        break;
-      case 'injury_free':
-        confidence_score = (a.medical_status === 'fit' && injuries === 0)
-          ? Math.min(100, Math.max(70, fitness * 0.5 + att * 0.5))
-          : (injuries === 0 ? 50 : 0);
-        reason = (a.medical_status === 'fit' && injuries === 0)
-          ? `Fit medical status with zero active injuries. Fitness: ${fitness.toFixed(1)}`
-          : `Medical status: ${a.medical_status}, Active injuries: ${injuries}`;
-        suggestion = injuries === 0 ? 'Fully cleared for intensive training and match selection' : 'Requires medical monitoring';
         break;
       case 'high_potential':
         confidence_score = (perf * 0.3 + fitness * 0.3 + coaching * 0.25 + att * 0.15) * (injuries === 0 ? 1 : 0.8);

@@ -747,3 +747,4 @@ INSERT IGNORE INTO notifications (user_id, title, message, type) VALUES
 (2, 'New Athlete Assigned', 'Athlete Arjun Nair has been assigned to your training group.', 'info'),
 (5, 'Ranking Updated', 'New athlete rankings have been computed for this month.', 'info'),
 (7, 'Fitness Assessment Due', 'Your next fitness assessment is scheduled for next week.', 'warning');
+o

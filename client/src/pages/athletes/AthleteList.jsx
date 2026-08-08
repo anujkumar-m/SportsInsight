@@ -38,7 +38,7 @@ const StatusBadge = ({ status }) => {
 const RowActions = ({ athlete, onView, onEdit, onArchive, onDelete, role }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="relative" onClick={(e) => e.stopPropagation()}>
+    <div className="relative">
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
@@ -48,23 +48,23 @@ const RowActions = ({ athlete, onView, onEdit, onArchive, onDelete, role }) => {
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-30" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-8 z-40 min-w-[160px] rounded-xl border border-border bg-card p-1.5 shadow-xl">
-            <button onClick={(e) => { e.stopPropagation(); setOpen(false); onView(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-secondary">
+            <button onClick={() => { setOpen(false); onView(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-secondary">
               <Eye size={13} /> View Profile
             </button>
             {(role === 'admin' || role === 'coach') && (
-              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-secondary">
+              <button onClick={() => { setOpen(false); onEdit(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-secondary">
                 <Pencil size={13} /> Edit
               </button>
             )}
             {role === 'admin' && athlete.current_status !== 'archived' && (
-              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onArchive(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-warning hover:bg-warning/10">
+              <button onClick={() => { setOpen(false); onArchive(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-warning hover:bg-warning/10">
                 <Archive size={13} /> Archive
               </button>
             )}
             {role === 'admin' && (
-              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-destructive hover:bg-destructive/10">
+              <button onClick={() => { setOpen(false); onDelete(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-destructive hover:bg-destructive/10">
                 <Trash2 size={13} /> Delete
               </button>
             )}
@@ -98,17 +98,6 @@ const AthleteList = () => {
   const [actionLoading, setActionLoading] = useState(false);
 
   const [aiModalOpen, setAiModalOpen] = useState(false);
-  const [selectedAiType, setSelectedAiType] = useState('top_performers');
-
-  const AI_DROPDOWN_OPTIONS = [
-    { value: 'top_performers', label: 'Top Performers' },
-    { value: 'most_improved', label: 'Most Improved' },
-    { value: 'highest_attendance', label: 'Highest Attendance' },
-    { value: 'best_fitness', label: 'Best Fitness' },
-    { value: 'injury_free', label: 'Injury Free' },
-    { value: 'recovery_ready', label: 'Recovery Ready' },
-    { value: 'selection_ready', label: 'Selection Ready' },
-  ];
 
   // fetch athletes
   const fetchData = useCallback(async () => {
@@ -275,28 +264,14 @@ const AthleteList = () => {
                 </Button>
               </>
             )}
-            <div className="flex items-center gap-2">
-              <select
-                aria-label="Select AI Athlete List Type"
-                value={selectedAiType}
-                onChange={(e) => setSelectedAiType(e.target.value)}
-                className="h-9 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                {AI_DROPDOWN_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <Button
-                size="sm"
-                variant="accent"
-                leftIcon={Sparkles}
-                onClick={() => setAiModalOpen(true)}
-              >
-                Generate List
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              variant="accent"
+              leftIcon={Sparkles}
+              onClick={() => setAiModalOpen(true)}
+            >
+              AI Generate List
+            </Button>
           </>
         }
       />
@@ -396,12 +371,7 @@ const AthleteList = () => {
       />
 
       {/* AI Generate Modal */}
-      <AiAthleteListModal
-        open={aiModalOpen}
-        onClose={() => setAiModalOpen(false)}
-        sports={sports}
-        initialListType={selectedAiType}
-      />
+      <AiAthleteListModal open={aiModalOpen} onClose={() => setAiModalOpen(false)} sports={sports} />
     </div>
   );
 };

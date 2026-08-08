@@ -125,11 +125,7 @@ const EditAthlete = () => {
     if (!validate()) return;
     setSaving(true);
     try {
-      const payload = { ...form };
-      ['coach_id', 'sport_id', 'category_id', 'height_cm', 'weight_kg', 'joining_date', 'date_of_birth'].forEach((k) => {
-        if (payload[k] === '') payload[k] = null;
-      });
-      await athleteService.update(id, payload);
+      await athleteService.update(id, form);
       toast.success('Athlete updated successfully');
       navigate(`/athletes/${id}`);
     } catch (err) {
