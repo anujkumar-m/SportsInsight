@@ -93,7 +93,14 @@ const createSelector = async (data, createdBy) => {
 const updateSelector = async (id, data) => {
   const allowed = ['designation','organization','sport_expertise','years_experience','is_active'];
   const fields = []; const vals = [];
-  for (const k of allowed) { if (data[k] !== undefined) { fields.push(`${k}=?`); vals.push(data[k]); } }
+  for (const k of allowed) {
+    if (data[k] !== undefined) {
+      fields.push(`${k}=?`);
+      let val = data[k];
+      if (val === '' && ['years_experience'].includes(k)) val = null;
+      vals.push(val);
+    }
+  }
   if (fields.length) { vals.push(id); await pool.query(`UPDATE selectors SET ${fields.join(',')} WHERE id=?`, vals); }
 
   const uFields = []; const uVals = [];

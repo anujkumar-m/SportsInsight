@@ -169,7 +169,14 @@ const updateAthlete = async (id, data, updatedBy) => {
       'joining_date','medical_status','current_status',
     ];
     for (const k of allowed) {
-      if (data[k] !== undefined) { fields.push(`${k} = ?`); vals.push(data[k]); }
+      if (data[k] !== undefined) {
+        fields.push(`${k} = ?`);
+        let val = data[k];
+        if (val === '' && ['coach_id','sport_id','category_id','height_cm','weight_kg','date_of_birth','joining_date'].includes(k)) {
+          val = null;
+        }
+        vals.push(val);
+      }
     }
     if (!fields.length) return false;
 

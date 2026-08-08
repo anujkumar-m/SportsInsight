@@ -45,4 +45,25 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-module.exports = { authenticate };
+// authorizeRoles middleware - checks req.user.role against allowed roles
+const authorizeRoles = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Authentication required.' });
+    }
+    const userRole = req.user.role;
+    if (!roles.includes(userRole)) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied. Required role(s): ${roles.join(', ')}. Your role: ${userRole}`,
+        code: 'FORBIDDEN',
+      });
+    }
+    next();
+  };
+};
+
+// authenticateJWT is an alias for authenticate (used by all route files)
+const authenticateJWT = authenticate;
+
+module.exports = { authenticate, authenticateJWT, authorizeRoles };

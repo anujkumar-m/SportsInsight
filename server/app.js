@@ -12,6 +12,14 @@ const coachRoutes = require('./routes/coach.routes');
 const selectorRoutes = require('./routes/selector.routes');
 const sportRoutes = require('./routes/sport.routes');
 const categoryRoutes = require('./routes/category.routes');
+const performanceRoutes = require('./routes/performance.routes');
+const fitnessRoutes = require('./routes/fitness.routes');
+const attendanceRoutes = require('./routes/attendance.routes');
+const injuryRoutes = require('./routes/injury.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
+const rankingRoutes = require('./routes/ranking.routes');
+const selectionRoutes = require('./routes/selection.routes');
+const comparisonRoutes = require('./routes/comparison.routes');
 const { errorHandler, notFound } = require('./middleware/error.middleware');
 
 const app = express();
@@ -71,6 +79,14 @@ app.use('/api/coaches', generalLimiter, coachRoutes);
 app.use('/api/selectors', generalLimiter, selectorRoutes);
 app.use('/api/sports', generalLimiter, sportRoutes);
 app.use('/api/categories', generalLimiter, categoryRoutes);
+app.use('/api/performance', generalLimiter, performanceRoutes);
+app.use('/api/fitness', generalLimiter, fitnessRoutes);
+app.use('/api/attendance', generalLimiter, attendanceRoutes);
+app.use('/api/injuries', generalLimiter, injuryRoutes);
+app.use('/api/analytics', generalLimiter, analyticsRoutes);
+app.use('/api/rankings', generalLimiter, rankingRoutes);
+app.use('/api/selections', generalLimiter, selectionRoutes);
+app.use('/api/comparison', generalLimiter, comparisonRoutes);
 
 // ─── Error Handling ───────────────────────────────────────
 app.use(notFound);

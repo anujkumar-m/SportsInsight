@@ -3,6 +3,7 @@ import api from './api';
 
 export const athleteService = {
   list: (params = {}) => api.get('/athletes', { params }),
+  getAthletes: (params = {}) => api.get('/athletes', { params }),
   listArchived: (params = {}) => api.get('/athletes/archived', { params }),
   getById: (id) => api.get(`/athletes/${id}`),
   create: (data) => api.post('/athletes', data),
