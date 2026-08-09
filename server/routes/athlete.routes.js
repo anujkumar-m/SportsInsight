@@ -22,7 +22,7 @@ router.post('/generate-list', authorize(['admin', 'coach', 'selector']), ctrl.ge
 router.get('/', authorize(['admin', 'coach', 'selector']), ctrl.list);
 router.get('/:id', authorize(['admin', 'coach', 'selector', 'athlete']), ctrl.getOne);
 router.post('/', authorize(['admin', 'coach']), ctrl.create);
-router.put('/:id', authorize(['admin', 'coach']), ctrl.update);
+router.put('/:id', authorize(['admin', 'coach', 'athlete']), ctrl.update);
 router.delete('/:id', authorize(['admin']), ctrl.remove);
 
 module.exports = router;

@@ -200,7 +200,7 @@ const App = () => {
               <Route path="/athletes" element={<ProtectedRoute><DashboardLayout title="Athletes"><AthleteList /></DashboardLayout></ProtectedRoute>} />
               <Route path="/athletes/archived" element={<ProtectedRoute><RoleRoute roles={['admin']}><DashboardLayout title="Archived Athletes"><ArchivedAthletes /></DashboardLayout></RoleRoute></ProtectedRoute>} />
               <Route path="/athletes/add" element={<ProtectedRoute><RoleRoute roles={['admin', 'coach']}><DashboardLayout title="Add Athlete"><AddAthlete /></DashboardLayout></RoleRoute></ProtectedRoute>} />
-              <Route path="/athletes/:id/edit" element={<ProtectedRoute><RoleRoute roles={['admin', 'coach']}><DashboardLayout title="Edit Athlete"><EditAthlete /></DashboardLayout></RoleRoute></ProtectedRoute>} />
+              <Route path="/athletes/:id/edit" element={<ProtectedRoute><RoleRoute roles={['admin', 'coach', 'athlete']}><DashboardLayout title="Edit Athlete"><EditAthlete /></DashboardLayout></RoleRoute></ProtectedRoute>} />
               <Route path="/athletes/:id" element={<ProtectedRoute><DashboardLayout title="Athlete Profile"><AthleteProfile /></DashboardLayout></ProtectedRoute>} />
 
               <Route path="/coaches" element={<ProtectedRoute><RoleRoute roles={['admin', 'selector']}><DashboardLayout title="Coaches"><CoachList /></DashboardLayout></RoleRoute></ProtectedRoute>} />
