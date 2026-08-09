@@ -112,4 +112,26 @@ const getProfile = async (userId) => {
   return user;
 };
 
-module.exports = { login, logout, refreshTokens, forgotPassword, resetPassword, getProfile };
+const updateProfile = async (userId, data) => {
+  const user = await findUserById(userId);
+  if (!user) throw { status: 404, message: 'User not found.' };
+  const { updateUserProfile } = require('../models/user.model');
+  await updateUserProfile(userId, data);
+  return await findUserById(userId);
+};
+
+const changePassword = async (userId, currentPassword, newPassword) => {
+  const { pool } = require('../config/database');
+  const [rows] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [userId]);
+  if (!rows.length) throw { status: 404, message: 'User not found.' };
+  
+  const isMatch = await comparePassword(currentPassword, rows[0].password_hash);
+  if (!isMatch) throw { status: 400, message: 'Current password is incorrect.' };
+
+  const hashed = await hashPassword(newPassword);
+  await updatePassword(userId, hashed);
+  await revokeAllUserTokens(userId);
+};
+
+module.exports = { login, logout, refreshTokens, forgotPassword, resetPassword, getProfile, updateProfile, changePassword };
+

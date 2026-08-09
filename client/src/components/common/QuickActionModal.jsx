@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, Brain, Activity, Heart, Calendar, GitCompare, FileText, UserPlus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { athleteService } from '../../services/athleteService';
 
 const QuickActionModal = ({ isOpen, onClose, title, type, data }) => {
+  const [dbAthletes, setDbAthletes] = useState([]);
   const [formData, setFormData] = useState({
     athleteId: '',
     metricName: '',
@@ -18,6 +20,17 @@ const QuickActionModal = ({ isOpen, onClose, title, type, data }) => {
   });
 
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      athleteService.getAthletes({ limit: 100 })
+        .then((res) => {
+          const list = res?.data || res?.athletes || (Array.isArray(res) ? res : []);
+          if (Array.isArray(list)) setDbAthletes(list);
+        })
+        .catch(() => setDbAthletes([]));
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -75,10 +88,11 @@ const QuickActionModal = ({ isOpen, onClose, title, type, data }) => {
                   onChange={(e) => setFormData({ ...formData, athleteId: e.target.value })}
                 >
                   <option value="">-- Choose Athlete --</option>
-                  <option value="1">Arjun Nair (ATH-2024-001)</option>
-                  <option value="2">Sneha Patel (ATH-2024-002)</option>
-                  <option value="3">Rohit Sharma (ATH-2024-003)</option>
-                  <option value="5">Kiran Rao (ATH-2024-005)</option>
+                  {dbAthletes.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.first_name} {a.last_name} ({a.athlete_code || a.sport_name || 'Athlete'})
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -146,9 +160,11 @@ const QuickActionModal = ({ isOpen, onClose, title, type, data }) => {
                   onChange={(e) => setFormData({ ...formData, athleteId: e.target.value })}
                 >
                   <option value="">-- Choose Athlete --</option>
-                  <option value="1">Arjun Nair (ATH-2024-001)</option>
-                  <option value="2">Sneha Patel (ATH-2024-002)</option>
-                  <option value="3">Rohit Sharma (ATH-2024-003)</option>
+                  {dbAthletes.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.first_name} {a.last_name} ({a.athlete_code || a.sport_name || 'Athlete'})
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -187,9 +203,11 @@ const QuickActionModal = ({ isOpen, onClose, title, type, data }) => {
                   onChange={(e) => setFormData({ ...formData, athleteId: e.target.value })}
                 >
                   <option value="">-- Choose Athlete --</option>
-                  <option value="1">Arjun Nair (ATH-2024-001)</option>
-                  <option value="2">Sneha Patel (ATH-2024-002)</option>
-                  <option value="3">Rohit Sharma (ATH-2024-003)</option>
+                  {dbAthletes.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.first_name} {a.last_name} ({a.athlete_code || a.sport_name || 'Athlete'})
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -227,16 +245,22 @@ const QuickActionModal = ({ isOpen, onClose, title, type, data }) => {
                   <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Athlete 1</label>
                   <select required className="input-field" value={formData.athlete1Id} onChange={(e) => setFormData({ ...formData, athlete1Id: e.target.value })}>
                     <option value="">Select Athlete 1</option>
-                    <option value="1">Arjun Nair (Sprint)</option>
-                    <option value="2">Sneha Patel (Swim)</option>
+                    {dbAthletes.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.first_name} {a.last_name} ({a.sport_name || 'DB'})
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Athlete 2</label>
                   <select required className="input-field" value={formData.athlete2Id} onChange={(e) => setFormData({ ...formData, athlete2Id: e.target.value })}>
                     <option value="">Select Athlete 2</option>
-                    <option value="3">Rohit Sharma (Track)</option>
-                    <option value="5">Kiran Rao (Football)</option>
+                    {dbAthletes.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.first_name} {a.last_name} ({a.sport_name || 'DB'})
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

@@ -6,3 +6,6 @@ export const rankingService = {
   getComparison:    (ids) => api.get('/rankings/comparison', { params: { ids: ids.join(',') } }),
   calculate:        () => api.post('/rankings/calculate'),
 };
+
+export default rankingService;
+

@@ -7,6 +7,8 @@ const {
   forgotPassword,
   resetPassword,
   getProfile,
+  updateProfile,
+  changePassword,
   loginValidation,
   forgotPasswordValidation,
   resetPasswordValidation,
@@ -23,5 +25,8 @@ router.post('/reset-password', resetPasswordValidation, validate, resetPassword)
 
 // Protected routes
 router.get('/profile', authenticate, getProfile);
+router.put('/profile', authenticate, updateProfile);
+router.put('/change-password', authenticate, changePassword);
 
 module.exports = router;
+

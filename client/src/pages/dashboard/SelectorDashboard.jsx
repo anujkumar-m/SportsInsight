@@ -229,7 +229,7 @@ export default function SelectorDashboard() {
               </label>
             ))}
             <ResponsiveContainer width="100%" height={280}>
-              <RadarChart data={compareData}>
+              <RadarChart data={comparisonMetrics}>
                 <PolarGrid stroke="var(--border)" />
                 <PolarAngleAxis dataKey="metric" tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} />
                 <Radar

@@ -73,15 +73,18 @@ export default function AdminDashboard() {
   // Transform charts data for Recharts
   const perfTrend = charts.performanceTrend || [];
   const fitTrend = charts.fitnessTrend || [];
-  const attTrend = charts.attendanceTrend || [];
+  const attMonthly = charts.attendanceMonthlyTrend || [];
   
+  // Merge all month keys across all three trends
   const trendLabels = [...new Set([
     ...perfTrend.map((d) => d.month),
     ...fitTrend.map((d) => d.month),
+    ...attMonthly.map((d) => d.month),
   ])].sort();
 
   const perfByMonth = Object.fromEntries(perfTrend.map((d) => [d.month, Number(d.avg_score)]));
-  const fitByMonth = Object.fromEntries(fitTrend.map((d) => [d.month, Number(d.avg_fitness)]));
+  const fitByMonth  = Object.fromEntries(fitTrend.map((d)  => [d.month, Number(d.avg_fitness)]));
+  const attByMonth  = Object.fromEntries(attMonthly.map((d) => [d.month, Number(d.avg_attendance)]));
   
   const performanceTrendData = trendLabels.map((m) => {
     const [y, mo] = String(m).split('-');
@@ -89,7 +92,7 @@ export default function AdminDashboard() {
       month: new Date(Number(y), Number(mo) - 1).toLocaleDateString('en', { month: 'short' }),
       performance: perfByMonth[m] || 0,
       fitness: fitByMonth[m] || 0,
-      attendance: 80 + Math.random() * 15 // Mock attendance line if not provided per month
+      attendance: attByMonth[m] || 0,
     };
   });
 
@@ -107,10 +110,10 @@ export default function AdminDashboard() {
     score: Number(s.avg_performance || 0)
   }));
 
-  // Create a selection stats line chart based on attendance trend since the API doesn't provide selection trend
-  const selectionStatsData = attTrend.slice(-6).map((d, i) => ({
+  // Create a selection stats line chart based on attendance monthly trend since the API doesn't provide selection trend
+  const selectionStatsData = attMonthly.slice(-6).map((d, i) => ({
     stage: `Stage ${i + 1}`,
-    count: Number(d.present || 0) / 10 // pseudo conversion for display
+    count: Number(d.avg_attendance || 0) / 10 // pseudo conversion for display
   }));
 
   const topRanked = [...topAthletes].sort((a, b) => Number(b.overall_ranking_score) - Number(a.overall_ranking_score)).slice(0, 6);
@@ -183,17 +186,22 @@ export default function AdminDashboard() {
                   <stop offset="0%" stopColor="var(--chart-2)" stopOpacity={0.4} />
                   <stop offset="100%" stopColor="var(--chart-2)" stopOpacity={0} />
                 </linearGradient>
+                <linearGradient id="gAtt" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--chart-3)" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="var(--chart-3)" stopOpacity={0} />
+                </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} {...axis} />
-              <YAxis tickLine={false} axisLine={false} {...axis} domain={[50, 100]} />
-              <Tooltip contentStyle={tooltipStyle} />
+              <YAxis tickLine={false} axisLine={false} {...axis} domain={[0, 100]} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v) => `${Number(v).toFixed(1)}%`} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Area dataKey="performance" stroke="var(--chart-1)" fill="url(#gPerf)" strokeWidth={2} />
-              <Area dataKey="fitness" stroke="var(--chart-2)" fill="url(#gFit)" strokeWidth={2} />
-              <Line dataKey="attendance" stroke="var(--chart-3)" strokeWidth={2} dot={false} />
+              <Area dataKey="performance" name="Performance" stroke="var(--chart-1)" fill="url(#gPerf)" strokeWidth={2} />
+              <Area dataKey="fitness" name="Fitness" stroke="var(--chart-2)" fill="url(#gFit)" strokeWidth={2} />
+              <Area dataKey="attendance" name="Attendance" stroke="var(--chart-3)" fill="url(#gAtt)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
+
         </Panel>
 
         <Panel title="Ranking Distribution">

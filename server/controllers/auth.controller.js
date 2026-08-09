@@ -100,6 +100,30 @@ const getProfile = async (req, res, next) => {
   }
 };
 
+const updateProfile = async (req, res, next) => {
+  try {
+    const user = await authService.updateProfile(req.user.id, req.body);
+    res.status(200).json({ success: true, message: 'Profile updated successfully', data: { user } });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ success: false, message: err.message });
+    next(err);
+  }
+};
+
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Current password and new password are required' });
+    }
+    await authService.changePassword(req.user.id, currentPassword, newPassword);
+    res.status(200).json({ success: true, message: 'Password changed successfully. Please sign in again.' });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ success: false, message: err.message });
+    next(err);
+  }
+};
+
 module.exports = {
   login,
   logout,
@@ -107,8 +131,11 @@ module.exports = {
   forgotPassword,
   resetPassword,
   getProfile,
+  updateProfile,
+  changePassword,
   loginValidation,
   forgotPasswordValidation,
   resetPasswordValidation,
   validate,
 };
+

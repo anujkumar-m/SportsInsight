@@ -12,6 +12,10 @@ export const coachService = {
   assignAthlete: (coach_id, athlete_id) => api.post('/coaches/assign-athlete', { coach_id, athlete_id }),
   removeAthlete: (coach_id, athlete_id) => api.delete('/coaches/remove-athlete', { data: { coach_id, athlete_id } }),
   generateList: (payload) => api.post('/coaches/generate-list', payload),
+  getRemarks: (params = {}) => api.get('/coaches/remarks', { params }),
+  createRemark: (data) => api.post('/coaches/remarks', data),
+  deleteRemark: (id) => api.delete(`/coaches/remarks/${id}`),
 };
 
 export default coachService;
+

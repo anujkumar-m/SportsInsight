@@ -62,12 +62,18 @@ export default function CoachDashboard() {
 
   const { stats = {}, athletes = [], charts = {} } = data;
   const perfTrend = charts.performanceTrend || [];
-  const fitTrend = charts.fitnessTrend || [];
+  const fitTrend  = charts.fitnessTrend || [];
+  const attMonthly = charts.attendanceMonthlyTrend || [];
 
-  const trendLabels = [...new Set([...perfTrend.map((d) => d.month), ...fitTrend.map((d) => d.month)])].sort();
+  const trendLabels = [...new Set([
+    ...perfTrend.map((d) => d.month),
+    ...fitTrend.map((d) => d.month),
+    ...attMonthly.map((d) => d.month),
+  ])].sort();
 
   const perfByMonth = Object.fromEntries(perfTrend.map((d) => [d.month, toNum(d.avg_score)]));
-  const fitByMonth = Object.fromEntries(fitTrend.map((d) => [d.month, toNum(d.avg_fitness)]));
+  const fitByMonth  = Object.fromEntries(fitTrend.map((d)  => [d.month, toNum(d.avg_fitness)]));
+  const attByMonth  = Object.fromEntries(attMonthly.map((d) => [d.month, toNum(d.avg_attendance)]));
 
   const performanceTrendData = trendLabels.map((m) => {
     const [y, mo] = String(m).split('-');
@@ -75,6 +81,7 @@ export default function CoachDashboard() {
       month: new Date(Number(y), Number(mo) - 1).toLocaleDateString('en', { month: 'short' }),
       performance: perfByMonth[m] || 0,
       fitness: fitByMonth[m] || 0,
+      attendance: attByMonth[m] || 0,
     };
   });
 
@@ -160,16 +167,17 @@ export default function CoachDashboard() {
       </Panel>
 
       <div className="grid gap-5 xl:grid-cols-3">
-        <Panel title="Performance & Fitness Trend" className="xl:col-span-2">
+        <Panel title="Performance, Fitness & Attendance Trend" className="xl:col-span-2">
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={performanceTrendData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} {...axis} />
-              <YAxis tickLine={false} axisLine={false} {...axis} domain={[50, 100]} />
-              <Tooltip contentStyle={tooltipStyle} />
+              <YAxis tickLine={false} axisLine={false} {...axis} domain={[0, 100]} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v) => `${Number(v).toFixed(1)}%`} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line dataKey="performance" stroke="var(--chart-1)" strokeWidth={2.5} dot={false} />
-              <Line dataKey="fitness" stroke="var(--chart-2)" strokeWidth={2.5} dot={false} />
+              <Line dataKey="performance" name="Performance" stroke="var(--chart-1)" strokeWidth={2.5} dot={false} />
+              <Line dataKey="fitness" name="Fitness" stroke="var(--chart-2)" strokeWidth={2.5} dot={false} />
+              <Line dataKey="attendance" name="Attendance" stroke="var(--chart-3)" strokeWidth={2.5} dot={false} strokeDasharray="4 2" />
             </LineChart>
           </ResponsiveContainer>
         </Panel>

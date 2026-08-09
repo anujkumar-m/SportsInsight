@@ -5,12 +5,16 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RoleRoute from './routes/RoleRoute';
-import ModulePlaceholder from './components/common/ModulePlaceholder';
 
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
 const Unauthorized = React.lazy(() => import('./pages/Unauthorized'));
+const UserProfile = React.lazy(() => import('./pages/auth/UserProfile'));
+const CoachFeedback = React.lazy(() => import('./pages/coaches/CoachFeedback'));
+const SettingsPage = React.lazy(() => import('./pages/settings/SettingsPage'));
+const ReportsCenter = React.lazy(() => import('./pages/reports/ReportsCenter'));
+
 
 const DashboardLayout = React.lazy(() => import('./layouts/DashboardLayout'));
 const AdminDashboard = React.lazy(() => import('./pages/dashboard/AdminDashboard'));
@@ -150,15 +154,8 @@ const DashboardPage = () => {
   );
 };
 
-const PlaceholderRoute = ({ title, description }) => (
-  <ProtectedRoute>
-    <DashboardLayout title={title} subtitle={description}>
-      <ModulePlaceholder title={title} description={description} />
-    </DashboardLayout>
-  </ProtectedRoute>
-);
-
 const App = () => {
+
   return (
     <BrowserRouter>
       <ThemeProvider>
@@ -263,35 +260,13 @@ const App = () => {
 
               {/* Athlete Comparison Route */}
               <Route path="/compare" element={<ProtectedRoute><DashboardLayout title="Compare Athletes"><AthleteComparison /></DashboardLayout></ProtectedRoute>} />
-              <Route
-                path="/profile"
-                element={
-                  <PlaceholderRoute
-                    title="My Profile"
-                    description="Personal profile, sport details, and account preferences."
-                  />
-                }
-              />
-              <Route
-                path="/feedback"
-                element={
-                  <PlaceholderRoute
-                    title="Coach Feedback"
-                    description="Coach remarks, ratings, and suggested improvements."
-                  />
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <PlaceholderRoute
-                    title="Settings"
-                    description="Account security, preferences, and notification settings."
-                  />
-                }
-              />
+              <Route path="/profile" element={<ProtectedRoute><DashboardLayout title="My Profile"><UserProfile /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/feedback" element={<ProtectedRoute><DashboardLayout title="Coach Feedback"><CoachFeedback /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><DashboardLayout title="Settings"><SettingsPage /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/reports" element={<ProtectedRoute><RoleRoute roles={['admin']}><DashboardLayout title="Reports Center"><ReportsCenter /></DashboardLayout></RoleRoute></ProtectedRoute>} />
 
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
             </Routes>
           </Suspense>
 

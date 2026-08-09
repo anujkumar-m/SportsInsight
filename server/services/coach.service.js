@@ -168,4 +168,58 @@ const generateCoachAiList = async (coach_id, list_type, limit = 20) => {
   return athleteService.generateAiList({ list_type, coach_id, limit });
 };
 
-module.exports = { listCoaches, getCoachById, createCoach, updateCoach, deleteCoach, assignAthlete, removeAthlete, getAnalytics, generateCoachAiList };
+const getCoachRemarks = async ({ athlete_id, coach_id, limit = 50 }) => {
+  const where = ['1=1'];
+  const params = [];
+  if (athlete_id) { where.push('cr.athlete_id = ?'); params.push(athlete_id); }
+  if (coach_id) { where.push('cr.coach_id = ?'); params.push(coach_id); }
+
+  const sql = `
+    SELECT cr.*,
+           CONCAT(u_ath.first_name, ' ', u_ath.last_name) AS athlete_name,
+           a.athlete_code,
+           CONCAT(u_coa.first_name, ' ', u_coa.last_name) AS coach_name
+    FROM coach_remarks cr
+    JOIN athletes a ON a.id = cr.athlete_id
+    JOIN users u_ath ON u_ath.id = a.user_id
+    JOIN coaches co ON co.id = cr.coach_id
+    JOIN users u_coa ON u_coa.id = co.user_id
+    WHERE ${where.join(' AND ')}
+    ORDER BY cr.remark_date DESC, cr.id DESC
+    LIMIT ?
+  `;
+  params.push(Number(limit));
+  const [rows] = await pool.query(sql, params);
+  return rows;
+};
+
+const createCoachRemark = async (data) => {
+  const { athlete_id, coach_id, remark_type = 'general', rating = 8.0, remarks, remark_date } = data;
+  const dateStr = remark_date || new Date().toISOString().split('T')[0];
+  const [res] = await pool.query(
+    `INSERT INTO coach_remarks (athlete_id, coach_id, remark_date, remark_type, rating, remarks)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [athlete_id, coach_id, dateStr, remark_type, rating, remarks]
+  );
+  return { id: res.insertId, ...data, remark_date: dateStr };
+};
+
+const deleteCoachRemark = async (id) => {
+  await pool.query('DELETE FROM coach_remarks WHERE id = ?', [id]);
+};
+
+module.exports = {
+  listCoaches,
+  getCoachById,
+  createCoach,
+  updateCoach,
+  deleteCoach,
+  assignAthlete,
+  removeAthlete,
+  getAnalytics,
+  generateCoachAiList,
+  getCoachRemarks,
+  createCoachRemark,
+  deleteCoachRemark,
+};
+

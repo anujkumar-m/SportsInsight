@@ -13,10 +13,17 @@ async function safeQuery(sql, params, fallback = []) {
 
 // ─── Compare Multiple Athletes ────────────────────────────────────────────────
 async function compareAthletes(athleteIds) {
-  if (!athleteIds || !Array.isArray(athleteIds) || athleteIds.length < 2) {
-    throw new Error('At least 2 athlete IDs required for comparison.');
+  // Validate and sanitize all IDs
+  const ids = (Array.isArray(athleteIds) ? athleteIds : [])
+    .map(Number)
+    .filter((n) => Number.isInteger(n) && n > 0);
+
+  console.log('[comparison.service] Validated IDs:', ids);
+
+  if (ids.length < 2) {
+    throw new Error(`At least 2 valid athlete IDs required. Received: ${JSON.stringify(athleteIds)}`);
   }
-  const placeholders = athleteIds.map(() => '?').join(',');
+  const placeholders = ids.map(() => '?').join(',');
 
   // Core profiles (required input)
   const profiles = await safeQuery(`
@@ -24,15 +31,15 @@ async function compareAthletes(athleteIds) {
            a.blood_group, a.medical_status,
            TIMESTAMPDIFF(YEAR, a.date_of_birth, CURDATE()) AS age,
            u.first_name, u.last_name, u.profile_photo,
-           s.name AS sport, cat.name AS category
+           s.name AS sport, s.id AS sport_id, cat.name AS category
     FROM athletes a
     JOIN users u ON a.user_id = u.id
     LEFT JOIN sports s ON a.sport_id = s.id
     LEFT JOIN categories cat ON a.category_id = cat.id
-    WHERE a.id IN (${placeholders})`, athleteIds, []);
+    WHERE a.id IN (${placeholders})`, ids, []);
 
-  if (profiles.length === 0) {
-    throw new Error('No valid athlete profiles found for the provided IDs.');
+  if (profiles.length < 2) {
+    throw new Error(`Comparison requires at least 2 valid athletes. Found ${profiles.length} matching the provided IDs. Please ensure the athletes exist in the database.`);
   }
 
   // Performance stats per athlete (isolated failure tolerance)
@@ -43,7 +50,7 @@ async function compareAthletes(athleteIds) {
            ROUND(AVG(improvement_rate),2) AS avg_improvement,
            COUNT(*) AS total_records
     FROM performance_records WHERE athlete_id IN (${placeholders})
-    GROUP BY athlete_id`, athleteIds, []);
+    GROUP BY athlete_id`, ids, []);
 
   // Fitness stats (isolated failure tolerance)
   const fitnessStats = await safeQuery(`
@@ -56,7 +63,7 @@ async function compareAthletes(athleteIds) {
            ROUND(AVG(flexibility_score),2) AS avg_flexibility,
            ROUND(AVG(bmi),2) AS avg_bmi
     FROM fitness_assessments WHERE athlete_id IN (${placeholders})
-    GROUP BY athlete_id`, athleteIds, []);
+    GROUP BY athlete_id`, ids, []);
 
   // Attendance stats (isolated failure tolerance)
   const attendanceStats = await safeQuery(`
@@ -65,7 +72,7 @@ async function compareAthletes(athleteIds) {
            SUM(status='present') AS present_days,
            ROUND(SUM(status='present')/COUNT(*)*100,2) AS attendance_pct
     FROM attendance WHERE athlete_id IN (${placeholders})
-    GROUP BY athlete_id`, athleteIds, []);
+    GROUP BY athlete_id`, ids, []);
 
   // Injury stats (isolated failure tolerance)
   const injuryStats = await safeQuery(`
@@ -73,14 +80,14 @@ async function compareAthletes(athleteIds) {
            SUM(recovery_status='recovering') AS active,
            MAX(availability_status) AS current_availability
     FROM injuries WHERE athlete_id IN (${placeholders})
-    GROUP BY athlete_id`, athleteIds, []);
+    GROUP BY athlete_id`, ids, []);
 
   // Rankings (isolated failure tolerance)
   const rankingStats = await safeQuery(`
     SELECT athlete_id, rank_position, overall_ranking_score AS ranking_score,
            performance_score AS rank_perf, fitness_score AS rank_fitness,
            consistency_score
-    FROM rankings WHERE athlete_id IN (${placeholders}) AND rank_type = 'overall'`, athleteIds, []);
+    FROM rankings WHERE athlete_id IN (${placeholders}) AND rank_type = 'overall'`, ids, []);
 
   // Selections (isolated failure tolerance)
   const selectionStats = await safeQuery(`
@@ -89,13 +96,13 @@ async function compareAthletes(athleteIds) {
            SUM(status='selected') AS times_selected,
            ROUND(AVG(selection_score),2) AS avg_selection_score
     FROM selections WHERE athlete_id IN (${placeholders})
-    GROUP BY athlete_id`, athleteIds, []);
+    GROUP BY athlete_id`, ids, []);
 
   // Coach ratings (isolated failure tolerance)
   const coachRatings = await safeQuery(`
     SELECT athlete_id, ROUND(AVG(rating),2) AS avg_rating, COUNT(*) AS remarks_count
     FROM coach_remarks WHERE athlete_id IN (${placeholders})
-    GROUP BY athlete_id`, athleteIds, []);
+    GROUP BY athlete_id`, ids, []);
 
   // Merge all available module data into athlete comparison object
   const combined = profiles.map(profile => {

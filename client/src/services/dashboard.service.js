@@ -34,6 +34,14 @@ const MOCK_ADMIN = {
       { date: '2026-08-04', present: 128, absent: 14 },
       { date: '2026-08-05', present: 135, absent: 7 },
     ],
+    attendanceMonthlyTrend: [
+      { month: '2026-03', avg_attendance: 83.2 },
+      { month: '2026-04', avg_attendance: 85.7 },
+      { month: '2026-05', avg_attendance: 87.4 },
+      { month: '2026-06', avg_attendance: 88.9 },
+      { month: '2026-07', avg_attendance: 90.1 },
+      { month: '2026-08', avg_attendance: 91.5 },
+    ],
     fitnessTrend: [
       { month: '2026-03', avg_fitness: 74.0 },
       { month: '2026-04', avg_fitness: 78.5 },
@@ -79,6 +87,13 @@ const MOCK_COACH = {
       { month: '2026-05', avg_fitness: 83.5 },
       { month: '2026-06', avg_fitness: 85.2 },
       { month: '2026-07', avg_fitness: 87.5 },
+    ],
+    attendanceMonthlyTrend: [
+      { month: '2026-03', avg_attendance: 82.0 },
+      { month: '2026-04', avg_attendance: 84.5 },
+      { month: '2026-05', avg_attendance: 86.0 },
+      { month: '2026-06', avg_attendance: 87.8 },
+      { month: '2026-07', avg_attendance: 89.3 },
     ],
   },
 };

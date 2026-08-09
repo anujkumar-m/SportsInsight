@@ -6,3 +6,6 @@ export const selectionService = {
   getHistory:         (params) => api.get('/selections/history', { params }),
   generate:           (body)   => api.post('/selections/generate', body),
 };
+
+export default selectionService;
+

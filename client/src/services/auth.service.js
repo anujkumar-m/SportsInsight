@@ -13,6 +13,12 @@ const authAPI = {
   getProfile: () =>
     api.get('/auth/profile').then((r) => r.data),
 
+  updateProfile: (data) =>
+    api.put('/auth/profile', data).then((r) => r.data),
+
+  changePassword: (currentPassword, newPassword) =>
+    api.put('/auth/change-password', { currentPassword, newPassword }).then((r) => r.data),
+
   forgotPassword: (email) =>
     api.post('/auth/forgot-password', { email }),
 
@@ -21,3 +27,4 @@ const authAPI = {
 };
 
 export default authAPI;
+

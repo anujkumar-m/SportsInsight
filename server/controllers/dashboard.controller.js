@@ -5,12 +5,13 @@ const { pool } = require('../config/database');
 // ─── Admin Dashboard ──────────────────────────────────────
 const getAdminDashboard = async (req, res, next) => {
   try {
-    const [stats, topAthletes, perfTrend, attTrend, fitTrend, sportPerf, rankDist, activities] =
+    const [stats, topAthletes, perfTrend, attTrend, attMonthly, fitTrend, sportPerf, rankDist, activities] =
       await Promise.all([
         dashboardModel.getAdminStats(),
         dashboardModel.getTopRankedAthletes(10),
         dashboardModel.getPerformanceTrend(6),
         dashboardModel.getAttendanceTrend(14),
+        dashboardModel.getAttendanceMonthlyTrend(6),
         dashboardModel.getFitnessTrend(6),
         dashboardModel.getSportWisePerformance(),
         dashboardModel.getRankingDistribution(),
@@ -25,6 +26,7 @@ const getAdminDashboard = async (req, res, next) => {
         charts: {
           performanceTrend: perfTrend,
           attendanceTrend: attTrend,
+          attendanceMonthlyTrend: attMonthly,
           fitnessTrend: fitTrend,
           sportWisePerformance: sportPerf,
           rankingDistribution: rankDist,
@@ -50,11 +52,12 @@ const getCoachDashboard = async (req, res, next) => {
     }
 
     const coachId = coachRow[0].id;
-    const [stats, athletes, perfTrend, fitTrend] = await Promise.all([
+    const [stats, athletes, perfTrend, fitTrend, attMonthly] = await Promise.all([
       dashboardModel.getCoachStats(coachId),
       dashboardModel.getCoachAthletes(coachId, 10),
       dashboardModel.getPerformanceTrend(6),
       dashboardModel.getFitnessTrend(6),
+      dashboardModel.getAttendanceMonthlyTrend(6),
     ]);
 
     res.status(200).json({
@@ -66,6 +69,7 @@ const getCoachDashboard = async (req, res, next) => {
         charts: {
           performanceTrend: perfTrend,
           fitnessTrend: fitTrend,
+          attendanceMonthlyTrend: attMonthly,
         },
       },
     });

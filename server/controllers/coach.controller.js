@@ -79,3 +79,37 @@ exports.generateList = async (req, res, next) => {
     res.json({ success: true, list_type, count: result.length, data: result });
   } catch (err) { next(err); }
 };
+
+exports.getRemarks = async (req, res, next) => {
+  try {
+    const { athlete_id, coach_id, limit } = req.query;
+    const remarks = await coachService.getCoachRemarks({ athlete_id, coach_id, limit });
+    res.json({ success: true, data: remarks });
+  } catch (err) { next(err); }
+};
+
+exports.createRemark = async (req, res, next) => {
+  try {
+    const { athlete_id, coach_id, remark_type, rating, remarks, remark_date } = req.body;
+    if (!athlete_id || !remarks) {
+      return res.status(400).json({ success: false, message: 'athlete_id and remarks are required' });
+    }
+    const result = await coachService.createCoachRemark({
+      athlete_id,
+      coach_id: coach_id || 1,
+      remark_type,
+      rating,
+      remarks,
+      remark_date,
+    });
+    res.status(201).json({ success: true, message: 'Remark submitted successfully', data: result });
+  } catch (err) { next(err); }
+};
+
+exports.deleteRemark = async (req, res, next) => {
+  try {
+    await coachService.deleteCoachRemark(req.params.id);
+    res.json({ success: true, message: 'Remark deleted' });
+  } catch (err) { next(err); }
+};
+

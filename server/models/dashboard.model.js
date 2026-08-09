@@ -57,6 +57,7 @@ const getPerformanceTrend = async (months = 6) => {
   return rows;
 };
 
+// Keep raw daily trend for any other consumers
 const getAttendanceTrend = async (days = 30) => {
   const [rows] = await pool.query(
     `SELECT attendance_date AS date,
@@ -69,6 +70,22 @@ const getAttendanceTrend = async (days = 30) => {
      GROUP BY attendance_date
      ORDER BY attendance_date ASC`,
     [days]
+  );
+  return rows;
+};
+
+// Monthly attendance percentage — aligned with performanceTrend and fitnessTrend
+const getAttendanceMonthlyTrend = async (months = 6) => {
+  const [rows] = await pool.query(
+    `SELECT DATE_FORMAT(attendance_date, '%Y-%m') AS month,
+            ROUND(
+              100.0 * SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) / COUNT(*),
+            1) AS avg_attendance
+     FROM attendance
+     WHERE attendance_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+     GROUP BY DATE_FORMAT(attendance_date, '%Y-%m')
+     ORDER BY month ASC`,
+    [months]
   );
   return rows;
 };
@@ -324,6 +341,7 @@ module.exports = {
   getTopRankedAthletes,
   getPerformanceTrend,
   getAttendanceTrend,
+  getAttendanceMonthlyTrend,
   getFitnessTrend,
   getSportWisePerformance,
   getRankingDistribution,

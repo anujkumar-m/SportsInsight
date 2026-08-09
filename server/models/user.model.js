@@ -96,6 +96,19 @@ const updatePassword = async (userId, passwordHash) => {
   );
 };
 
+const updateUserProfile = async (userId, { first_name, last_name, phone, profile_photo }) => {
+  const fields = [];
+  const params = [];
+  if (first_name !== undefined) { fields.push('first_name = ?'); params.push(first_name); }
+  if (last_name !== undefined) { fields.push('last_name = ?'); params.push(last_name); }
+  if (phone !== undefined) { fields.push('phone = ?'); params.push(phone); }
+  if (profile_photo !== undefined) { fields.push('profile_photo = ?'); params.push(profile_photo); }
+
+  if (fields.length === 0) return;
+  params.push(userId);
+  await pool.query(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, params);
+};
+
 module.exports = {
   findUserByEmail,
   findUserByUsername,
@@ -108,4 +121,6 @@ module.exports = {
   setPasswordResetToken,
   findUserByResetToken,
   updatePassword,
+  updateUserProfile,
 };
+

@@ -12,6 +12,10 @@ router.post('/assign-athlete', authorize(['admin', 'coach']), ctrl.assignAthlete
 router.delete('/remove-athlete', authorize(['admin', 'coach']), ctrl.removeAthlete);
 router.post('/generate-list', authorize(['admin', 'coach']), ctrl.generateList);
 
+router.get('/remarks', authorize(['admin', 'coach', 'selector', 'athlete']), ctrl.getRemarks);
+router.post('/remarks', authorize(['admin', 'coach']), ctrl.createRemark);
+router.delete('/remarks/:id', authorize(['admin', 'coach']), ctrl.deleteRemark);
+
 router.get('/', authorize(['admin', 'selector']), ctrl.list);
 router.get('/:id', authorize(['admin', 'coach', 'selector']), ctrl.getOne);
 router.get('/:id/athletes', authorize(['admin', 'coach', 'selector']), ctrl.getAthletes);
@@ -21,3 +25,4 @@ router.put('/:id', authorize(['admin', 'coach']), ctrl.update);
 router.delete('/:id', authorize(['admin']), ctrl.remove);
 
 module.exports = router;
+

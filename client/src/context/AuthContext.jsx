@@ -58,13 +58,22 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (identifier, password) => {
     try {
-      const data = await authAPI.login(identifier, password);
-      localStorage.setItem('accessToken', data.accessToken || 'demo_access_token');
-      localStorage.setItem('refreshToken', data.refreshToken || 'demo_refresh_token');
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setUser(data.user);
-      setIsAuthenticated(true);
-      return data.user;
+      const res = await authAPI.login(identifier, password);
+      const payload = res?.data || res;
+      const token = payload?.accessToken || payload?.token;
+      const refreshToken = payload?.refreshToken;
+      const userObj = payload?.user;
+
+      if (token && userObj) {
+        localStorage.setItem('accessToken', token);
+        localStorage.setItem('refreshToken', refreshToken || 'demo_refresh_token');
+        localStorage.setItem('user', JSON.stringify(userObj));
+        setUser(userObj);
+        setIsAuthenticated(true);
+        return userObj;
+      }
+
+      throw new Error('Invalid login payload');
     } catch (err) {
       // Fallback demo login match based on identifier
       let selectedMock = MOCK_USERS.admin;
