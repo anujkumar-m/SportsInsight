@@ -82,8 +82,11 @@ exports.generateList = async (req, res, next) => {
 
 exports.getRemarks = async (req, res, next) => {
   try {
-    const { athlete_id, coach_id, limit } = req.query;
-    const remarks = await coachService.getCoachRemarks({ athlete_id, coach_id, limit });
+    let { athlete_id, coach_id, limit, remark_type } = req.query;
+    if (req.user.role === 'athlete') {
+      athlete_id = req.user.athlete_id || 0;
+    }
+    const remarks = await coachService.getCoachRemarks({ athlete_id, coach_id, limit, remark_type });
     res.json({ success: true, data: remarks });
   } catch (err) { next(err); }
 };

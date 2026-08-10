@@ -170,14 +170,14 @@ const InjuryList = () => {
       render: (r) => (
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigate(`/injuries/recovery/${r.id}`)}
+            onClick={(e) => { e.stopPropagation(); navigate(`/injuries/recovery/${r.id}`); }}
             title="Recovery Tracker & Checkups"
             className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors font-medium text-xs flex items-center gap-1"
           >
             <Activity size={14} /> Recovery
           </button>
           <button
-            onClick={() => navigate(`/injuries/history/${r.athlete_id}`)}
+            onClick={(e) => { e.stopPropagation(); navigate(`/injuries/history/${r.athlete_id}`); }}
             title="View Medical History"
             className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
           >
@@ -186,14 +186,14 @@ const InjuryList = () => {
           {(role === 'admin' || role === 'coach') && (
             <>
               <button
-                onClick={() => navigate(`/injuries/${r.id}/edit`)}
+                onClick={(e) => { e.stopPropagation(); navigate(`/injuries/${r.id}/edit`); }}
                 title="Edit Injury"
                 className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
               >
                 <Pencil size={14} />
               </button>
               <button
-                onClick={() => setConfirmDelete(r)}
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(r); }}
                 title="Delete Injury"
                 className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
               >

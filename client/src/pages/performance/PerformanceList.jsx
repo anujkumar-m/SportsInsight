@@ -254,7 +254,7 @@ const PerformanceList = () => {
       render: (_, row) => (
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigate(`/performance/history/${row.athlete_id}`)}
+            onClick={(e) => { e.stopPropagation(); navigate(`/performance/history/${row.athlete_id}`); }}
             title="View Athlete History"
             className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
           >
@@ -263,14 +263,14 @@ const PerformanceList = () => {
           {(role === 'admin' || role === 'coach') && (
             <>
               <button
-                onClick={() => navigate(`/performance/${row.id}/edit`)}
+                onClick={(e) => { e.stopPropagation(); navigate(`/performance/${row.id}/edit`); }}
                 title="Edit Record"
                 className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
               >
                 <Pencil size={15} />
               </button>
               <button
-                onClick={() => setConfirmDelete(row)}
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}
                 title="Delete Record"
                 className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
               >

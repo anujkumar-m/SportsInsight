@@ -48,23 +48,23 @@ const RowActions = ({ athlete, onView, onEdit, onArchive, onDelete, role }) => {
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-30" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
           <div className="absolute right-0 top-8 z-40 min-w-[160px] rounded-xl border border-border bg-card p-1.5 shadow-xl">
-            <button onClick={() => { setOpen(false); onView(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-secondary">
+            <button onClick={(e) => { e.stopPropagation(); setOpen(false); onView(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-secondary">
               <Eye size={13} /> View Profile
             </button>
             {(role === 'admin' || role === 'coach') && (
-              <button onClick={() => { setOpen(false); onEdit(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-secondary">
+              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-secondary">
                 <Pencil size={13} /> Edit
               </button>
             )}
             {role === 'admin' && athlete.current_status !== 'archived' && (
-              <button onClick={() => { setOpen(false); onArchive(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-warning hover:bg-warning/10">
+              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onArchive(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-warning hover:bg-warning/10">
                 <Archive size={13} /> Archive
               </button>
             )}
             {role === 'admin' && (
-              <button onClick={() => { setOpen(false); onDelete(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-destructive hover:bg-destructive/10">
+              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-destructive hover:bg-destructive/10">
                 <Trash2 size={13} /> Delete
               </button>
             )}

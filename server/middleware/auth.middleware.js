@@ -17,9 +17,15 @@ const authenticate = async (req, res, next) => {
     if (token === 'demo_access_token') {
       const [rows] = await pool.query(
         `SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.profile_photo, u.is_active,
-                r.id AS role_id, r.name AS role
+                r.id AS role_id, r.name AS role,
+                co.id AS coach_id,
+                ath.id AS athlete_id,
+                sel.id AS selector_id
          FROM users u
          JOIN roles r ON u.role_id = r.id
+         LEFT JOIN coaches co ON co.user_id = u.id
+         LEFT JOIN athletes ath ON ath.user_id = u.id
+         LEFT JOIN selectors sel ON sel.user_id = u.id
          WHERE u.is_active = 1
          ORDER BY u.id ASC LIMIT 1`
       );
@@ -34,9 +40,15 @@ const authenticate = async (req, res, next) => {
     // Fetch fresh user from DB to ensure they're still active
     const [rows] = await pool.query(
       `SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.profile_photo, u.is_active,
-              r.id AS role_id, r.name AS role
+              r.id AS role_id, r.name AS role,
+              co.id AS coach_id,
+              ath.id AS athlete_id,
+              sel.id AS selector_id
        FROM users u
        JOIN roles r ON u.role_id = r.id
+       LEFT JOIN coaches co ON co.user_id = u.id
+       LEFT JOIN athletes ath ON ath.user_id = u.id
+       LEFT JOIN selectors sel ON sel.user_id = u.id
        WHERE u.id = ?`,
       [decoded.id]
     );

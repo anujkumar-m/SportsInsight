@@ -113,7 +113,14 @@ const updateSelector = async (id, data) => {
   }
 };
 
-const deleteSelector = async (id) => { await pool.query('DELETE FROM selectors WHERE id=?', [id]); };
+const deleteSelector = async (id) => {
+  const [rows] = await pool.query('SELECT user_id FROM selectors WHERE id = ?', [id]);
+  if (rows.length > 0) {
+    await pool.query('DELETE FROM users WHERE id = ?', [rows[0].user_id]);
+  } else {
+    await pool.query('DELETE FROM selectors WHERE id = ?', [id]);
+  }
+};
 
 const assignSport = async (selector_id, sport_id) => {
   await pool.query(`INSERT IGNORE INTO selector_sports (selector_id,sport_id) VALUES (?,?)`, [selector_id, sport_id]);

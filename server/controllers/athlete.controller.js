@@ -8,7 +8,11 @@ const { parsePagination } = require('../utils/helpers');
 exports.list = async (req, res, next) => {
   try {
     const { page, limit } = parsePagination(req.query);
-    const result = await athleteService.listAthletes({ ...req.query, page, limit });
+    const queryParams = { ...req.query, page, limit };
+    if (req.user.role === 'coach') {
+      queryParams.coach_id = req.user.coach_id || 0;
+    }
+    const result = await athleteService.listAthletes(queryParams);
     res.json({ success: true, ...result });
   } catch (err) { next(err); }
 };
@@ -17,7 +21,11 @@ exports.list = async (req, res, next) => {
 exports.listArchived = async (req, res, next) => {
   try {
     const { page, limit } = parsePagination(req.query);
-    const result = await athleteService.listAthletes({ ...req.query, page, limit, current_status: 'archived' });
+    const queryParams = { ...req.query, page, limit, current_status: 'archived' };
+    if (req.user.role === 'coach') {
+      queryParams.coach_id = req.user.coach_id || 0;
+    }
+    const result = await athleteService.listAthletes(queryParams);
     res.json({ success: true, ...result });
   } catch (err) { next(err); }
 };
@@ -102,7 +110,11 @@ exports.bulkUpdate = async (req, res, next) => {
 // GET /api/athletes/export
 exports.exportData = async (req, res, next) => {
   try {
-    const data = await athleteService.exportAthletes(req.query);
+    const queryParams = { ...req.query };
+    if (req.user.role === 'coach') {
+      queryParams.coach_id = req.user.coach_id || 0;
+    }
+    const data = await athleteService.exportAthletes(queryParams);
     res.json({ success: true, data, total: data.length });
   } catch (err) { next(err); }
 };

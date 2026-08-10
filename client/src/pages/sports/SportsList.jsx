@@ -113,7 +113,7 @@ const SportsList = () => {
       label: '',
       render: (_, row) => (
         <div className="flex justify-end gap-2">
-          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setConfirmDelete(row)}>
+          <Button size="sm" variant="ghost" className="text-destructive" onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}>
             <Trash2 size={14} />
           </Button>
         </div>

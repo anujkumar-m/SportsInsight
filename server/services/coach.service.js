@@ -128,7 +128,14 @@ const updateCoach = async (id, data, updatedBy) => {
   await pool.query(`INSERT INTO coach_history (coach_id,action_type,description,changed_by) VALUES (?,?,?,?)`, [id,'updated','Coach profile updated',updatedBy]);
 };
 
-const deleteCoach = async (id) => { await pool.query('DELETE FROM coaches WHERE id=?', [id]); };
+const deleteCoach = async (id) => {
+  const [rows] = await pool.query('SELECT user_id FROM coaches WHERE id = ?', [id]);
+  if (rows.length > 0) {
+    await pool.query('DELETE FROM users WHERE id = ?', [rows[0].user_id]);
+  } else {
+    await pool.query('DELETE FROM coaches WHERE id = ?', [id]);
+  }
+};
 
 const assignAthlete = async (coach_id, athlete_id, assigned_by) => {
   await pool.query(
@@ -168,11 +175,12 @@ const generateCoachAiList = async (coach_id, list_type, limit = 20) => {
   return athleteService.generateAiList({ list_type, coach_id, limit });
 };
 
-const getCoachRemarks = async ({ athlete_id, coach_id, limit = 50 }) => {
+const getCoachRemarks = async ({ athlete_id, coach_id, limit = 50, remark_type }) => {
   const where = ['1=1'];
   const params = [];
   if (athlete_id) { where.push('cr.athlete_id = ?'); params.push(athlete_id); }
   if (coach_id) { where.push('cr.coach_id = ?'); params.push(coach_id); }
+  if (remark_type && remark_type !== 'all') { where.push('cr.remark_type = ?'); params.push(remark_type); }
 
   const sql = `
     SELECT cr.*,

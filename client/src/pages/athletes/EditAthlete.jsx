@@ -70,7 +70,7 @@ const EditAthlete = () => {
     const fetchAthlete = async () => {
       try {
         const res = await athleteService.getById(id);
-        const data = res.data;
+        const data = res?.data || res;
         if (data) {
           setForm({
             first_name: data.first_name || '',

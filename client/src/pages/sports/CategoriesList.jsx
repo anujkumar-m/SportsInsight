@@ -78,7 +78,7 @@ const CategoriesList = () => {
       render: (_, row) => (
         <div className="flex justify-end gap-2">
           {/* <Button size="sm" variant="ghost"><Pencil size={14}/></Button> */}
-          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setConfirmDelete(row)}><Trash2 size={14}/></Button>
+          <Button size="sm" variant="ghost" className="text-destructive" onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}><Trash2 size={14}/></Button>
         </div>
       ),
     },

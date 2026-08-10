@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 
 const ConfirmDialog = ({
   open,
+  isOpen,
   onClose,
   onConfirm,
   title = 'Are you sure?',
@@ -12,15 +13,18 @@ const ConfirmDialog = ({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   variant = 'danger',
+  confirmVariant,
   loading = false,
 }) => {
   const btnRef = useRef(null);
+  const isVisible = open !== undefined ? open : isOpen;
+  const activeVariant = confirmVariant || variant;
 
   useEffect(() => {
-    if (open) btnRef.current?.focus();
-  }, [open]);
+    if (isVisible) btnRef.current?.focus();
+  }, [isVisible]);
 
-  if (!open) return null;
+  if (!isVisible) return null;
 
   return (
     <div
@@ -61,7 +65,7 @@ const ConfirmDialog = ({
           </Button>
           <Button
             ref={btnRef}
-            variant={variant}
+            variant={activeVariant}
             size="sm"
             loading={loading}
             onClick={onConfirm}

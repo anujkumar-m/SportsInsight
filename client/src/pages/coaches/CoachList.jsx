@@ -79,11 +79,11 @@ const CoachList = () => {
       key: 'actions', label: '',
       render: (_, row) => (
         <div className="flex justify-end gap-2">
-          <Button size="sm" variant="ghost" onClick={() => navigate(`/coaches/${row.id}`)}><Eye size={14}/></Button>
+          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/coaches/${row.id}`); }}><Eye size={14}/></Button>
           {role === 'admin' && (
             <>
-              <Button size="sm" variant="ghost" onClick={() => navigate(`/coaches/${row.id}/edit`)}><Pencil size={14}/></Button>
-              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setConfirmDelete(row)}><Trash2 size={14}/></Button>
+              <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/coaches/${row.id}/edit`); }}><Pencil size={14}/></Button>
+              <Button size="sm" variant="ghost" className="text-destructive" onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}><Trash2 size={14}/></Button>
             </>
           )}
         </div>

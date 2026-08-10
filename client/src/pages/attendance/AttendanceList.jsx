@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar as CalendarIcon, FileText, CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, FileText, Trash2, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { attendanceService } from '../../services/attendanceService';
 import { athleteService } from '../../services/athleteService';
@@ -10,6 +10,7 @@ import Badge from '../../components/ui/Badge';
 import DataTable from '../../components/common/DataTable';
 import Pagination from '../../components/common/Pagination';
 import PageHeader from '../../components/common/PageHeader';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 const AttendanceStatusBadge = ({ status }) => {
   const map = {
@@ -38,6 +39,8 @@ const AttendanceList = () => {
   const [status, setStatus] = useState('');
   const [athleteId, setAthleteId] = useState('');
   const [athletes, setAthletes] = useState([]);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchAthletes = async () => {
     try {
@@ -76,6 +79,21 @@ const AttendanceList = () => {
     fetchRecords();
   }, [fetchRecords]);
 
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setActionLoading(true);
+    try {
+      await attendanceService.delete(confirmDelete.id);
+      toast.success('Attendance record deleted successfully.');
+      setConfirmDelete(null);
+      fetchRecords();
+    } catch (err) {
+      toast.error(err?.message || 'Failed to delete attendance record.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const columns = [
     {
       key: 'athlete',
@@ -111,6 +129,22 @@ const AttendanceList = () => {
       label: 'Remarks',
       render: (_, row) => <span className="text-xs text-muted-foreground italic">{row.remarks || '—'}</span>,
     },
+    ...(role === 'admin' || role === 'coach' ? [{
+      key: 'actions',
+      label: '',
+      render: (_, row) => (
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-destructive hover:bg-destructive/10"
+            onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}
+          >
+            <Trash2 size={14} />
+          </Button>
+        </div>
+      ),
+    }] : []),
   ];
 
   return (
@@ -193,6 +227,16 @@ const AttendanceList = () => {
         totalEntries={total}
         limit={limit}
         onLimitChange={setLimit}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(confirmDelete)}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete Attendance Record"
+        message={`Are you sure you want to delete the attendance record for ${confirmDelete?.first_name} ${confirmDelete?.last_name} on ${confirmDelete?.attendance_date ? new Date(confirmDelete.attendance_date).toLocaleDateString() : ''}?`}
+        confirmText="Delete Record"
+        loading={actionLoading}
       />
     </div>
   );

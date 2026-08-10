@@ -236,12 +236,22 @@ const restoreAthlete = async (id, restoredBy) => {
 
 // ─── Delete athlete ─────────────────────────────────────────
 const deleteAthlete = async (id) => {
-  await pool.query(`DELETE FROM athletes WHERE id = ?`, [id]);
+  const [rows] = await pool.query('SELECT user_id FROM athletes WHERE id = ?', [id]);
+  if (rows.length > 0) {
+    await pool.query('DELETE FROM users WHERE id = ?', [rows[0].user_id]);
+  } else {
+    await pool.query(`DELETE FROM athletes WHERE id = ?`, [id]);
+  }
 };
 
 // ─── Bulk operations ────────────────────────────────────────
 const bulkDelete = async (ids) => {
-  if (!ids.length) return;
+  if (!ids || !ids.length) return;
+  const [rows] = await pool.query('SELECT user_id FROM athletes WHERE id IN (?)', [ids]);
+  if (rows.length > 0) {
+    const userIds = rows.map((r) => r.user_id);
+    await pool.query('DELETE FROM users WHERE id IN (?)', [userIds]);
+  }
   await pool.query(`DELETE FROM athletes WHERE id IN (?)`, [ids]);
 };
 
