@@ -42,6 +42,12 @@ exports.create = async (req, res, next) => {
 // PUT /api/athletes/:id
 exports.update = async (req, res, next) => {
   try {
+    if (req.user.role === 'athlete') {
+      const athlete = await athleteService.getAthleteById(req.params.id);
+      if (!athlete || athlete.user_id !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only edit your own profile.' });
+      }
+    }
     await athleteService.updateAthlete(req.params.id, req.body, req.user.id);
     res.json({ success: true, message: 'Athlete updated successfully' });
   } catch (err) { next(err); }

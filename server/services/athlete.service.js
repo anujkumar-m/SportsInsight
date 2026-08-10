@@ -7,7 +7,7 @@ const { generateCode } = require('../utils/helpers');
 // ─── Helpers ────────────────────────────────────────────────
 const BASE_SELECT = `
   SELECT
-    a.id, a.athlete_code, a.date_of_birth,
+    a.id, a.user_id, a.athlete_code, a.date_of_birth,
     TIMESTAMPDIFF(YEAR, a.date_of_birth, CURDATE()) AS age,
     a.gender, a.height_cm, a.weight_kg, a.blood_group,
     ROUND(a.weight_kg / ((a.height_cm/100) * (a.height_cm/100)), 2) AS bmi,
