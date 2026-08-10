@@ -80,18 +80,18 @@ const AttendanceList = () => {
     {
       key: 'athlete',
       label: 'Athlete',
-      render: (r) => (
+      render: (_, row) => (
         <div className="flex items-center gap-3">
-          {r.profile_photo ? (
-            <img src={r.profile_photo} alt="" className="size-9 rounded-full object-cover border border-border" />
+          {row.profile_photo ? (
+            <img src={row.profile_photo} alt="" className="size-9 rounded-full object-cover border border-border" />
           ) : (
             <div className="grid size-9 place-items-center rounded-full bg-primary/10 text-primary font-bold text-xs">
-              {r.first_name?.[0]}{r.last_name?.[0]}
+              {row.first_name?.[0]}{row.last_name?.[0]}
             </div>
           )}
           <div>
-            <div className="font-semibold text-foreground">{r.first_name} {r.last_name}</div>
-            <div className="text-xs text-muted-foreground">{r.athlete_code} • {r.sport_name}</div>
+            <div className="font-semibold text-foreground">{row.first_name} {row.last_name}</div>
+            <div className="text-xs text-muted-foreground">{row.athlete_code} • {row.sport_name}</div>
           </div>
         </div>
       ),
@@ -99,17 +99,17 @@ const AttendanceList = () => {
     {
       key: 'attendance_date',
       label: 'Date',
-      render: (r) => <span className="text-xs text-muted-foreground">{new Date(r.attendance_date).toLocaleDateString()}</span>,
+      render: (_, row) => <span className="text-xs text-muted-foreground">{new Date(row.attendance_date).toLocaleDateString()}</span>,
     },
     {
       key: 'status',
       label: 'Status',
-      render: (r) => <AttendanceStatusBadge status={r.status} />,
+      render: (_, row) => <AttendanceStatusBadge status={row.status} />,
     },
     {
       key: 'remarks',
       label: 'Remarks',
-      render: (r) => <span className="text-xs text-muted-foreground italic">{r.remarks || '—'}</span>,
+      render: (_, row) => <span className="text-xs text-muted-foreground italic">{row.remarks || '—'}</span>,
     },
   ];
 

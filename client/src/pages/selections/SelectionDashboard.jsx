@@ -25,7 +25,7 @@ const SelectionDashboard = () => {
       try {
         const [selRes, sportRes] = await Promise.all([
           selectionService.getSelections({ status, sportId }).catch(() => ({ data: { selections: [] } })),
-          sportService.getSports().catch(() => ({ data: [] })),
+          sportService.listSports().catch(() => ({ data: [] })),
         ]);
         setSelections(selRes.data?.selections || selRes.data || []);
         setSports(sportRes.data || []);

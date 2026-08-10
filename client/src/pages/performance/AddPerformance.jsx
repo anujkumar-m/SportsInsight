@@ -33,7 +33,7 @@ const AddPerformance = () => {
       try {
         const athRes = await athleteService.getAthletes({ limit: 200 });
         setAthletes(athRes.data?.athletes || athRes.data || []);
-        const spRes = await sportService.getSports();
+        const spRes = await sportService.listSports();
         setSports(spRes.data || []);
       } catch (e) {
         toast.error('Failed to load form metadata.');

@@ -106,18 +106,18 @@ const InjuryList = () => {
     {
       key: 'athlete',
       label: 'Athlete',
-      render: (r) => (
+      render: (_, row) => (
         <div className="flex items-center gap-3">
-          {r.profile_photo ? (
-            <img src={r.profile_photo} alt="" className="size-9 rounded-full object-cover border border-border" />
+          {row.profile_photo ? (
+            <img src={row.profile_photo} alt="" className="size-9 rounded-full object-cover border border-border" />
           ) : (
             <div className="grid size-9 place-items-center rounded-full bg-rose-500/10 text-rose-500 font-bold text-xs">
-              {r.first_name?.[0]}{r.last_name?.[0]}
+              {row.first_name?.[0]}{row.last_name?.[0]}
             </div>
           )}
           <div>
-            <div className="font-semibold text-foreground">{r.first_name} {r.last_name}</div>
-            <div className="text-xs text-muted-foreground">{r.athlete_code} • {r.sport_name}</div>
+            <div className="font-semibold text-foreground">{row.first_name} {row.last_name}</div>
+            <div className="text-xs text-muted-foreground">{row.athlete_code} • {row.sport_name}</div>
           </div>
         </div>
       ),
@@ -125,28 +125,28 @@ const InjuryList = () => {
     {
       key: 'injury_details',
       label: 'Injury & Body Part',
-      render: (r) => (
+      render: (_, row) => (
         <div>
-          <div className="font-medium text-foreground text-sm">{r.injury_type}</div>
-          <div className="text-xs text-muted-foreground">{r.body_part || 'General'}</div>
+          <div className="font-medium text-foreground text-sm">{row.injury_type}</div>
+          <div className="text-xs text-muted-foreground">{row.body_part || 'General'}</div>
         </div>
       ),
     },
     {
       key: 'severity',
       label: 'Severity',
-      render: (r) => <SeverityBadge severity={r.severity} />,
+      render: (_, row) => <SeverityBadge severity={row.severity} />,
     },
     {
       key: 'availability_status',
       label: 'Availability',
-      render: (r) => <AvailabilityBadge status={r.availability_status} />,
+      render: (_, row) => <AvailabilityBadge status={row.availability_status} />,
     },
     {
       key: 'ai_recovery',
       label: 'AI Recovery Prediction',
-      render: (r) => {
-        const ai = r.ai_analysis;
+      render: (_, row) => {
+        const ai = row.ai_analysis;
         return (
           <div className="space-y-1 max-w-xs text-xs">
             <div className="flex items-center justify-between">

@@ -55,7 +55,7 @@ const PerformanceList = () => {
 
   const fetchSportsAndAthletes = async () => {
     try {
-      const sportsRes = await sportService.getSports();
+      const sportsRes = await sportService.listSports();
       setSports(sportsRes.data || []);
       const athRes = await athleteService.getAthletes({ limit: 100 });
       setAthletes(athRes.data?.athletes || athRes.data || []);
@@ -171,18 +171,18 @@ const PerformanceList = () => {
     {
       key: 'athlete',
       label: 'Athlete',
-      render: (r) => (
+      render: (_, row) => (
         <div className="flex items-center gap-3">
-          {r.profile_photo ? (
-            <img src={r.profile_photo} alt="" className="size-9 rounded-full object-cover border border-border" />
+          {row.profile_photo ? (
+            <img src={row.profile_photo} alt="" className="size-9 rounded-full object-cover border border-border" />
           ) : (
             <div className="grid size-9 place-items-center rounded-full bg-primary/10 text-primary font-bold text-xs">
-              {r.first_name?.[0]}{r.last_name?.[0]}
+              {row.first_name?.[0]}{row.last_name?.[0]}
             </div>
           )}
           <div>
-            <div className="font-semibold text-foreground">{r.first_name} {r.last_name}</div>
-            <div className="text-xs text-muted-foreground">{r.athlete_code} • {r.sport_name}</div>
+            <div className="font-semibold text-foreground">{row.first_name} {row.last_name}</div>
+            <div className="text-xs text-muted-foreground">{row.athlete_code} • {row.sport_name}</div>
           </div>
         </div>
       ),
@@ -190,11 +190,11 @@ const PerformanceList = () => {
     {
       key: 'metric_name',
       label: 'Metric & Value',
-      render: (r) => (
+      render: (_, row) => (
         <div>
-          <div className="font-medium text-foreground text-sm">{r.metric_name}</div>
+          <div className="font-medium text-foreground text-sm">{row.metric_name}</div>
           <div className="text-xs font-semibold text-primary">
-            {r.metric_value} {r.metric_unit}
+            {row.metric_value} {row.metric_unit}
           </div>
         </div>
       ),
@@ -202,22 +202,22 @@ const PerformanceList = () => {
     {
       key: 'record_date',
       label: 'Record Date',
-      render: (r) => <span className="text-xs text-muted-foreground">{new Date(r.record_date).toLocaleDateString()}</span>,
+      render: (_, row) => <span className="text-xs text-muted-foreground">{new Date(row.record_date).toLocaleDateString()}</span>,
     },
     {
       key: 'performance_score',
       label: 'AI Performance Score',
-      render: (r) => (
+      render: (_, row) => (
         <div className="flex items-center gap-2">
-          <div className="text-base font-bold text-foreground">{r.performance_score ?? 75}</div>
+          <div className="text-base font-bold text-foreground">{row.performance_score ?? 75}</div>
           <div className="flex flex-col text-[10px]">
-            {r.improvement_rate > 0 ? (
+            {row.improvement_rate > 0 ? (
               <span className="flex items-center gap-0.5 text-emerald-500 font-semibold">
-                <TrendingUp size={11} /> +{r.improvement_rate}%
+                <TrendingUp size={11} /> +{row.improvement_rate}%
               </span>
-            ) : r.improvement_rate < 0 ? (
+            ) : row.improvement_rate < 0 ? (
               <span className="flex items-center gap-0.5 text-rose-500 font-semibold">
-                <TrendingDown size={11} /> {r.improvement_rate}%
+                <TrendingDown size={11} /> {row.improvement_rate}%
               </span>
             ) : (
               <span className="text-muted-foreground">Stable</span>
@@ -229,8 +229,8 @@ const PerformanceList = () => {
     {
       key: 'ai_insights',
       label: 'AI Trend / Insights',
-      render: (r) => {
-        const ai = r.ai_analysis;
+      render: (_, row) => {
+        const ai = row.ai_analysis;
         return (
           <div className="space-y-1 max-w-xs">
             <div className="flex items-center gap-1.5">
@@ -251,10 +251,10 @@ const PerformanceList = () => {
     {
       key: 'actions',
       label: 'Actions',
-      render: (r) => (
+      render: (_, row) => (
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigate(`/performance/history/${r.athlete_id}`)}
+            onClick={() => navigate(`/performance/history/${row.athlete_id}`)}
             title="View Athlete History"
             className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
           >
@@ -263,14 +263,14 @@ const PerformanceList = () => {
           {(role === 'admin' || role === 'coach') && (
             <>
               <button
-                onClick={() => navigate(`/performance/${r.id}/edit`)}
+                onClick={() => navigate(`/performance/${row.id}/edit`)}
                 title="Edit Record"
                 className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
               >
                 <Pencil size={15} />
               </button>
               <button
-                onClick={() => setConfirmDelete(r)}
+                onClick={() => setConfirmDelete(row)}
                 title="Delete Record"
                 className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
               >

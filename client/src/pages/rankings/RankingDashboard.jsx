@@ -25,7 +25,7 @@ const RankingDashboard = () => {
     try {
       const [rankRes, sportRes] = await Promise.all([
         rankingService.getRankings({ rankType, sportId }).catch(() => ({ data: { rankings: [] } })),
-        sportService.getSports().catch(() => ({ data: [] })),
+        sportService.listSports().catch(() => ({ data: [] })),
       ]);
       setRankings(rankRes.data?.rankings || rankRes.data || []);
       setSports(sportRes.data || []);

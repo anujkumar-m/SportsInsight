@@ -24,7 +24,7 @@ const RecommendedAthletes = () => {
   });
 
   useEffect(() => {
-    sportService.getSports().then(res => setSports(res.data || []));
+    sportService.listSports().then(res => setSports(res.data || []));
   }, []);
 
   const handleGenerate = async () => {

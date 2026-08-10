@@ -95,18 +95,18 @@ const FitnessList = () => {
     {
       key: 'athlete',
       label: 'Athlete',
-      render: (r) => (
+      render: (_, row) => (
         <div className="flex items-center gap-3">
-          {r.profile_photo ? (
-            <img src={r.profile_photo} alt="" className="size-9 rounded-full object-cover border border-border" />
+          {row.profile_photo ? (
+            <img src={row.profile_photo} alt="" className="size-9 rounded-full object-cover border border-border" />
           ) : (
             <div className="grid size-9 place-items-center rounded-full bg-emerald-500/10 text-emerald-500 font-bold text-xs">
-              {r.first_name?.[0]}{r.last_name?.[0]}
+              {row.first_name?.[0]}{row.last_name?.[0]}
             </div>
           )}
           <div>
-            <div className="font-semibold text-foreground">{r.first_name} {r.last_name}</div>
-            <div className="text-xs text-muted-foreground">{r.athlete_code} • {r.sport_name}</div>
+            <div className="font-semibold text-foreground">{row.first_name} {row.last_name}</div>
+            <div className="text-xs text-muted-foreground">{row.athlete_code} • {row.sport_name}</div>
           </div>
         </div>
       ),
@@ -114,24 +114,24 @@ const FitnessList = () => {
     {
       key: 'assessment_date',
       label: 'Date',
-      render: (r) => <span className="text-xs text-muted-foreground">{new Date(r.assessment_date).toLocaleDateString()}</span>,
+      render: (_, row) => <span className="text-xs text-muted-foreground">{new Date(row.assessment_date).toLocaleDateString()}</span>,
     },
     {
       key: 'bmi',
       label: 'BMI & Body Fat',
-      render: (r) => (
+      render: (_, row) => (
         <div className="text-xs">
-          <div className="font-semibold text-foreground">BMI: {r.bmi || 'N/A'}</div>
-          <div className="text-muted-foreground">Body Fat: {r.body_fat_percentage || 0}%</div>
+          <div className="font-semibold text-foreground">BMI: {row.bmi || 'N/A'}</div>
+          <div className="text-muted-foreground">Body Fat: {row.body_fat_percentage || 0}%</div>
         </div>
       ),
     },
     {
       key: 'fitness_score',
       label: 'Fitness Score & Grade',
-      render: (r) => {
-        const score = Math.round(r.overall_fitness_score || 0);
-        const grade = r.ai_analysis?.fitnessGrade || (score >= 80 ? 'A' : score >= 60 ? 'B' : 'C');
+      render: (_, row) => {
+        const score = Math.round(row.overall_fitness_score || 0);
+        const grade = row.ai_analysis?.fitnessGrade || (score >= 80 ? 'A' : score >= 60 ? 'B' : 'C');
         return (
           <div className="flex items-center gap-2">
             <div className="text-base font-bold text-foreground">{score} <span className="text-xs text-muted-foreground">/ 100</span></div>
@@ -145,8 +145,8 @@ const FitnessList = () => {
     {
       key: 'ai_insights',
       label: 'Readiness & Injury Risk',
-      render: (r) => {
-        const ai = r.ai_analysis;
+      render: (_, row) => {
+        const ai = row.ai_analysis;
         return (
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-xs">
@@ -165,10 +165,10 @@ const FitnessList = () => {
     {
       key: 'actions',
       label: 'Actions',
-      render: (r) => (
+      render: (_, row) => (
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigate(`/fitness/history/${r.athlete_id}`)}
+            onClick={() => navigate(`/fitness/history/${row.athlete_id}`)}
             title="View Fitness History"
             className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
           >
@@ -177,14 +177,14 @@ const FitnessList = () => {
           {(role === 'admin' || role === 'coach') && (
             <>
               <button
-                onClick={() => navigate(`/fitness/${r.id}/edit`)}
+                onClick={() => navigate(`/fitness/${row.id}/edit`)}
                 title="Edit Assessment"
                 className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
               >
                 <Pencil size={15} />
               </button>
               <button
-                onClick={() => setConfirmDelete(r)}
+                onClick={() => setConfirmDelete(row)}
                 title="Delete Assessment"
                 className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
               >
