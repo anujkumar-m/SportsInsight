@@ -9,6 +9,7 @@ import RoleRoute from './routes/RoleRoute';
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
+const PendingRole = React.lazy(() => import('./pages/auth/PendingRole'));
 const Unauthorized = React.lazy(() => import('./pages/Unauthorized'));
 const UserProfile = React.lazy(() => import('./pages/auth/UserProfile'));
 const CoachFeedback = React.lazy(() => import('./pages/coaches/CoachFeedback'));
@@ -166,6 +167,7 @@ const App = () => {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="/pending-role" element={<ProtectedRoute><PendingRole /></ProtectedRoute>} />
 
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
 

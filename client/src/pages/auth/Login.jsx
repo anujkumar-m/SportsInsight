@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { Activity, BarChart3, Loader2, Lock, Sparkles } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -12,10 +13,17 @@ const DEMO_ACCOUNTS = [
   { label: 'Athlete', email: 'athlete.arjun@sportsacademy.com', password: 'Admin@123' },
 ];
 
+/** Determine where to navigate after any login based on role */
+function getDestination(role, from) {
+  if (role === 'unassigned') return '/pending-role';
+  return from || '/dashboard';
+}
+
 const Login = () => {
   const { register, handleSubmit, setValue, formState } = useForm();
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
@@ -23,14 +31,31 @@ const Login = () => {
   async function onSubmit(values) {
     setLoading(true);
     try {
-      await login(values.identifier, values.password);
+      const userObj = await login(values.identifier, values.password);
       toast.success('Welcome back!');
-      navigate(from, { replace: true });
+      navigate(getDestination(userObj?.role, from), { replace: true });
     } catch (error) {
       toast.error(error.message || 'Login failed');
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleGoogleSuccess(credentialResponse) {
+    setGoogleLoading(true);
+    try {
+      const userObj = await googleLogin(credentialResponse.credential);
+      toast.success(`Welcome, ${userObj.firstName || userObj.email}!`);
+      navigate(getDestination(userObj.role, from), { replace: true });
+    } catch (error) {
+      toast.error(error.message || 'Google sign-in failed. Please try again.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
+
+  function handleGoogleError() {
+    toast.error('Google sign-in was cancelled or failed.');
   }
 
   return (
@@ -78,9 +103,40 @@ const Login = () => {
             <Lock className="size-6" />
           </span>
           <h2 className="mt-5 text-2xl font-bold tracking-tight">Sign in to your workspace</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Use your academy credentials to continue.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Use your academy credentials or Google account.</p>
 
-          <form className="mt-7 space-y-4" onSubmit={handleSubmit(onSubmit)}>
+          {/* ─── Google Sign-In ─────────────────────────── */}
+          <div className="mt-7">
+            {googleLoading ? (
+              <div className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-card text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                Signing in with Google…
+              </div>
+            ) : (
+              <div id="google-signin-btn" className="w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  width="100%"
+                  size="large"
+                  shape="rectangular"
+                  theme="outline"
+                  text="signin_with"
+                  logo_alignment="left"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ─── Divider ───────────────────────────────── */}
+          <div className="my-6 flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or continue with email</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* ─── Email / Password Form ─────────────────── */}
+          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label className="text-sm font-medium" htmlFor="identifier">
                 Email or username
@@ -152,3 +208,4 @@ const Login = () => {
 };
 
 export default Login;
+

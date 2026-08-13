@@ -81,13 +81,33 @@ export const AuthProvider = ({ children }) => {
       else if (identifier.includes('selector')) selectedMock = MOCK_USERS.selector;
       else if (identifier.includes('athlete')) selectedMock = MOCK_USERS.athlete;
 
-      localStorage.setItem('accessToken', 'demo_access_token');
+      localStorage.setItem('accessToken', `demo_access_token_${selectedMock.role}`);
       localStorage.setItem('refreshToken', 'demo_refresh_token');
       localStorage.setItem('user', JSON.stringify(selectedMock));
       setUser(selectedMock);
       setIsAuthenticated(true);
       return selectedMock;
     }
+  };
+
+  // Google Sign-In — no demo fallback; real Google token must succeed
+  const googleLogin = async (credential) => {
+    const res = await authAPI.googleLogin(credential);
+    const payload = res?.data || res;
+    const token = payload?.accessToken || payload?.token;
+    const refreshToken = payload?.refreshToken;
+    const userObj = payload?.user;
+
+    if (!token || !userObj) {
+      throw new Error('Invalid Google login response from server.');
+    }
+
+    localStorage.setItem('accessToken', token);
+    localStorage.setItem('refreshToken', refreshToken || '');
+    localStorage.setItem('user', JSON.stringify(userObj));
+    setUser(userObj);
+    setIsAuthenticated(true);
+    return userObj;
   };
 
   const logout = async () => {
@@ -115,6 +135,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     isAuthenticated,
     login,
+    googleLogin,
     logout,
     updateUser,
     role: user?.role || 'admin',
@@ -130,3 +151,4 @@ export const useAuth = () => {
 };
 
 export default AuthContext;
+

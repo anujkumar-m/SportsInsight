@@ -4,10 +4,11 @@ const findUserByEmail = async (email) => {
   const [rows] = await pool.query(
     `SELECT u.id, u.username, u.email, u.password_hash, u.first_name, u.last_name,
             u.phone, u.profile_photo, u.is_active, u.password_reset_token,
-            u.password_reset_expires, r.id AS role_id, r.name AS role
+            u.password_reset_expires, u.google_id, u.auth_provider,
+            r.id AS role_id, r.name AS role
      FROM users u
      JOIN roles r ON u.role_id = r.id
-     WHERE u.email = ? AND u.is_active = TRUE`,
+     WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(?)) AND u.is_active = TRUE`,
     [email]
   );
   return rows[0] || null;
@@ -109,6 +110,65 @@ const updateUserProfile = async (userId, { first_name, last_name, phone, profile
   await pool.query(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, params);
 };
 
+const findUserByGoogleId = async (googleId) => {
+  const [rows] = await pool.query(
+    `SELECT u.id, u.username, u.email, u.first_name, u.last_name,
+            u.phone, u.profile_photo, u.is_active, u.google_id, u.auth_provider,
+            r.id AS role_id, r.name AS role
+     FROM users u
+     JOIN roles r ON u.role_id = r.id
+     WHERE u.google_id = ? AND u.is_active = TRUE`,
+    [googleId]
+  );
+  return rows[0] || null;
+};
+
+const createGoogleUser = async (email, googleId, firstName, lastName, picture, roleId) => {
+  const username = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '.') + '_g';
+  const [result] = await pool.query(
+    `INSERT INTO users (role_id, username, email, password_hash, first_name, last_name, profile_photo, google_id, auth_provider, is_active)
+     VALUES (?, ?, ?, '', ?, ?, ?, ?, 'google', TRUE)`,
+    [roleId, username, email, firstName, lastName, picture || null, googleId]
+  );
+  return result.insertId;
+};
+
+const getAllGoogleUsers = async () => {
+  const [rows] = await pool.query(
+    `SELECT u.id, u.email, u.first_name, u.last_name, u.profile_photo,
+            u.google_id, u.created_at, u.last_login,
+            r.id AS role_id, r.name AS role
+     FROM users u
+     JOIN roles r ON u.role_id = r.id
+     WHERE u.auth_provider = 'google'
+     ORDER BY u.created_at DESC`
+  );
+  return rows;
+};
+
+const updateUserRole = async (userId, roleId) => {
+  await pool.query('UPDATE users SET role_id = ? WHERE id = ?', [roleId, userId]);
+
+  // Fetch the role name for the new roleId
+  const [roleRows] = await pool.query('SELECT name FROM roles WHERE id = ? LIMIT 1', [roleId]);
+  const roleName = roleRows[0]?.name;
+
+  if (roleName === 'coach') {
+    // Ensure a coaches table record exists for this user
+    const [existing] = await pool.query('SELECT id FROM coaches WHERE user_id = ? LIMIT 1', [userId]);
+    if (!existing.length) {
+      const [userRows] = await pool.query('SELECT id FROM users WHERE id = ? LIMIT 1', [userId]);
+      if (userRows.length) {
+        await pool.query(
+          `INSERT INTO coaches (user_id, is_active, current_status, created_at, updated_at)
+           VALUES (?, TRUE, 'active', NOW(), NOW())`,
+          [userId]
+        );
+      }
+    }
+  }
+};
+
 module.exports = {
   findUserByEmail,
   findUserByUsername,
@@ -122,5 +182,9 @@ module.exports = {
   findUserByResetToken,
   updatePassword,
   updateUserProfile,
+  findUserByGoogleId,
+  createGoogleUser,
+  getAllGoogleUsers,
+  updateUserRole,
 };
 

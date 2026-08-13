@@ -158,6 +158,11 @@ async function getFitnessAssessments(filters = {}) {
   let whereClauses = ['1=1'];
   const params = [];
 
+  const coachId = filters.coach_id ?? filters.coachId;
+  if (coachId !== undefined && coachId !== null && coachId !== '') {
+    whereClauses.push('a.coach_id = ?');
+    params.push(coachId);
+  }
   if (filters.athleteId) {
     whereClauses.push('fa.athlete_id = ?');
     params.push(filters.athleteId);
@@ -182,7 +187,7 @@ async function getFitnessAssessments(filters = {}) {
   const [rows] = await pool.query(
     `SELECT fa.*, 
             u.first_name, u.last_name, u.profile_photo,
-            a.athlete_code, s.name as sport_name
+            a.athlete_code, a.coach_id, s.name as sport_name
      FROM fitness_assessments fa
      JOIN athletes a ON a.id = fa.athlete_id
      JOIN users u ON u.id = a.user_id
@@ -211,7 +216,7 @@ async function getFitnessById(id) {
   const [rows] = await pool.query(
     `SELECT fa.*, 
             u.first_name, u.last_name, u.profile_photo,
-            a.athlete_code, s.name as sport_name
+            a.athlete_code, a.coach_id, s.name as sport_name
      FROM fitness_assessments fa
      JOIN athletes a ON a.id = fa.athlete_id
      JOIN users u ON u.id = a.user_id
@@ -440,26 +445,43 @@ async function getAthleteFitnessHistory(athleteId) {
 }
 
 async function getFitnessAnalytics(filters = {}) {
+  const coachId = filters.coach_id ?? filters.coachId;
+  const whereClauses = [];
+  const params = [];
+
+  if (coachId !== undefined && coachId !== null && coachId !== '') {
+    whereClauses.push('a.coach_id = ?');
+    params.push(coachId);
+  }
+
+  const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
   const [overview] = await pool.query(
     `SELECT 
        COUNT(*) as total_assessments,
-       COUNT(DISTINCT athlete_id) as total_athletes,
-       AVG(overall_fitness_score) as avg_fitness_score,
-       AVG(bmi) as avg_bmi,
-       AVG(strength_score) as avg_strength,
-       AVG(endurance_score) as avg_endurance,
-       AVG(stamina_score) as avg_stamina,
-       AVG(flexibility_score) as avg_flexibility,
-       AVG(agility_score) as avg_agility
-     FROM fitness_assessments`
+       COUNT(DISTINCT fa.athlete_id) as total_athletes,
+       AVG(fa.overall_fitness_score) as avg_fitness_score,
+       AVG(fa.bmi) as avg_bmi,
+       AVG(fa.strength_score) as avg_strength,
+       AVG(fa.endurance_score) as avg_endurance,
+       AVG(fa.stamina_score) as avg_stamina,
+       AVG(fa.flexibility_score) as avg_flexibility,
+       AVG(fa.agility_score) as avg_agility
+     FROM fitness_assessments fa
+     JOIN athletes a ON a.id = fa.athlete_id
+     ${whereSql}`,
+    params
   );
 
   const [trends] = await pool.query(
-    `SELECT DATE_FORMAT(assessment_date, '%Y-%m') as month,
-            AVG(overall_fitness_score) as avg_score
-     FROM fitness_assessments
+    `SELECT DATE_FORMAT(fa.assessment_date, '%Y-%m') as month,
+            AVG(fa.overall_fitness_score) as avg_score
+     FROM fitness_assessments fa
+     JOIN athletes a ON a.id = fa.athlete_id
+     ${whereSql}
      GROUP BY month
-     ORDER BY month ASC LIMIT 12`
+     ORDER BY month ASC LIMIT 12`,
+    params
   );
 
   return {

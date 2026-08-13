@@ -1,8 +1,20 @@
 const performanceService = require('../services/performance.service');
+const athleteService = require('../services/athlete.service');
+
+function applyCoachFilter(req, queryParams = {}) {
+  const params = { ...queryParams };
+  if (req.user?.role?.toLowerCase() === 'coach') {
+    delete params.coach_id;
+    delete params.coachId;
+    params.coach_id = req.user.coach_id ?? -1;
+  }
+  return params;
+}
 
 async function getPerformanceRecords(req, res, next) {
   try {
-    const data = await performanceService.getPerformanceRecords(req.query);
+    const queryParams = applyCoachFilter(req, req.query);
+    const data = await performanceService.getPerformanceRecords(queryParams);
     res.json({ success: true, data });
   } catch (error) {
     next(error);
@@ -15,6 +27,9 @@ async function getPerformanceById(req, res, next) {
     if (!record) {
       return res.status(404).json({ success: false, message: 'Performance record not found.' });
     }
+    if (req.user?.role?.toLowerCase() === 'coach' && record.coach_id !== req.user.coach_id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only view performance records for your assigned athletes.' });
+    }
     res.json({ success: true, data: record });
   } catch (error) {
     next(error);
@@ -23,6 +38,12 @@ async function getPerformanceById(req, res, next) {
 
 async function createPerformance(req, res, next) {
   try {
+    if (req.user?.role?.toLowerCase() === 'coach' && req.body.athlete_id) {
+      const athlete = await athleteService.getAthleteById(req.body.athlete_id);
+      if (!athlete || athlete.coach_id !== req.user.coach_id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only add performance records for your assigned athletes.' });
+      }
+    }
     const record = await performanceService.createPerformanceRecord(req.body, req.user?.id);
     res.status(201).json({ success: true, message: 'Performance record added successfully.', data: record });
   } catch (error) {
@@ -32,6 +53,12 @@ async function createPerformance(req, res, next) {
 
 async function updatePerformance(req, res, next) {
   try {
+    if (req.user?.role?.toLowerCase() === 'coach') {
+      const existing = await performanceService.getPerformanceById(req.params.id);
+      if (!existing || existing.coach_id !== req.user.coach_id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only edit performance records for your assigned athletes.' });
+      }
+    }
     const record = await performanceService.updatePerformanceRecord(req.params.id, req.body, req.user?.id);
     res.json({ success: true, message: 'Performance record updated successfully.', data: record });
   } catch (error) {
@@ -41,6 +68,12 @@ async function updatePerformance(req, res, next) {
 
 async function deletePerformance(req, res, next) {
   try {
+    if (req.user?.role?.toLowerCase() === 'coach') {
+      const existing = await performanceService.getPerformanceById(req.params.id);
+      if (!existing || existing.coach_id !== req.user.coach_id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only delete performance records for your assigned athletes.' });
+      }
+    }
     const result = await performanceService.deletePerformanceRecord(req.params.id, req.user?.id);
     res.json(result);
   } catch (error) {
@@ -50,6 +83,12 @@ async function deletePerformance(req, res, next) {
 
 async function getAthletePerformanceHistory(req, res, next) {
   try {
+    if (req.user?.role?.toLowerCase() === 'coach') {
+      const athlete = await athleteService.getAthleteById(req.params.athleteId);
+      if (!athlete || athlete.coach_id !== req.user.coach_id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only view performance history for your assigned athletes.' });
+      }
+    }
     const data = await performanceService.getAthletePerformanceHistory(req.params.athleteId);
     res.json({ success: true, data });
   } catch (error) {
@@ -59,7 +98,8 @@ async function getAthletePerformanceHistory(req, res, next) {
 
 async function getPerformanceAnalytics(req, res, next) {
   try {
-    const data = await performanceService.getPerformanceAnalytics(req.query);
+    const queryParams = applyCoachFilter(req, req.query);
+    const data = await performanceService.getPerformanceAnalytics(queryParams);
     res.json({ success: true, data });
   } catch (error) {
     next(error);
@@ -95,7 +135,8 @@ async function importPerformanceData(req, res, next) {
 
 async function exportPerformanceData(req, res, next) {
   try {
-    const data = await performanceService.exportPerformanceData(req.query);
+    const queryParams = applyCoachFilter(req, req.query);
+    const data = await performanceService.exportPerformanceData(queryParams);
     res.json({ success: true, data });
   } catch (error) {
     next(error);
@@ -115,3 +156,4 @@ module.exports = {
   importPerformanceData,
   exportPerformanceData
 };
+

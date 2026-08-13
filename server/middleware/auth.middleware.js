@@ -14,7 +14,12 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     // Handle demo/fallback access tokens gracefully
-    if (token === 'demo_access_token') {
+    if (token.startsWith('demo_access_token')) {
+      let targetRole = 'admin';
+      if (token.includes('coach')) targetRole = 'coach';
+      else if (token.includes('selector')) targetRole = 'selector';
+      else if (token.includes('athlete')) targetRole = 'athlete';
+
       const [rows] = await pool.query(
         `SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.profile_photo, u.is_active,
                 r.id AS role_id, r.name AS role,
@@ -26,8 +31,9 @@ const authenticate = async (req, res, next) => {
          LEFT JOIN coaches co ON co.user_id = u.id
          LEFT JOIN athletes ath ON ath.user_id = u.id
          LEFT JOIN selectors sel ON sel.user_id = u.id
-         WHERE u.is_active = 1
-         ORDER BY u.id ASC LIMIT 1`
+         WHERE u.is_active = 1 AND LOWER(r.name) = ?
+         ORDER BY u.id ASC LIMIT 1`,
+        [targetRole]
       );
       if (rows.length > 0) {
         req.user = rows[0];

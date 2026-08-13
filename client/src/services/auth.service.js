@@ -24,7 +24,19 @@ const authAPI = {
 
   resetPassword: (token, password) =>
     api.post('/auth/reset-password', { token, password }),
+
+  // Google OAuth
+  googleLogin: (credential) =>
+    api.post('/auth/google', { credential }).then((r) => r.data),
+
+  // Admin: Google user management
+  getGoogleUsers: () =>
+    api.get('/auth/google-users').then((r) => r.data),
+
+  assignRole: (userId, roleId) =>
+    api.put('/auth/assign-role', { userId, roleId }).then((r) => r.data),
 };
 
 export default authAPI;
+
 

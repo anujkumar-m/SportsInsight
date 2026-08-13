@@ -9,8 +9,11 @@ exports.list = async (req, res, next) => {
   try {
     const { page, limit } = parsePagination(req.query);
     const queryParams = { ...req.query, page, limit };
-    if (req.user.role === 'coach') {
-      queryParams.coach_id = req.user.coach_id || 0;
+    if (req.user.role?.toLowerCase() === 'coach') {
+      // Always derive coach_id from the authenticated session.
+      // Delete any coach_id the client may have sent to prevent tampering.
+      delete queryParams.coach_id;
+      queryParams.coach_id = req.user.coach_id ?? -1;
     }
     const result = await athleteService.listAthletes(queryParams);
     res.json({ success: true, ...result });
@@ -22,8 +25,11 @@ exports.listArchived = async (req, res, next) => {
   try {
     const { page, limit } = parsePagination(req.query);
     const queryParams = { ...req.query, page, limit, current_status: 'archived' };
-    if (req.user.role === 'coach') {
-      queryParams.coach_id = req.user.coach_id || 0;
+    if (req.user.role?.toLowerCase() === 'coach') {
+      // Always derive coach_id from the authenticated session.
+      // Delete any coach_id the client may have sent to prevent tampering.
+      delete queryParams.coach_id;
+      queryParams.coach_id = req.user.coach_id ?? -1;
     }
     const result = await athleteService.listAthletes(queryParams);
     res.json({ success: true, ...result });
@@ -35,6 +41,9 @@ exports.getOne = async (req, res, next) => {
   try {
     const athlete = await athleteService.getAthleteById(req.params.id);
     if (!athlete) return res.status(404).json({ success: false, message: 'Athlete not found' });
+    if (req.user.role?.toLowerCase() === 'coach' && athlete.coach_id !== req.user.coach_id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only view your assigned athletes.' });
+    }
     res.json({ success: true, data: athlete });
   } catch (err) { next(err); }
 };
@@ -42,7 +51,11 @@ exports.getOne = async (req, res, next) => {
 // POST /api/athletes
 exports.create = async (req, res, next) => {
   try {
-    const result = await athleteService.createAthlete(req.body, req.user.id);
+    const data = { ...req.body };
+    if (req.user.role?.toLowerCase() === 'coach') {
+      data.coach_id = req.user.coach_id;
+    }
+    const result = await athleteService.createAthlete(data, req.user.id);
     res.status(201).json({ success: true, message: 'Athlete created successfully', data: result });
   } catch (err) { next(err); }
 };
@@ -50,12 +63,16 @@ exports.create = async (req, res, next) => {
 // PUT /api/athletes/:id
 exports.update = async (req, res, next) => {
   try {
-    if (req.user.role === 'athlete') {
-      const athlete = await athleteService.getAthleteById(req.params.id);
-      if (!athlete || athlete.user_id !== req.user.id) {
-        return res.status(403).json({ success: false, message: 'Access denied. You can only edit your own profile.' });
-      }
+    const athlete = await athleteService.getAthleteById(req.params.id);
+    if (!athlete) return res.status(404).json({ success: false, message: 'Athlete not found' });
+
+    if (req.user.role?.toLowerCase() === 'athlete' && athlete.user_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only edit your own profile.' });
     }
+    if (req.user.role?.toLowerCase() === 'coach' && athlete.coach_id !== req.user.coach_id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only edit your assigned athletes.' });
+    }
+
     await athleteService.updateAthlete(req.params.id, req.body, req.user.id);
     res.json({ success: true, message: 'Athlete updated successfully' });
   } catch (err) { next(err); }
@@ -111,8 +128,11 @@ exports.bulkUpdate = async (req, res, next) => {
 exports.exportData = async (req, res, next) => {
   try {
     const queryParams = { ...req.query };
-    if (req.user.role === 'coach') {
-      queryParams.coach_id = req.user.coach_id || 0;
+    if (req.user.role?.toLowerCase() === 'coach') {
+      // Always derive coach_id from the authenticated session.
+      // Delete any coach_id the client may have sent to prevent tampering.
+      delete queryParams.coach_id;
+      queryParams.coach_id = req.user.coach_id ?? -1;
     }
     const data = await athleteService.exportAthletes(queryParams);
     res.json({ success: true, data, total: data.length });

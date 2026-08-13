@@ -162,6 +162,11 @@ async function getPerformanceRecords(filters = {}) {
   let whereClauses = ['1=1'];
   const params = [];
 
+  const coachId = filters.coach_id ?? filters.coachId;
+  if (coachId !== undefined && coachId !== null && coachId !== '') {
+    whereClauses.push('a.coach_id = ?');
+    params.push(coachId);
+  }
   if (filters.athleteId) {
     whereClauses.push('pr.athlete_id = ?');
     params.push(filters.athleteId);
@@ -202,7 +207,7 @@ async function getPerformanceRecords(filters = {}) {
   const [rows] = await pool.query(
     `SELECT pr.*, 
             u.first_name, u.last_name, u.profile_photo,
-            a.athlete_code, s.name as sport_name
+            a.athlete_code, a.coach_id, s.name as sport_name
      FROM performance_records pr
      JOIN athletes a ON a.id = pr.athlete_id
      JOIN users u ON u.id = a.user_id
@@ -231,7 +236,7 @@ async function getPerformanceById(id) {
   const [rows] = await pool.query(
     `SELECT pr.*, 
             u.first_name, u.last_name, u.profile_photo,
-            a.athlete_code, s.name as sport_name
+            a.athlete_code, a.coach_id, s.name as sport_name
      FROM performance_records pr
      JOIN athletes a ON a.id = pr.athlete_id
      JOIN users u ON u.id = a.user_id
@@ -410,24 +415,41 @@ async function getAthletePerformanceHistory(athleteId) {
 }
 
 async function getPerformanceAnalytics(filters = {}) {
+  const coachId = filters.coach_id ?? filters.coachId;
+  const whereClauses = [];
+  const params = [];
+
+  if (coachId !== undefined && coachId !== null && coachId !== '') {
+    whereClauses.push('a.coach_id = ?');
+    params.push(coachId);
+  }
+
+  const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
   const [overview] = await pool.query(
     `SELECT 
        COUNT(*) as total_records,
-       COUNT(DISTINCT athlete_id) as total_athletes,
-       AVG(performance_score) as avg_score,
-       MAX(performance_score) as top_score,
-       SUM(CASE WHEN improvement_rate > 0 THEN 1 ELSE 0 END) as total_improved,
-       SUM(CASE WHEN improvement_rate < 0 THEN 1 ELSE 0 END) as total_declining
-     FROM performance_records`
+       COUNT(DISTINCT pr.athlete_id) as total_athletes,
+       AVG(pr.performance_score) as avg_score,
+       MAX(pr.performance_score) as top_score,
+       SUM(CASE WHEN pr.improvement_rate > 0 THEN 1 ELSE 0 END) as total_improved,
+       SUM(CASE WHEN pr.improvement_rate < 0 THEN 1 ELSE 0 END) as total_declining
+     FROM performance_records pr
+     JOIN athletes a ON a.id = pr.athlete_id
+     ${whereSql}`,
+    params
   );
 
   const [trendData] = await pool.query(
-    `SELECT DATE_FORMAT(record_date, '%Y-%m') as month, 
-            AVG(performance_score) as avg_score,
+    `SELECT DATE_FORMAT(pr.record_date, '%Y-%m') as month, 
+            AVG(pr.performance_score) as avg_score,
             COUNT(*) as record_count
-     FROM performance_records
+     FROM performance_records pr
+     JOIN athletes a ON a.id = pr.athlete_id
+     ${whereSql}
      GROUP BY month
-     ORDER BY month ASC LIMIT 12`
+     ORDER BY month ASC LIMIT 12`,
+    params
   );
 
   const [topPerformers] = await pool.query(
@@ -437,8 +459,10 @@ async function getPerformanceAnalytics(filters = {}) {
      JOIN athletes a ON a.id = pr.athlete_id
      JOIN users u ON u.id = a.user_id
      LEFT JOIN sports s ON s.id = pr.sport_id
+     ${whereSql}
      GROUP BY pr.athlete_id, u.first_name, u.last_name, u.profile_photo, s.name
-     ORDER BY avg_score DESC LIMIT 5`
+     ORDER BY avg_score DESC LIMIT 5`,
+    params
   );
 
   return {

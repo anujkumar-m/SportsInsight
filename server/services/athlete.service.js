@@ -58,7 +58,7 @@ const listAthletes = async ({
   if (category_id) { where.push('a.category_id = ?'); params.push(category_id); }
   if (gender) { where.push('a.gender = ?'); params.push(gender); }
   if (medical_status) { where.push('a.medical_status = ?'); params.push(medical_status); }
-  if (coach_id) { where.push('a.coach_id = ?'); params.push(coach_id); }
+  if (coach_id !== undefined && coach_id !== null && coach_id !== '') { where.push('a.coach_id = ?'); params.push(coach_id); }
 
   const allowed_sorts = ['u.first_name', 'a.athlete_code', 'a.date_of_birth', 'a.registration_date', 's.name'];
   const safe_sort = allowed_sorts.includes(sort_by) ? sort_by : 'u.first_name';

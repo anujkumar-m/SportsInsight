@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Activity,
   CalendarCheck,
+  ChevronDown,
+  ChevronUp,
   HeartPulse,
   Medal,
   Plus,
@@ -29,6 +31,7 @@ import {
   YAxis,
 } from "recharts";
 import dashboardAPI from '../../services/dashboard.service';
+import authAPI from '../../services/auth.service';
 import { Panel, ScoreBar, StatCard, StatusPill } from '../../components/widgets';
 import { AiGenerateList } from '../../components/AiGenerateList';
 import QuickActionModal from '../../components/common/QuickActionModal';
@@ -49,7 +52,20 @@ export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalState, setModalState] = useState({ isOpen: false, title: '', type: '' });
+  const [googleUsers, setGoogleUsers] = useState([]);
+  const [googleUsersLoading, setGoogleUsersLoading] = useState(false);
+  const [googlePanelOpen, setGooglePanelOpen] = useState(false);
+  const [roleAssigning, setRoleAssigning] = useState({});
+  const [pendingRoles, setPendingRoles] = useState({});
   const navigate = useNavigate();
+
+  const ADMIN_EMAIL = 'samshibin1125@gmail.com';
+  const ASSIGNABLE_ROLES = [
+    { id: 2, name: 'coach', label: 'Coach' },
+    { id: 3, name: 'selector', label: 'State Selector' },
+    { id: 4, name: 'athlete', label: 'Athlete' },
+    { id: 5, name: 'unassigned', label: 'Unassigned' },
+  ];
 
   useEffect(() => {
     dashboardAPI.getAdminDashboard()
@@ -57,6 +73,44 @@ export default function AdminDashboard() {
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, []);
+
+  const fetchGoogleUsers = async () => {
+    setGoogleUsersLoading(true);
+    try {
+      const res = await authAPI.getGoogleUsers();
+      const users = res?.data?.users || res?.users || [];
+      setGoogleUsers(users);
+      // Init pending role selections to current role_id
+      const init = {};
+      users.forEach(u => { init[u.id] = u.role_id; });
+      setPendingRoles(init);
+    } catch (err) {
+      console.error('Failed to fetch Google users', err);
+    } finally {
+      setGoogleUsersLoading(false);
+    }
+  };
+
+  const handleToggleGooglePanel = () => {
+    if (!googlePanelOpen && googleUsers.length === 0) fetchGoogleUsers();
+    setGooglePanelOpen(prev => !prev);
+  };
+
+  const handleAssignRole = async (userId) => {
+    const roleId = pendingRoles[userId];
+    if (!roleId) return;
+    setRoleAssigning(prev => ({ ...prev, [userId]: true }));
+    try {
+      await authAPI.assignRole(userId, roleId);
+      setGoogleUsers(prev =>
+        prev.map(u => u.id === userId ? { ...u, role_id: roleId, role: ASSIGNABLE_ROLES.find(r => r.id === Number(roleId))?.name || u.role } : u)
+      );
+    } catch (err) {
+      console.error('Role assignment failed', err);
+    } finally {
+      setRoleAssigning(prev => ({ ...prev, [userId]: false }));
+    }
+  };
 
   if (loading || !data) {
     return (
@@ -296,6 +350,122 @@ export default function AdminDashboard() {
 
       <div id="ai-generator">
         <AiGenerateList scopeNote="Academy-wide analysis across all historical athlete records." />
+      </div>
+
+      {/* ─── Google User Management ──────────────────────── */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <button
+          id="google-users-panel-toggle"
+          onClick={handleToggleGooglePanel}
+          className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-secondary/50"
+        >
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="size-4 text-primary" />
+            <span className="text-sm font-semibold">Google User Management</span>
+            {googleUsers.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {googleUsers.length}
+              </span>
+            )}
+          </div>
+          {googlePanelOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+        </button>
+
+        {googlePanelOpen && (
+          <div className="border-t border-border px-5 pb-5">
+            <p className="py-3 text-xs text-muted-foreground">
+              Manage roles for users who signed in via Google. The admin account cannot be modified.
+            </p>
+
+            {googleUsersLoading ? (
+              <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
+                <div className="mr-2 size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                Loading Google users…
+              </div>
+            ) : googleUsers.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                No Google users have signed in yet.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                      <th className="py-2 pr-4">User</th>
+                      <th className="py-2 pr-4">Email</th>
+                      <th className="py-2 pr-4">Current Role</th>
+                      <th className="py-2 pr-4">Assign Role</th>
+                      <th className="py-2">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {googleUsers.map((u) => {
+                      const isAdmin = u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+                      return (
+                        <tr key={u.id} className="border-b border-border/60 last:border-0">
+                          <td className="py-3 pr-4">
+                            <div className="flex items-center gap-2">
+                              {u.profile_photo ? (
+                                <img src={u.profile_photo} alt={u.first_name} className="size-7 rounded-full object-cover" />
+                              ) : (
+                                <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                                  {(u.first_name?.[0] || '?').toUpperCase()}
+                                </div>
+                              )}
+                              <span className="font-medium">{u.first_name} {u.last_name}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 pr-4 text-muted-foreground">{u.email}</td>
+                          <td className="py-3 pr-4">
+                            <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              u.role === 'admin' ? 'bg-primary/10 text-primary' :
+                              u.role === 'unassigned' ? 'bg-warning/10 text-warning' :
+                              'bg-success/10 text-success'
+                            }`}>
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className="py-3 pr-4">
+                            {isAdmin ? (
+                              <span className="text-xs text-muted-foreground italic">Protected</span>
+                            ) : (
+                              <select
+                                id={`role-select-${u.id}`}
+                                value={pendingRoles[u.id] || u.role_id}
+                                onChange={(e) => setPendingRoles(prev => ({ ...prev, [u.id]: Number(e.target.value) }))}
+                                className="h-8 rounded-lg border border-border bg-card px-2 text-xs outline-none focus:border-primary"
+                              >
+                                {ASSIGNABLE_ROLES.map(r => (
+                                  <option key={r.id} value={r.id}>{r.label}</option>
+                                ))}
+                              </select>
+                            )}
+                          </td>
+                          <td className="py-3">
+                            {isAdmin ? (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            ) : (
+                              <button
+                                id={`assign-role-btn-${u.id}`}
+                                onClick={() => handleAssignRole(u.id)}
+                                disabled={roleAssigning[u.id] || pendingRoles[u.id] === u.role_id}
+                                className="inline-flex h-7 items-center gap-1 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+                              >
+                                {roleAssigning[u.id] ? (
+                                  <><div className="size-3 animate-spin rounded-full border border-white border-t-transparent" /> Saving…</>
+                                ) : 'Assign'}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <QuickActionModal

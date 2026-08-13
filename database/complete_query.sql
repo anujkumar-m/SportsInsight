@@ -22,9 +22,9 @@
 --   Athlete  : arjun.nair@sportsacademy.com / Admin@123
 -- ============================================================
 
-DROP DATABASE IF EXISTS sports_acadmey;
-CREATE DATABASE sports_acadmey CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE sports_acadmey;
+DROP DATABASE IF EXISTS sports_academy;
+CREATE DATABASE sports_academy CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE sports_academy;
 
 -- ============================================================
 -- ROLES
@@ -45,12 +45,14 @@ CREATE TABLE IF NOT EXISTS users (
     role_id INT UNSIGNED NOT NULL,
     username VARCHAR(100) NOT NULL UNIQUE,
     email VARCHAR(150) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL DEFAULT '',
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     phone VARCHAR(20),
     profile_photo VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
+    google_id VARCHAR(255) UNIQUE NULL,
+    auth_provider ENUM('local','google') DEFAULT 'local',
     password_reset_token VARCHAR(255),
     password_reset_expires TIMESTAMP NULL,
     last_login TIMESTAMP NULL,
@@ -847,24 +849,27 @@ CREATE TABLE IF NOT EXISTS coach_remarks (
 
 -- Roles
 INSERT INTO roles (id, name, description) VALUES
-(1, 'admin', 'System Administrator with full access'),
-(2, 'coach', 'Coach who manages and trains athletes'),
-(3, 'selector', 'Selector who evaluates and selects athletes'),
-(4, 'athlete', 'Athlete registered in the academy');
+(1, 'admin',      'System Administrator with full access'),
+(2, 'coach',      'Coach who manages and trains athletes'),
+(3, 'selector',   'Selector who evaluates and selects athletes'),
+(4, 'athlete',    'Athlete registered in the academy'),
+(5, 'unassigned', 'Google user awaiting role assignment by admin');
 
--- Users (password: Admin@123 for all)
-INSERT INTO users (id, role_id, username, email, password_hash, first_name, last_name, phone, is_active) VALUES
-(1,  1, 'admin',            'admin@sportsacademy.com',      '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Super',  'Admin',   '+91-9876543210', TRUE),
-(2,  2, 'coach.rajesh',     'rajesh.kumar@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Rajesh', 'Kumar',   '+91-9876543211', TRUE),
-(3,  2, 'coach.priya',      'priya.sharma@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Priya',  'Sharma',  '+91-9876543212', TRUE),
-(4,  2, 'coach.arun',       'arun.verma@sportsacademy.com', '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Arun',   'Verma',   '+91-9876543213', TRUE),
-(5,  3, 'selector.vikram',  'vikram.singh@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Vikram', 'Singh',   '+91-9876543214', TRUE),
-(6,  3, 'selector.meera',   'meera.reddy@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Meera',  'Reddy',   '+91-9876543215', TRUE),
-(7,  4, 'athlete.arjun',    'arjun.nair@sportsacademy.com', '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Arjun',  'Nair',    '+91-9876543216', TRUE),
-(8,  4, 'athlete.sneha',    'sneha.patel@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Sneha',  'Patel',   '+91-9876543217', TRUE),
-(9,  4, 'athlete.rohit',    'rohit.sharma@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u','Rohit',  'Sharma',  '+91-9876543218', TRUE),
-(10, 4, 'athlete.kavya',    'kavya.menon@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Kavya',  'Menon',   '+91-9876543219', TRUE),
-(11, 4, 'athlete.kiran',    'kiran.rao@sportsacademy.com',  '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Kiran',  'Rao',     '+91-9876543220', TRUE);
+
+-- Users (password: Admin@123 / admin@123 for all)
+INSERT INTO users (id, role_id, username, email, password_hash, first_name, last_name, phone, auth_provider, is_active) VALUES
+(1,  1, 'admin',            'admin@sportsacademy.com',      '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Super',  'Admin',   '+91-9876543210', 'local',  TRUE),
+(2,  2, 'coach.rajesh',     'rajesh.kumar@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Rajesh', 'Kumar',   '+91-9876543211', 'local',  TRUE),
+(3,  2, 'coach.priya',      'priya.sharma@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Priya',  'Sharma',  '+91-9876543212', 'local',  TRUE),
+(4,  2, 'coach.arun',       'arun.verma@sportsacademy.com', '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Arun',   'Verma',   '+91-9876543213', 'local',  TRUE),
+(5,  3, 'selector.vikram',  'vikram.singh@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Vikram', 'Singh',   '+91-9876543214', 'local',  TRUE),
+(6,  3, 'selector.meera',   'meera.reddy@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Meera',  'Reddy',   '+91-9876543215', 'local',  TRUE),
+(7,  4, 'athlete.arjun',    'arjun.nair@sportsacademy.com', '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Arjun',  'Nair',    '+91-9876543216', 'local',  TRUE),
+(8,  4, 'athlete.sneha',    'sneha.patel@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Sneha',  'Patel',   '+91-9876543217', 'local',  TRUE),
+(9,  4, 'athlete.rohit',    'rohit.sharma@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u','Rohit',  'Sharma',  '+91-9876543218', 'local',  TRUE),
+(10, 4, 'athlete.kavya',    'kavya.menon@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Kavya',  'Menon',   '+91-9876543219', 'local',  TRUE),
+(11, 4, 'athlete.kiran',    'kiran.rao@sportsacademy.com',  '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Kiran',  'Rao',     '+91-9876543220', 'local',  TRUE),
+(12, 1, 'samshibin1125',    'samshibin1125@gmail.com',      '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Sam',    'Shibin',  '+91-9876543299', 'google', TRUE);
 
 -- Sports
 INSERT INTO sports (id, name, description, icon, is_active) VALUES
@@ -1373,4 +1378,6 @@ INSERT INTO rankings (athlete_id, sport_id, category_id, rank_position, performa
 (2, 2, 14,3, 88.4, 87.6, 87.0, 87.80, 'overall', '2026-08-01'),
 (5, 3, 9, 4, 89.0, 87.5, 86.0, 87.80, 'overall', '2026-08-01'),
 (4, 2, 13,5, 88.0, 86.0, 85.0, 86.50, 'overall', '2026-08-01');
+
+
 

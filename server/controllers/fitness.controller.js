@@ -1,8 +1,20 @@
 const fitnessService = require('../services/fitness.service');
+const athleteService = require('../services/athlete.service');
+
+function applyCoachFilter(req, queryParams = {}) {
+  const params = { ...queryParams };
+  if (req.user?.role?.toLowerCase() === 'coach') {
+    delete params.coach_id;
+    delete params.coachId;
+    params.coach_id = req.user.coach_id ?? -1;
+  }
+  return params;
+}
 
 async function getFitnessAssessments(req, res, next) {
   try {
-    const data = await fitnessService.getFitnessAssessments(req.query);
+    const queryParams = applyCoachFilter(req, req.query);
+    const data = await fitnessService.getFitnessAssessments(queryParams);
     res.json({ success: true, data });
   } catch (error) {
     next(error);
@@ -15,6 +27,9 @@ async function getFitnessById(req, res, next) {
     if (!record) {
       return res.status(404).json({ success: false, message: 'Fitness assessment record not found.' });
     }
+    if (req.user?.role?.toLowerCase() === 'coach' && record.coach_id !== req.user.coach_id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only view fitness assessments for your assigned athletes.' });
+    }
     res.json({ success: true, data: record });
   } catch (error) {
     next(error);
@@ -23,6 +38,12 @@ async function getFitnessById(req, res, next) {
 
 async function createFitness(req, res, next) {
   try {
+    if (req.user?.role?.toLowerCase() === 'coach' && req.body.athlete_id) {
+      const athlete = await athleteService.getAthleteById(req.body.athlete_id);
+      if (!athlete || athlete.coach_id !== req.user.coach_id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only add fitness assessments for your assigned athletes.' });
+      }
+    }
     const record = await fitnessService.createFitnessAssessment(req.body, req.user?.id);
     res.status(201).json({ success: true, message: 'Fitness assessment added successfully.', data: record });
   } catch (error) {
@@ -32,6 +53,12 @@ async function createFitness(req, res, next) {
 
 async function updateFitness(req, res, next) {
   try {
+    if (req.user?.role?.toLowerCase() === 'coach') {
+      const existing = await fitnessService.getFitnessById(req.params.id);
+      if (!existing || existing.coach_id !== req.user.coach_id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only edit fitness assessments for your assigned athletes.' });
+      }
+    }
     const record = await fitnessService.updateFitnessAssessment(req.params.id, req.body, req.user?.id);
     res.json({ success: true, message: 'Fitness assessment updated successfully.', data: record });
   } catch (error) {
@@ -41,6 +68,12 @@ async function updateFitness(req, res, next) {
 
 async function deleteFitness(req, res, next) {
   try {
+    if (req.user?.role?.toLowerCase() === 'coach') {
+      const existing = await fitnessService.getFitnessById(req.params.id);
+      if (!existing || existing.coach_id !== req.user.coach_id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only delete fitness assessments for your assigned athletes.' });
+      }
+    }
     const result = await fitnessService.deleteFitnessAssessment(req.params.id, req.user?.id);
     res.json(result);
   } catch (error) {
@@ -50,6 +83,12 @@ async function deleteFitness(req, res, next) {
 
 async function getAthleteFitnessHistory(req, res, next) {
   try {
+    if (req.user?.role?.toLowerCase() === 'coach') {
+      const athlete = await athleteService.getAthleteById(req.params.athleteId);
+      if (!athlete || athlete.coach_id !== req.user.coach_id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only view fitness history for your assigned athletes.' });
+      }
+    }
     const data = await fitnessService.getAthleteFitnessHistory(req.params.athleteId);
     res.json({ success: true, data });
   } catch (error) {
@@ -59,7 +98,8 @@ async function getAthleteFitnessHistory(req, res, next) {
 
 async function getFitnessAnalytics(req, res, next) {
   try {
-    const data = await fitnessService.getFitnessAnalytics(req.query);
+    const queryParams = applyCoachFilter(req, req.query);
+    const data = await fitnessService.getFitnessAnalytics(queryParams);
     res.json({ success: true, data });
   } catch (error) {
     next(error);
@@ -75,3 +115,4 @@ module.exports = {
   getAthleteFitnessHistory,
   getFitnessAnalytics
 };
+

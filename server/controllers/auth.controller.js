@@ -1,4 +1,7 @@
 const authService = require('../services/auth.service');
+const googleAuthService = require('../services/googleAuth.service');
+const { getAllGoogleUsers, updateUserRole, findUserById } = require('../models/user.model');
+const { pool } = require('../config/database');
 const { body } = require('express-validator');
 const { validate } = require('../middleware/validate.middleware');
 
@@ -124,6 +127,65 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+// ─── Google OAuth Controllers ─────────────────────────────
+const googleLogin = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ success: false, message: 'Google credential is required.' });
+    }
+    const ip = req.ip || req.connection?.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+    const data = await googleAuthService.googleLogin(credential, ip, userAgent);
+    res.status(200).json({ success: true, message: 'Google login successful', data });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ success: false, message: err.message });
+    next(err);
+  }
+};
+
+const getGoogleUsers = async (req, res, next) => {
+  try {
+    const users = await getAllGoogleUsers();
+    res.status(200).json({ success: true, data: { users } });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const assignRole = async (req, res, next) => {
+  try {
+    const { userId, roleId } = req.body;
+    if (!userId || !roleId) {
+      return res.status(400).json({ success: false, message: 'userId and roleId are required.' });
+    }
+
+    // Protect: cannot change the designated admin Google email's role
+    const ADMIN_EMAIL = process.env.ADMIN_GOOGLE_EMAIL;
+    const [targetRows] = await pool.query('SELECT email FROM users WHERE id = ?', [userId]);
+    if (!targetRows.length) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+    if (targetRows[0].email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      return res.status(403).json({ success: false, message: 'Cannot change the role of the designated admin account.' });
+    }
+
+    // Validate roleId exists (and is not admin role = 1, since admin is reserved for designated email)
+    const [roleRows] = await pool.query("SELECT id, name FROM roles WHERE id = ?", [roleId]);
+    if (!roleRows.length) {
+      return res.status(400).json({ success: false, message: 'Invalid role.' });
+    }
+    if (roleRows[0].name === 'admin') {
+      return res.status(403).json({ success: false, message: 'Cannot assign admin role to other users.' });
+    }
+
+    await updateUserRole(userId, roleId);
+    res.status(200).json({ success: true, message: 'Role assigned successfully.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   login,
   logout,
@@ -133,6 +195,9 @@ module.exports = {
   getProfile,
   updateProfile,
   changePassword,
+  googleLogin,
+  getGoogleUsers,
+  assignRole,
   loginValidation,
   forgotPasswordValidation,
   resetPasswordValidation,
