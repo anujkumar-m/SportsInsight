@@ -1,19 +1,24 @@
 const performanceService = require('../services/performance.service');
 const athleteService = require('../services/athlete.service');
 
-function applyCoachFilter(req, queryParams = {}) {
+function applyRoleFilters(req, queryParams = {}) {
   const params = { ...queryParams };
-  if (req.user?.role?.toLowerCase() === 'coach') {
+  const role = req.user?.role?.toLowerCase();
+  if (role === 'coach') {
     delete params.coach_id;
     delete params.coachId;
     params.coach_id = req.user.coach_id ?? -1;
+  } else if (role === 'athlete') {
+    delete params.athlete_id;
+    delete params.athleteId;
+    params.athleteId = req.user.athlete_id ?? -1;
   }
   return params;
 }
 
 async function getPerformanceRecords(req, res, next) {
   try {
-    const queryParams = applyCoachFilter(req, req.query);
+    const queryParams = applyRoleFilters(req, req.query);
     const data = await performanceService.getPerformanceRecords(queryParams);
     res.json({ success: true, data });
   } catch (error) {
@@ -29,6 +34,9 @@ async function getPerformanceById(req, res, next) {
     }
     if (req.user?.role?.toLowerCase() === 'coach' && record.coach_id !== req.user.coach_id) {
       return res.status(403).json({ success: false, message: 'Access denied. You can only view performance records for your assigned athletes.' });
+    }
+    if (req.user?.role?.toLowerCase() === 'athlete' && record.athlete_id !== req.user.athlete_id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only view your own performance records.' });
     }
     res.json({ success: true, data: record });
   } catch (error) {
@@ -89,6 +97,9 @@ async function getAthletePerformanceHistory(req, res, next) {
         return res.status(403).json({ success: false, message: 'Access denied. You can only view performance history for your assigned athletes.' });
       }
     }
+    if (req.user?.role?.toLowerCase() === 'athlete' && Number(req.params.athleteId) !== req.user.athlete_id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only view your own performance history.' });
+    }
     const data = await performanceService.getAthletePerformanceHistory(req.params.athleteId);
     res.json({ success: true, data });
   } catch (error) {
@@ -98,7 +109,7 @@ async function getAthletePerformanceHistory(req, res, next) {
 
 async function getPerformanceAnalytics(req, res, next) {
   try {
-    const queryParams = applyCoachFilter(req, req.query);
+    const queryParams = applyRoleFilters(req, req.query);
     const data = await performanceService.getPerformanceAnalytics(queryParams);
     res.json({ success: true, data });
   } catch (error) {
@@ -135,7 +146,7 @@ async function importPerformanceData(req, res, next) {
 
 async function exportPerformanceData(req, res, next) {
   try {
-    const queryParams = applyCoachFilter(req, req.query);
+    const queryParams = applyRoleFilters(req, req.query);
     const data = await performanceService.exportPerformanceData(queryParams);
     res.json({ success: true, data });
   } catch (error) {

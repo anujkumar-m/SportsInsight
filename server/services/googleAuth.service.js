@@ -10,7 +10,10 @@ const { pool } = require('../config/database');
 const { generateAccessToken, generateRefreshToken } = require('../utils/jwt.util');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const ADMIN_EMAIL = (process.env.ADMIN_GOOGLE_EMAIL || '').trim().toLowerCase();
+const ADMIN_EMAILS = (process.env.ADMIN_GOOGLE_EMAIL || '')
+  .split(',')
+  .map(email => email.trim().toLowerCase())
+  .filter(Boolean);
 
 /**
  * Verify a Google credential token and return the payload.
@@ -89,7 +92,7 @@ const googleLogin = async (credential, ip, userAgent) => {
 
   // 2. Normalize email — trim whitespace and lowercase for all comparisons
   const email = rawEmail.trim().toLowerCase();
-  const isAdminEmail = email === ADMIN_EMAIL;
+  const isAdminEmail = ADMIN_EMAILS.includes(email);
 
   // [DEBUG] Trace incoming email and admin check
   console.log(`[DEBUG] googleAuth.googleLogin: email='${email}' isAdmin=${isAdminEmail} googleId='${googleId}'`);

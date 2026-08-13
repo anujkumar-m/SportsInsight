@@ -1,18 +1,23 @@
 const attendanceService = require('../services/attendance.service');
 
-function applyCoachFilter(req, queryParams = {}) {
+function applyRoleFilters(req, queryParams = {}) {
   const params = { ...queryParams };
-  if (req.user?.role?.toLowerCase() === 'coach') {
+  const role = req.user?.role?.toLowerCase();
+  if (role === 'coach') {
     delete params.coach_id;
     delete params.coachId;
     params.coach_id = req.user.coach_id ?? -1;
+  } else if (role === 'athlete') {
+    delete params.athlete_id;
+    delete params.athleteId;
+    params.athleteId = req.user.athlete_id ?? -1;
   }
   return params;
 }
 
 async function getAttendanceRecords(req, res, next) {
   try {
-    const queryParams = applyCoachFilter(req, req.query);
+    const queryParams = applyRoleFilters(req, req.query);
     const data = await attendanceService.getAttendanceRecords(queryParams);
     res.json({ success: true, data });
   } catch (error) {
@@ -49,7 +54,7 @@ async function deleteAttendance(req, res, next) {
 
 async function getAttendanceReport(req, res, next) {
   try {
-    const queryParams = applyCoachFilter(req, req.query);
+    const queryParams = applyRoleFilters(req, req.query);
     const data = await attendanceService.getAttendanceReport(queryParams);
     res.json({ success: true, data });
   } catch (error) {

@@ -157,9 +157,11 @@ const AttendanceList = () => {
             <Button variant="outline" size="sm" onClick={() => navigate('/attendance/calendar')}>
               <CalendarIcon size={14} className="mr-1.5" /> Calendar View
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/attendance/reports')}>
-              <FileText size={14} className="mr-1.5" /> Reports & AI Alerts
-            </Button>
+            {role !== 'athlete' && (
+              <Button variant="outline" size="sm" onClick={() => navigate('/attendance/reports')}>
+                <FileText size={14} className="mr-1.5" /> Reports & AI Alerts
+              </Button>
+            )}
             {(role === 'admin' || role === 'coach') && (
               <Button size="sm" onClick={() => navigate('/attendance/mark')}>
                 <Plus size={14} className="mr-1.5" /> Mark Attendance
@@ -174,7 +176,7 @@ const AttendanceList = () => {
         <div className="flex-1 min-w-[200px]">
           <input
             type="text"
-            placeholder="Search athlete..."
+            placeholder="Search date, status..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -198,16 +200,18 @@ const AttendanceList = () => {
           <option value="half_day">Half Day</option>
           <option value="late">Late</option>
         </select>
-        <select
-          value={athleteId}
-          onChange={(e) => { setAthleteId(e.target.value); setPage(1); }}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground min-w-[160px]"
-        >
-          <option value="">All Athletes</option>
-          {athletes.map((a) => (
-            <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>
-          ))}
-        </select>
+        {role !== 'athlete' && (
+          <select
+            value={athleteId}
+            onChange={(e) => { setAthleteId(e.target.value); setPage(1); }}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground min-w-[160px]"
+          >
+            <option value="">All Athletes</option>
+            {athletes.map((a) => (
+              <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>
+            ))}
+          </select>
+        )}
         <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setDate(''); setStatus(''); setAthleteId(''); }}>
           <RefreshCw size={13} className="mr-1" /> Reset
         </Button>

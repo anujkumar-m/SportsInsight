@@ -4,12 +4,14 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from '
 import toast from 'react-hot-toast';
 import { attendanceService } from '../../services/attendanceService';
 import { athleteService } from '../../services/athleteService';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import PageHeader from '../../components/common/PageHeader';
 
 const AttendanceCalendar = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [athletes, setAthletes] = useState([]);
@@ -19,6 +21,7 @@ const AttendanceCalendar = () => {
 
   useEffect(() => {
     async function loadAthletes() {
+      if (role === 'athlete') return;
       try {
         const res = await athleteService.getAthletes({ limit: 150 });
         const list = res.data?.athletes || res.data || [];
@@ -29,11 +32,11 @@ const AttendanceCalendar = () => {
       }
     }
     loadAthletes();
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     async function fetchCalendarLogs() {
-      if (!selectedAthlete) return;
+      if (role !== 'athlete' && !selectedAthlete) return;
       setLoading(true);
       try {
         const year = currentDate.getFullYear();
@@ -43,7 +46,7 @@ const AttendanceCalendar = () => {
         const dateTo = `${year}-${month}-${lastDay}`;
 
         const res = await attendanceService.getRecords({
-          athleteId: selectedAthlete,
+          athleteId: role !== 'athlete' ? selectedAthlete : undefined,
           dateFrom,
           dateTo,
           limit: 100,
@@ -56,7 +59,7 @@ const AttendanceCalendar = () => {
       }
     }
     fetchCalendarLogs();
-  }, [selectedAthlete, currentDate]);
+  }, [selectedAthlete, currentDate, role]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -82,7 +85,7 @@ const AttendanceCalendar = () => {
     <div className="space-y-6">
       <PageHeader
         title="Attendance Calendar View"
-        subtitle="Visual monthly attendance log and status distribution for selected athlete."
+        subtitle="Visual monthly attendance log and status distribution."
         action={
           <Button variant="outline" size="sm" onClick={() => navigate('/attendance')}>
             <ArrowLeft size={14} className="mr-1.5" /> Back to Records
@@ -94,15 +97,19 @@ const AttendanceCalendar = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <CalendarIcon size={20} className="text-primary" />
-            <select
-              value={selectedAthlete}
-              onChange={(e) => setSelectedAthlete(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground font-semibold min-w-[200px]"
-            >
-              {athletes.map((a) => (
-                <option key={a.id} value={a.id}>{a.first_name} {a.last_name} ({a.athlete_code})</option>
-              ))}
-            </select>
+            {role !== 'athlete' ? (
+              <select
+                value={selectedAthlete}
+                onChange={(e) => setSelectedAthlete(e.target.value)}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground font-semibold min-w-[200px]"
+              >
+                {athletes.map((a) => (
+                  <option key={a.id} value={a.id}>{a.first_name} {a.last_name} ({a.athlete_code})</option>
+                ))}
+              </select>
+            ) : (
+              <span className="text-sm font-semibold text-foreground">My Attendance Logs</span>
+            )}
           </div>
 
           <div className="flex items-center gap-3">

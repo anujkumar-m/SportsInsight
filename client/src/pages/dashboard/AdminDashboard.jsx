@@ -59,7 +59,6 @@ export default function AdminDashboard() {
   const [pendingRoles, setPendingRoles] = useState({});
   const navigate = useNavigate();
 
-  const ADMIN_EMAIL = 'samshibin1125@gmail.com';
   const ASSIGNABLE_ROLES = [
     { id: 2, name: 'coach', label: 'Coach' },
     { id: 3, name: 'selector', label: 'State Selector' },
@@ -400,7 +399,7 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody>
                     {googleUsers.map((u) => {
-                      const isAdmin = u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+                      const isAdmin = u.role === 'admin';
                       return (
                         <tr key={u.id} className="border-b border-border/60 last:border-0">
                           <td className="py-3 pr-4">

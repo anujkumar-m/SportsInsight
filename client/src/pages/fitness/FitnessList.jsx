@@ -204,12 +204,16 @@ const FitnessList = () => {
         subtitle="Evaluate 13 physical fitness parameters, real-time BMI, recovery readiness, and injury risk."
         action={
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/fitness/analytics')}>
-              <BarChart2 size={14} className="mr-1.5" /> Analytics
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/fitness/reports')}>
-              <FileText size={14} className="mr-1.5" /> Reports
-            </Button>
+            {role !== 'athlete' && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => navigate('/fitness/analytics')}>
+                  <BarChart2 size={14} className="mr-1.5" /> Analytics
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate('/fitness/reports')}>
+                  <FileText size={14} className="mr-1.5" /> Reports
+                </Button>
+              </>
+            )}
             {(role === 'admin' || role === 'coach') && (
               <Button size="sm" onClick={() => navigate('/fitness/add')}>
                 <Plus size={14} className="mr-1.5" /> Add Assessment
@@ -220,7 +224,7 @@ const FitnessList = () => {
       />
 
       {/* Fitness KPI Cards */}
-      {analytics && (
+      {analytics && role !== 'athlete' && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
             <div className="text-xs text-muted-foreground font-medium">Total Evaluations</div>
@@ -250,22 +254,24 @@ const FitnessList = () => {
         <div className="flex-1 min-w-[200px]">
           <input
             type="text"
-            placeholder="Search athlete code, name..."
+            placeholder="Search fitness metrics..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
-        <select
-          value={athleteId}
-          onChange={(e) => { setAthleteId(e.target.value); setPage(1); }}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary min-w-[180px]"
-        >
-          <option value="">All Athletes</option>
-          {athletes.map((a) => (
-            <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>
-          ))}
-        </select>
+        {role !== 'athlete' && (
+          <select
+            value={athleteId}
+            onChange={(e) => { setAthleteId(e.target.value); setPage(1); }}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary min-w-[180px]"
+          >
+            <option value="">All Athletes</option>
+            {athletes.map((a) => (
+              <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>
+            ))}
+          </select>
+        )}
         <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setAthleteId(''); }}>
           <RefreshCw size={13} className="mr-1" /> Reset
         </Button>

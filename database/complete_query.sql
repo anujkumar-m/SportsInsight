@@ -869,7 +869,14 @@ INSERT INTO users (id, role_id, username, email, password_hash, first_name, last
 (9,  4, 'athlete.rohit',    'rohit.sharma@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u','Rohit',  'Sharma',  '+91-9876543218', 'local',  TRUE),
 (10, 4, 'athlete.kavya',    'kavya.menon@sportsacademy.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Kavya',  'Menon',   '+91-9876543219', 'local',  TRUE),
 (11, 4, 'athlete.kiran',    'kiran.rao@sportsacademy.com',  '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Kiran',  'Rao',     '+91-9876543220', 'local',  TRUE),
-(12, 1, 'samshibin1125',    'samshibin1125@gmail.com',      '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Sam',    'Shibin',  '+91-9876543299', 'google', TRUE);
+(12, 1, 'samshibin1125',    'samshibin1125@gmail.com',      '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Sam',    'Shibin',  '+91-9876543299', 'google', TRUE),
+(13, 2, 'coach.adhithyan',   'adhithyanshanmugam@gmail.com',  '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'Adhithyan', 'M S',     '+91-9876543221', 'google', TRUE),
+(14, 2, 'coach.adhithyan.ms','adhithyan.it23@bitsathy.ac.in', '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'ADHITHYAN', 'M S',     '+91-9876543222', 'google', TRUE),
+(15, 4, 'athlete.kishorkumar','kishorkumarp.cs24@bitsathy.ac.in','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u','KISHORKUMAR','P',      '+91-9876543223', 'google', TRUE),
+(16, 4, 'athlete.sanjay',    'sanjays.cs24@bitsathy.ac.in',   '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'SANJAY',    'S',     '+91-9876543224', 'google', TRUE),
+(17, 4, 'athlete.shanjai',   'shanjai.it23@bitsathy.ac.in',   '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'SHANJAI',   'M R',   '+91-9876543225', 'google', TRUE),
+(18, 4, 'athlete.vignesh',   'vigneshc.cs24@bitsathy.ac.in',  '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'VIGNESH',   'C',     '+91-9876543226', 'google', TRUE),
+(19, 4, 'athlete.rahulsanjay','rahulsanjay.it23@bitsathy.ac.in','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u','RAHUL SANJAY','G',    '+91-9876543227', 'google', TRUE);
 
 -- Sports
 INSERT INTO sports (id, name, description, icon, is_active) VALUES
@@ -949,7 +956,9 @@ INSERT INTO categories (id, sport_id, name, age_min, age_max, gender, is_active)
 INSERT INTO coaches (id, user_id, sport_id, qualification, experience_years, specialization) VALUES
 (1, 2, 1, 'NIS Diploma in Athletics',  12, 'Sprint & Track Events'),
 (2, 3, 2, 'NIS Diploma in Swimming',   8,  'Freestyle & Backstroke'),
-(3, 4, 3, 'UEFA B License',            10, 'Youth Football Development');
+(3, 4, 3, 'UEFA B License',            10, 'Youth Football Development'),
+(4, 13, 3, 'UEFA A License',            8,  'Tactical Training & Offense'),
+(5, 14, 4, 'BCCI Level 2 Coach',        6,  'Batting & All-Round Development');
 
 -- Selectors
 INSERT INTO selectors (id, user_id, designation, organization) VALUES
@@ -962,7 +971,12 @@ INSERT INTO athletes (id, user_id, coach_id, sport_id, category_id, athlete_code
 (2, 8,  2, 2, 14, 'ATH-2024-002', '2007-09-22', 'female', 165.00, 55.00, 'O+',  'Bangalore', 'Karnataka',   '2024-01-15'),
 (3, 9,  1, 1, 5,  'ATH-2024-003', '2005-03-08', 'male',   178.00, 68.50, 'A+',  'Hyderabad', 'Telangana',   '2024-01-20'),
 (4, 10, 2, 2, 13, 'ATH-2024-004', '2009-11-30', 'female', 158.00, 48.00, 'AB+', 'Kochi',     'Kerala',      '2024-02-01'),
-(5, 11, 3, 3, 9,  'ATH-2024-005', '2007-07-18', 'male',   170.00, 65.00, 'O-',  'Mumbai',    'Maharashtra', '2024-02-10');
+(5, 11, 3, 3, 9,  'ATH-2024-005', '2007-07-18', 'male',   170.00, 65.00, 'O-',  'Mumbai',    'Maharashtra', '2024-02-10'),
+(6, 15, 4, 3, 10, 'ATH-2024-006', '2006-04-12', 'male',   174.00, 64.00, 'B+',  'Coimbatore','Tamil Nadu',  '2024-03-01'),
+(7, 16, 4, 3, 10, 'ATH-2024-007', '2006-08-25', 'male',   176.50, 67.00, 'O+',  'Erode',     'Tamil Nadu',  '2024-03-05'),
+(8, 17, 5, 4, 12, 'ATH-2024-008', '2005-12-10', 'male',   172.00, 63.00, 'A+',  'Salem',     'Tamil Nadu',  '2024-03-10'),
+(9, 18, 5, 4, 12, 'ATH-2024-009', '2006-02-18', 'male',   179.00, 70.00, 'B+',  'Madurai',   'Tamil Nadu',  '2024-03-15'),
+(10, 19, 4, 3, 10, 'ATH-2024-010', '2005-10-05', 'male',   175.00, 66.00, 'AB+', 'Tiruchirappalli','Tamil Nadu','2024-03-20');
 
 -- Performance Records
 INSERT INTO performance_records (athlete_id, coach_id, sport_id, record_date, metric_name, metric_value, metric_unit, performance_score, improvement_rate) VALUES
@@ -982,7 +996,16 @@ INSERT INTO performance_records (athlete_id, coach_id, sport_id, record_date, me
 (3, 1, 1, '2024-05-25', '200m Sprint', 22.65, 'seconds', 88.00, 4.13),
 (5, 3, 3, '2024-02-01', 'Goals Scored', 8.00,  'goals',   75.00, 0.00),
 (5, 3, 3, '2024-03-01', 'Goals Scored', 11.00, 'goals',   82.00, 9.33),
-(5, 3, 3, '2024-04-01', 'Goals Scored', 14.00, 'goals',   87.50, 6.71);
+(5, 3, 3, '2024-04-01', 'Goals Scored', 14.00, 'goals',   87.50, 6.71),
+(6, 4, 3, '2024-03-15', 'Goals Scored', 6.00,  'goals',   80.00, 0.00),
+(6, 4, 3, '2024-04-15', 'Goals Scored', 9.00,  'goals',   85.50, 5.50),
+(7, 4, 3, '2024-03-20', 'Pass Accuracy', 82.00, '%',      82.00, 0.00),
+(7, 4, 3, '2024-04-20', 'Pass Accuracy', 88.00, '%',      88.00, 6.00),
+(8, 5, 4, '2024-03-25', 'Runs Scored',  45.00, 'runs',    81.00, 0.00),
+(8, 5, 4, '2024-04-25', 'Runs Scored',  68.00, 'runs',    87.50, 6.50),
+(9, 5, 4, '2024-03-28', 'Wickets Taken', 3.00, 'wickets', 83.00, 0.00),
+(9, 5, 4, '2024-04-28', 'Wickets Taken', 5.00, 'wickets', 89.00, 6.00),
+(10, 4, 3, '2024-04-02', 'Distance Covered', 10.50, 'km',  84.00, 0.00);
 
 -- Fitness Assessments
 INSERT INTO fitness_assessments (athlete_id, coach_id, assessment_date, strength_score, endurance_score, stamina_score, flexibility_score, agility_score, speed_score, reaction_time_ms, balance_score, body_fat_percentage, vo2_max, resting_heart_rate, recovery_rate_bpm, bmi, overall_fitness_score) VALUES
@@ -996,7 +1019,12 @@ INSERT INTO fitness_assessments (athlete_id, coach_id, assessment_date, strength
 (3, 1, '2024-03-25', 87.00, 83.00, 85.00, 77.00, 88.00, 86.00, 195.00, 79.00, 14.50, 54.00, 61, 29, 21.40, 84.00),
 (3, 1, '2024-05-25', 91.00, 87.00, 89.00, 82.00, 91.00, 90.00, 182.00, 84.00, 13.80, 56.50, 59, 31, 21.20, 88.00),
 (5, 3, '2024-02-01', 78.00, 82.00, 79.00, 75.00, 86.00, 80.00, 210.00, 76.00, 16.00, 50.00, 64, 26, 22.50, 80.00),
-(5, 3, '2024-04-01', 83.00, 86.00, 84.00, 79.00, 89.00, 85.00, 198.00, 80.00, 15.20, 52.50, 62, 28, 22.20, 84.20);
+(5, 3, '2024-04-01', 83.00, 86.00, 84.00, 79.00, 89.00, 85.00, 198.00, 80.00, 15.20, 52.50, 62, 28, 22.20, 84.20),
+(6, 4, '2024-03-15', 80.00, 84.00, 82.00, 76.00, 88.00, 84.00, 195.00, 78.00, 14.20, 53.00, 61, 30, 21.10, 82.50),
+(7, 4, '2024-03-20', 82.00, 86.00, 85.00, 78.00, 90.00, 86.00, 190.00, 80.00, 13.90, 55.00, 59, 31, 21.50, 85.00),
+(8, 5, '2024-03-25', 78.00, 81.00, 80.00, 82.00, 85.00, 82.00, 200.00, 81.00, 15.00, 51.50, 62, 28, 21.30, 81.00),
+(9, 5, '2024-03-28', 85.00, 88.00, 87.00, 80.00, 87.00, 85.00, 192.00, 83.00, 14.00, 54.00, 60, 30, 21.80, 85.50),
+(10, 4, '2024-04-02', 81.00, 85.00, 83.00, 77.00, 89.00, 85.00, 196.00, 79.00, 14.50, 52.80, 61, 29, 21.50, 83.20);
 
 -- Attendance Records
 INSERT IGNORE INTO attendance (athlete_id, coach_id, attendance_date, status) VALUES
@@ -1015,7 +1043,17 @@ INSERT IGNORE INTO attendance (athlete_id, coach_id, attendance_date, status) VA
 (3, 1, DATE_SUB(CURDATE(), INTERVAL 2 DAY),  'present'),
 (3, 1, DATE_SUB(CURDATE(), INTERVAL 3 DAY),  'absent'),
 (5, 3, DATE_SUB(CURDATE(), INTERVAL 1 DAY),  'present'),
-(5, 3, DATE_SUB(CURDATE(), INTERVAL 2 DAY),  'absent');
+(5, 3, DATE_SUB(CURDATE(), INTERVAL 2 DAY),  'absent'),
+(6, 4, DATE_SUB(CURDATE(), INTERVAL 1 DAY),  'present'),
+(6, 4, DATE_SUB(CURDATE(), INTERVAL 2 DAY),  'present'),
+(7, 4, DATE_SUB(CURDATE(), INTERVAL 1 DAY),  'present'),
+(7, 4, DATE_SUB(CURDATE(), INTERVAL 2 DAY),  'late'),
+(8, 5, DATE_SUB(CURDATE(), INTERVAL 1 DAY),  'present'),
+(8, 5, DATE_SUB(CURDATE(), INTERVAL 2 DAY),  'present'),
+(9, 5, DATE_SUB(CURDATE(), INTERVAL 1 DAY),  'present'),
+(9, 5, DATE_SUB(CURDATE(), INTERVAL 2 DAY),  'leave'),
+(10, 4, DATE_SUB(CURDATE(), INTERVAL 1 DAY), 'present'),
+(10, 4, DATE_SUB(CURDATE(), INTERVAL 2 DAY), 'present');
 
 -- Injuries
 INSERT INTO injuries (athlete_id, injury_type, body_part, injury_date, severity, diagnosis, treatment, doctor_name, hospital, expected_recovery_date, recovery_status, availability_status, is_available) VALUES
@@ -1038,7 +1076,15 @@ INSERT INTO rankings (athlete_id, sport_id, category_id, rank_position, performa
 (3, 1, 5, 1, 88.00, 88.00, 84.00, 87.20, 'sport',   CURDATE()),
 (2, 2, 14,1, 87.00, 85.20, 82.00, 85.46, 'sport',   CURDATE()),
 (5, 3, 9, 1, 87.50, 84.20, 80.00, 84.85, 'sport',   CURDATE()),
+(6, 3, 10, 2, 85.50, 82.50, 84.00, 84.30, 'sport', CURDATE()),
+(7, 3, 10, 3, 88.00, 85.00, 83.00, 86.10, 'sport', CURDATE()),
+(8, 4, 12, 1, 87.50, 81.00, 85.00, 85.05, 'sport', CURDATE()),
+(9, 4, 12, 2, 89.00, 85.50, 82.00, 86.55, 'sport', CURDATE()),
+(10, 3, 10, 4, 84.00, 83.20, 86.00, 84.16, 'sport', CURDATE()),
 (1, 1, 3, 1, 90.50, 87.00, 85.00, 88.85, 'overall', CURDATE()),
+(3, 1, 5, 2, 88.00, 88.00, 84.00, 87.20, 'overall', CURDATE()),
+(2, 2, 14,3, 87.00, 85.20, 82.00, 85.46, 'overall', CURDATE()),
+(5, 3, 9, 4, 87.50, 84.20, 80.00, 84.85, 'overall', CURDATE());
 (3, 1, 5, 2, 88.00, 88.00, 84.00, 87.20, 'overall', CURDATE()),
 (2, 2, 14,3, 87.00, 85.20, 82.00, 85.46, 'overall', CURDATE()),
 (5, 3, 9, 4, 87.50, 84.20, 80.00, 84.85, 'overall', CURDATE());

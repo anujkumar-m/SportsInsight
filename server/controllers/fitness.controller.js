@@ -1,19 +1,24 @@
 const fitnessService = require('../services/fitness.service');
 const athleteService = require('../services/athlete.service');
 
-function applyCoachFilter(req, queryParams = {}) {
+function applyRoleFilters(req, queryParams = {}) {
   const params = { ...queryParams };
-  if (req.user?.role?.toLowerCase() === 'coach') {
+  const role = req.user?.role?.toLowerCase();
+  if (role === 'coach') {
     delete params.coach_id;
     delete params.coachId;
     params.coach_id = req.user.coach_id ?? -1;
+  } else if (role === 'athlete') {
+    delete params.athlete_id;
+    delete params.athleteId;
+    params.athleteId = req.user.athlete_id ?? -1;
   }
   return params;
 }
 
 async function getFitnessAssessments(req, res, next) {
   try {
-    const queryParams = applyCoachFilter(req, req.query);
+    const queryParams = applyRoleFilters(req, req.query);
     const data = await fitnessService.getFitnessAssessments(queryParams);
     res.json({ success: true, data });
   } catch (error) {
@@ -29,6 +34,9 @@ async function getFitnessById(req, res, next) {
     }
     if (req.user?.role?.toLowerCase() === 'coach' && record.coach_id !== req.user.coach_id) {
       return res.status(403).json({ success: false, message: 'Access denied. You can only view fitness assessments for your assigned athletes.' });
+    }
+    if (req.user?.role?.toLowerCase() === 'athlete' && record.athlete_id !== req.user.athlete_id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only view your own fitness assessments.' });
     }
     res.json({ success: true, data: record });
   } catch (error) {
@@ -89,6 +97,9 @@ async function getAthleteFitnessHistory(req, res, next) {
         return res.status(403).json({ success: false, message: 'Access denied. You can only view fitness history for your assigned athletes.' });
       }
     }
+    if (req.user?.role?.toLowerCase() === 'athlete' && Number(req.params.athleteId) !== req.user.athlete_id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only view your own fitness history.' });
+    }
     const data = await fitnessService.getAthleteFitnessHistory(req.params.athleteId);
     res.json({ success: true, data });
   } catch (error) {
@@ -98,7 +109,7 @@ async function getAthleteFitnessHistory(req, res, next) {
 
 async function getFitnessAnalytics(req, res, next) {
   try {
-    const queryParams = applyCoachFilter(req, req.query);
+    const queryParams = applyRoleFilters(req, req.query);
     const data = await fitnessService.getFitnessAnalytics(queryParams);
     res.json({ success: true, data });
   } catch (error) {

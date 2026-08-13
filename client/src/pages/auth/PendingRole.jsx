@@ -83,7 +83,10 @@ const PendingRole = () => {
         <div className="mt-5 flex items-center gap-2 rounded-lg border border-dashed border-border bg-card/50 px-4 py-3">
           <Mail className="size-4 shrink-0 text-muted-foreground" />
           <p className="text-xs text-muted-foreground">
-            Admin account: <span className="font-medium text-foreground">{import.meta.env.VITE_ADMIN_EMAIL || 'samshibin1125@gmail.com'}</span>
+            {(import.meta.env.VITE_ADMIN_EMAIL || 'samshibin1125@gmail.com').split(',').length > 1 ? 'Admin accounts: ' : 'Admin account: '}
+            <span className="font-medium text-foreground">
+              {(import.meta.env.VITE_ADMIN_EMAIL || 'samshibin1125@gmail.com').split(',').map(email => email.trim()).join(', ')}
+            </span>
           </p>
         </div>
 

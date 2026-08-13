@@ -105,38 +105,8 @@ const Login = () => {
           <h2 className="mt-5 text-2xl font-bold tracking-tight">Sign in to your workspace</h2>
           <p className="mt-1 text-sm text-muted-foreground">Use your academy credentials or Google account.</p>
 
-          {/* ─── Google Sign-In ─────────────────────────── */}
-          <div className="mt-7">
-            {googleLoading ? (
-              <div className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-card text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" />
-                Signing in with Google…
-              </div>
-            ) : (
-              <div id="google-signin-btn" className="w-full">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  width="100%"
-                  size="large"
-                  shape="rectangular"
-                  theme="outline"
-                  text="signin_with"
-                  logo_alignment="left"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* ─── Divider ───────────────────────────────── */}
-          <div className="my-6 flex items-center gap-3">
-            <span className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or continue with email</span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
           {/* ─── Email / Password Form ─────────────────── */}
-          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+          <form className="mt-7 space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label className="text-sm font-medium" htmlFor="identifier">
                 Email or username
@@ -181,6 +151,36 @@ const Login = () => {
               Sign in
             </button>
           </form>
+
+          {/* ─── Divider ───────────────────────────────── */}
+          <div className="my-6 flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or sign in with Google</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* ─── Google Sign-In ─────────────────────────── */}
+          <div>
+            {googleLoading ? (
+              <div className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-card text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                Signing in with Google…
+              </div>
+            ) : (
+              <div id="google-signin-btn" className="w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  width="100%"
+                  size="large"
+                  shape="rectangular"
+                  theme="outline"
+                  text="signin_with"
+                  logo_alignment="left"
+                />
+              </div>
+            )}
+          </div>
 
           <div className="mt-8 rounded-xl border border-dashed border-border p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Demo accounts</p>

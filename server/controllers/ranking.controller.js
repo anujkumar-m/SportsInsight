@@ -1,8 +1,26 @@
 const rankingService = require('../services/ranking.service');
+const { pool } = require('../config/database');
 
 async function getRankings(req, res, next) {
-  try { res.json({ success: true, data: await rankingService.getRankings(req.query) }); }
-  catch (e) { next(e); }
+  try {
+    const queryParams = { ...req.query };
+    if (req.user?.role?.toLowerCase() === 'athlete') {
+      const athleteId = req.user.athlete_id;
+      if (athleteId) {
+        const [athRows] = await pool.query('SELECT sport_id FROM athletes WHERE id = ?', [athleteId]);
+        if (athRows.length > 0 && athRows[0].sport_id) {
+          queryParams.sportId = athRows[0].sport_id;
+        } else {
+          queryParams.sportId = -1;
+        }
+      } else {
+        queryParams.sportId = -1;
+      }
+    }
+    res.json({ success: true, data: await rankingService.getRankings(queryParams) });
+  } catch (e) {
+    next(e);
+  }
 }
 
 async function calculateRankings(req, res, next) {
@@ -13,8 +31,12 @@ async function calculateRankings(req, res, next) {
 }
 
 async function getAthleteRankingHistory(req, res, next) {
-  try { res.json({ success: true, data: await rankingService.getAthleteRankingHistory(req.params.athleteId) }); }
-  catch (e) { next(e); }
+  try {
+    if (req.user?.role?.toLowerCase() === 'athlete' && Number(req.params.athleteId) !== req.user.athlete_id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only view your own ranking history.' });
+    }
+    res.json({ success: true, data: await rankingService.getAthleteRankingHistory(req.params.athleteId) });
+  } catch (e) { next(e); }
 }
 
 async function getRankingComparison(req, res, next) {

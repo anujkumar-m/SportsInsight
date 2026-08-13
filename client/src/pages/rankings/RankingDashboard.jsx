@@ -4,6 +4,7 @@ import { Trophy, Medal, Sparkles, RefreshCw, ArrowUpRight, ArrowDownRight, Filte
 import toast from 'react-hot-toast';
 import { rankingService } from '../../services/rankingService';
 import { sportService } from '../../services/sportService';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import PageHeader from '../../components/common/PageHeader';
@@ -11,6 +12,7 @@ import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 
 const RankingDashboard = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
 
   const [rankings, setRankings] = useState([]);
   const [sports, setSports] = useState([]);
@@ -59,9 +61,11 @@ const RankingDashboard = () => {
         title="Academy Leaderboard & Rankings"
         subtitle="Auto-calculated rankings using formula: 50% Performance + 30% Fitness + 20% Consistency Score"
         action={
-          <Button size="sm" loading={calculating} onClick={handleRecalculate}>
-            <RefreshCw size={14} className="mr-1.5" /> Recalculate Rankings
-          </Button>
+          role !== 'athlete' && (
+            <Button size="sm" loading={calculating} onClick={handleRecalculate}>
+              <RefreshCw size={14} className="mr-1.5" /> Recalculate Rankings
+            </Button>
+          )
         }
       />
 
@@ -85,17 +89,19 @@ const RankingDashboard = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Filter size={14} className="text-muted-foreground" />
-            <select
-              value={sportId}
-              onChange={(e) => setSportId(e.target.value)}
-              className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground"
-            >
-              <option value="">All Sports</option>
-              {sports.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
+          {role !== 'athlete' && (
+            <div className="flex items-center gap-2">
+              <Filter size={14} className="text-muted-foreground" />
+              <select
+                value={sportId}
+                onChange={(e) => setSportId(e.target.value)}
+                className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground"
+              >
+                <option value="">All Sports</option>
+                {sports.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Formula breakdown card */}

@@ -290,12 +290,16 @@ const PerformanceList = () => {
         subtitle="Track sport-specific athlete metrics, AI trend predictions, and coach remarks."
         action={
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/performance/analytics')}>
-              <BarChart2 size={14} className="mr-1.5" /> Analytics
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/performance/compare')}>
-              <Sparkles size={14} className="mr-1.5" /> Compare
-            </Button>
+            {role !== 'athlete' && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => navigate('/performance/analytics')}>
+                  <BarChart2 size={14} className="mr-1.5" /> Analytics
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate('/performance/compare')}>
+                  <Sparkles size={14} className="mr-1.5" /> Compare
+                </Button>
+              </>
+            )}
             <Button variant="outline" size="sm" onClick={handleExport}>
               <Download size={14} className="mr-1.5" /> Export
             </Button>
@@ -319,7 +323,7 @@ const PerformanceList = () => {
       />
 
       {/* Summary KPI Cards */}
-      {analytics && (
+      {analytics && role !== 'athlete' && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
             <div className="text-xs text-muted-foreground font-medium">Total Performance Logs</div>
@@ -350,7 +354,7 @@ const PerformanceList = () => {
           <div className="flex-1 min-w-[200px]">
             <input
               type="text"
-              placeholder="Search athlete, metric name..."
+              placeholder="Search metric name..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -366,16 +370,18 @@ const PerformanceList = () => {
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
-          <select
-            value={athleteId}
-            onChange={(e) => { setAthleteId(e.target.value); setPage(1); }}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary min-w-[160px]"
-          >
-            <option value="">All Athletes</option>
-            {athletes.map((a) => (
-              <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>
-            ))}
-          </select>
+          {role !== 'athlete' && (
+            <select
+              value={athleteId}
+              onChange={(e) => { setAthleteId(e.target.value); setPage(1); }}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary min-w-[160px]"
+            >
+              <option value="">All Athletes</option>
+              {athletes.map((a) => (
+                <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>
+              ))}
+            </select>
+          )}
           <input
             type="date"
             value={dateFrom}

@@ -161,12 +161,15 @@ const assignRole = async (req, res, next) => {
     }
 
     // Protect: cannot change the designated admin Google email's role
-    const ADMIN_EMAIL = process.env.ADMIN_GOOGLE_EMAIL;
+    const adminEmails = (process.env.ADMIN_GOOGLE_EMAIL || '')
+      .split(',')
+      .map(email => email.trim().toLowerCase())
+      .filter(Boolean);
     const [targetRows] = await pool.query('SELECT email FROM users WHERE id = ?', [userId]);
     if (!targetRows.length) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
-    if (targetRows[0].email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    if (adminEmails.includes(targetRows[0].email.toLowerCase())) {
       return res.status(403).json({ success: false, message: 'Cannot change the role of the designated admin account.' });
     }
 
