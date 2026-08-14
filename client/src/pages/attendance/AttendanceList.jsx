@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar as CalendarIcon, FileText, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, FileText, Trash2, RefreshCw, X, UserCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { attendanceService } from '../../services/attendanceService';
 import { athleteService } from '../../services/athleteService';
@@ -36,18 +36,32 @@ const AttendanceList = () => {
 
   const [search, setSearch] = useState('');
   const [date, setDate] = useState('');
+  const [sessionFilter, setSessionFilter] = useState('');
   const [status, setStatus] = useState('');
   const [athleteId, setAthleteId] = useState('');
   const [athletes, setAthletes] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Provide Attendance Popup/Modal state
+  const [isProvideModalOpen, setIsProvideModalOpen] = useState(false);
+  const [modalDate, setModalDate] = useState(new Date().toISOString().split('T')[0]);
+  const [modalSession, setModalSession] = useState('Morning');
+  const [studentSelection, setStudentSelection] = useState('all'); // 'all' or 'specific'
+  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [modalAttendanceMap, setModalAttendanceMap] = useState({});
+  const [submittingAttendance, setSubmittingAttendance] = useState(false);
+
   const fetchAthletes = async () => {
     try {
-      const res = await athleteService.getAthletes({ limit: 150 });
-      setAthletes(res.data?.athletes || res.data || []);
+      const res = await athleteService.getAthletes({ limit: 200 });
+      const list = res.data?.athletes || res.data || (Array.isArray(res) ? res : []);
+      setAthletes(list);
+      if (list.length > 0 && !selectedStudentId) {
+        setSelectedStudentId(list[0].id);
+      }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to load athletes:', e);
     }
   };
 
@@ -59,17 +73,21 @@ const AttendanceList = () => {
         limit,
         search,
         date: date || undefined,
+        session: sessionFilter || undefined,
         status: status || undefined,
         athleteId: athleteId || undefined,
       });
-      setRecords(res.data.records);
-      setTotal(res.data.pagination.total);
+      const recordList = res?.data?.records || res?.records || [];
+      const totalCount = res?.data?.pagination?.total || res?.pagination?.total || recordList.length;
+      setRecords(recordList);
+      setTotal(totalCount);
     } catch (e) {
+      console.error(e);
       toast.error('Failed to load attendance records.');
     } finally {
       setLoading(false);
     }
-  }, [page, limit, search, date, status, athleteId]);
+  }, [page, limit, search, date, sessionFilter, status, athleteId]);
 
   useEffect(() => {
     fetchAthletes();
@@ -94,6 +112,52 @@ const AttendanceList = () => {
     }
   };
 
+  const openProvideModal = () => {
+    setModalDate(new Date().toISOString().split('T')[0]);
+    setModalSession('Morning');
+    setStudentSelection('all');
+    if (athletes.length > 0) {
+      setSelectedStudentId(athletes[0].id);
+    }
+    const initialMap = {};
+    athletes.forEach((a) => {
+      initialMap[a.id] = ''; // default unselected / dash
+    });
+    setModalAttendanceMap(initialMap);
+    setIsProvideModalOpen(true);
+  };
+
+  const modalDisplayAthletes = studentSelection === 'all'
+    ? athletes
+    : athletes.filter((a) => String(a.id) === String(selectedStudentId));
+
+  const handleSaveAttendance = async () => {
+    if (modalDisplayAthletes.length === 0) {
+      toast.error('No students selected.');
+      return;
+    }
+
+    const payload = modalDisplayAthletes.map((a) => ({
+      athlete_id: a.id,
+      attendance_date: modalDate,
+      session: modalSession,
+      status: modalAttendanceMap[a.id] || 'present',
+      remarks: '',
+    }));
+
+    setSubmittingAttendance(true);
+    try {
+      await attendanceService.markAttendance(payload);
+      toast.success('Attendance saved successfully!');
+      setIsProvideModalOpen(false);
+      fetchRecords();
+    } catch (err) {
+      toast.error(err?.message || 'Failed to save attendance.');
+    } finally {
+      setSubmittingAttendance(false);
+    }
+  };
+
   const columns = [
     {
       key: 'athlete',
@@ -109,7 +173,7 @@ const AttendanceList = () => {
           )}
           <div>
             <div className="font-semibold text-foreground">{row.first_name} {row.last_name}</div>
-            <div className="text-xs text-muted-foreground">{row.athlete_code} • {row.sport_name}</div>
+            <div className="text-xs text-muted-foreground">{row.athlete_code} • {row.sport_name || 'Athletics'}</div>
           </div>
         </div>
       ),
@@ -118,6 +182,15 @@ const AttendanceList = () => {
       key: 'attendance_date',
       label: 'Date',
       render: (_, row) => <span className="text-xs text-muted-foreground">{new Date(row.attendance_date).toLocaleDateString()}</span>,
+    },
+    {
+      key: 'session',
+      label: 'Session',
+      render: (_, row) => (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-secondary text-foreground border border-border">
+          {row.session || 'Morning'}
+        </span>
+      ),
     },
     {
       key: 'status',
@@ -129,7 +202,7 @@ const AttendanceList = () => {
       label: 'Remarks',
       render: (_, row) => <span className="text-xs text-muted-foreground italic">{row.remarks || '—'}</span>,
     },
-    ...(role === 'admin' || role === 'coach' ? [{
+    {
       key: 'actions',
       label: '',
       render: (_, row) => (
@@ -144,7 +217,7 @@ const AttendanceList = () => {
           </Button>
         </div>
       ),
-    }] : []),
+    },
   ];
 
   return (
@@ -153,20 +226,31 @@ const AttendanceList = () => {
         title="Attendance Management"
         subtitle="Track daily training participation, unexcused absences, and athlete consistency scores."
         action={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/attendance/calendar')}>
-              <CalendarIcon size={14} className="mr-1.5" /> Calendar View
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/attendance/calendar')}
+              className="rounded-xl border-border bg-card/60 backdrop-blur-sm text-foreground hover:bg-secondary hover:text-primary transition-all duration-200"
+            >
+              <CalendarIcon size={15} className="mr-1.5 text-primary" /> Calendar View
             </Button>
-            {role !== 'athlete' && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/attendance/reports')}>
-                <FileText size={14} className="mr-1.5" /> Reports & AI Alerts
-              </Button>
-            )}
-            {(role === 'admin' || role === 'coach') && (
-              <Button size="sm" onClick={() => navigate('/attendance/mark')}>
-                <Plus size={14} className="mr-1.5" /> Mark Attendance
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/attendance/reports')}
+              className="rounded-xl border-border bg-card/60 backdrop-blur-sm text-foreground hover:bg-secondary hover:text-primary transition-all duration-200"
+            >
+              <FileText size={15} className="mr-1.5 text-amber-500" /> Reports & AI Alerts
+            </Button>
+            <button
+              type="button"
+              onClick={openProvideModal}
+              className="inline-flex items-center justify-center gap-2 flex-nowrap whitespace-nowrap rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-semibold text-xs px-4 py-2.5 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 border border-emerald-400/30 cursor-pointer shrink-0"
+            >
+              <UserCheck size={16} className="shrink-0 text-emerald-100" />
+              <span className="whitespace-nowrap">Provide Attendance</span>
+            </button>
           </div>
         }
       />
@@ -189,6 +273,15 @@ const AttendanceList = () => {
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
         />
         <select
+          value={sessionFilter}
+          onChange={(e) => { setSessionFilter(e.target.value); setPage(1); }}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+        >
+          <option value="">All Sessions</option>
+          <option value="Morning">Morning</option>
+          <option value="Evening">Evening</option>
+        </select>
+        <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
@@ -200,7 +293,7 @@ const AttendanceList = () => {
           <option value="half_day">Half Day</option>
           <option value="late">Late</option>
         </select>
-        {role !== 'athlete' && (
+        {athletes.length > 0 && (
           <select
             value={athleteId}
             onChange={(e) => { setAthleteId(e.target.value); setPage(1); }}
@@ -212,7 +305,7 @@ const AttendanceList = () => {
             ))}
           </select>
         )}
-        <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setDate(''); setStatus(''); setAthleteId(''); }}>
+        <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setDate(''); setSessionFilter(''); setStatus(''); setAthleteId(''); }}>
           <RefreshCw size={13} className="mr-1" /> Reset
         </Button>
       </div>
@@ -232,6 +325,174 @@ const AttendanceList = () => {
         limit={limit}
         onLimitChange={setLimit}
       />
+
+      {/* Provide Attendance Popup / Modal */}
+      {isProvideModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsProvideModalOpen(false)} />
+          <div className="relative z-10 w-full max-w-3xl animate-fade-in rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Provide Attendance</h2>
+                <p className="text-xs text-muted-foreground">Select session, date, and mark attendance for assigned students.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsProvideModalOpen(false)}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-secondary transition-colors"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Controls Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-secondary/30 p-4 rounded-xl border border-border">
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Date:</label>
+                <input
+                  type="date"
+                  value={modalDate}
+                  onChange={(e) => setModalDate(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Session:</label>
+                <select
+                  value={modalSession}
+                  onChange={(e) => setModalSession(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="Morning">Morning</option>
+                  <option value="Evening">Evening</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Students:</label>
+                <select
+                  value={studentSelection}
+                  onChange={(e) => {
+                    setStudentSelection(e.target.value);
+                    if (e.target.value === 'specific' && athletes.length > 0 && !selectedStudentId) {
+                      setSelectedStudentId(athletes[0].id);
+                    }
+                  }}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="all">All Students</option>
+                  <option value="specific">Specific Student</option>
+                </select>
+              </div>
+            </div>
+
+            {studentSelection === 'specific' && (
+              <div className="bg-secondary/20 p-3 rounded-lg border border-border flex items-center gap-3">
+                <label className="text-xs font-semibold text-foreground whitespace-nowrap">Select Student:</label>
+                <select
+                  value={selectedStudentId}
+                  onChange={(e) => setSelectedStudentId(e.target.value)}
+                  className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {athletes.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.first_name} {a.last_name} ({a.athlete_code || a.id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Students Table */}
+            <div className="flex-1 overflow-y-auto rounded-xl border border-border">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-secondary/60 text-xs font-semibold text-muted-foreground uppercase border-b border-border sticky top-0 bg-card z-10">
+                  <tr>
+                    <th className="px-4 py-3">#</th>
+                    <th className="px-4 py-3">Student</th>
+                    <th className="px-4 py-3">Sport</th>
+                    <th className="px-4 py-3">Attendance</th>
+                    <th className="px-4 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {modalDisplayAthletes.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground text-sm">
+                        No students found.
+                      </td>
+                    </tr>
+                  ) : (
+                    modalDisplayAthletes.map((a, idx) => {
+                      const currentStatus = modalAttendanceMap[a.id];
+                      return (
+                        <tr key={a.id} className="hover:bg-secondary/30 transition-colors">
+                          <td className="px-4 py-3 text-xs text-muted-foreground font-mono">{idx + 1}</td>
+                          <td className="px-4 py-3 font-semibold text-foreground">
+                            {a.first_name} {a.last_name}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground">{a.sport_name || 'Athletics'}</td>
+                          <td className="px-4 py-3">
+                            {currentStatus === 'present' ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                Present
+                              </span>
+                            ) : currentStatus === 'absent' ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                Absent
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground font-medium">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setModalAttendanceMap((prev) => ({ ...prev, [a.id]: 'present' }))}
+                                className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all ${
+                                  currentStatus === 'present'
+                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                    : 'bg-background text-foreground border-border hover:bg-emerald-500/10 hover:border-emerald-500/30'
+                                }`}
+                              >
+                                Present
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setModalAttendanceMap((prev) => ({ ...prev, [a.id]: 'absent' }))}
+                                className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all ${
+                                  currentStatus === 'absent'
+                                    ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
+                                    : 'bg-background text-foreground border-border hover:bg-rose-500/10 hover:border-rose-500/30'
+                                }`}
+                              >
+                                Absent
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
+              <Button variant="outline" size="sm" onClick={() => setIsProvideModalOpen(false)} disabled={submittingAttendance}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSaveAttendance} loading={submittingAttendance}>
+                Save Attendance
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         isOpen={Boolean(confirmDelete)}

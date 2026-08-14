@@ -122,9 +122,22 @@ async function runAIAttendanceAnalysis(athleteId) {
   }
 }
 
+// Helper to safely auto-add session column if running on existing database without migration
+async function ensureSessionColumn() {
+  try {
+    const [cols] = await pool.query("SHOW COLUMNS FROM attendance LIKE 'session'");
+    if (cols.length === 0) {
+      await pool.query("ALTER TABLE attendance ADD COLUMN session ENUM('Morning', 'Evening') DEFAULT 'Morning' AFTER attendance_date");
+    }
+  } catch (e) {
+    // Ignore error
+  }
+}
+
 // ─── Service Functions ─────────────────────────────────────────
 
 async function getAttendanceRecords(filters = {}) {
+  await ensureSessionColumn();
   const page = parseInt(filters.page) || 1;
   const limit = parseInt(filters.limit) || 20;
   const offset = (page - 1) * limit;
@@ -144,6 +157,10 @@ async function getAttendanceRecords(filters = {}) {
   if (filters.date) {
     whereClauses.push('att.attendance_date = ?');
     params.push(filters.date);
+  }
+  if (filters.session) {
+    whereClauses.push('att.session = ?');
+    params.push(filters.session);
   }
   if (filters.dateFrom) {
     whereClauses.push('att.attendance_date >= ?');
@@ -199,19 +216,36 @@ async function getAttendanceRecords(filters = {}) {
   };
 }
 
-async function markAttendance(data, userId) {
+async function markAttendance(data, userObj) {
+  await ensureSessionColumn();
+  const userId = userObj?.id || (typeof userObj === 'number' ? userObj : null);
+  const userRole = userObj?.role?.toLowerCase();
+  const userCoachId = userObj?.coach_id;
+
   // Support both single record and bulk array
   const records = Array.isArray(data) ? data : [data];
   if (records.length === 0) throw new Error('No attendance data provided.');
+
+  // Security Check: If user is a coach, verify all athlete_ids belong to this coach
+  if (userRole === 'coach' && userCoachId) {
+    const [assigned] = await pool.query(`SELECT id FROM athletes WHERE coach_id = ?`, [userCoachId]);
+    const assignedSet = new Set(assigned.map((a) => Number(a.id)));
+    for (const item of records) {
+      if (item.athlete_id && !assignedSet.has(Number(item.athlete_id))) {
+        throw new Error('Unauthorized: You can only mark attendance for your assigned students.');
+      }
+    }
+  }
 
   const todayStr = new Date().toISOString().split('T')[0];
 
   const processed = [];
   for (const item of records) {
-    const { athlete_id, attendance_date, status, remarks } = item;
+    const { athlete_id, attendance_date, session, status, remarks } = item;
     if (!athlete_id || !attendance_date || !status) {
       continue;
     }
+    const sessionVal = session || 'Morning';
 
     // Validation: Future dates are not allowed
     if (attendance_date > todayStr) {
@@ -222,19 +256,19 @@ async function markAttendance(data, userId) {
     const [ath] = await pool.query(`SELECT coach_id FROM athletes WHERE id = ?`, [athlete_id]);
     const coach_id = ath[0]?.coach_id || null;
 
-    // Insert or update (upsert)
+    // Insert or update (upsert based on unique constraint (athlete_id, attendance_date, session))
     await pool.query(
-      `INSERT INTO attendance (athlete_id, coach_id, attendance_date, status, remarks)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO attendance (athlete_id, coach_id, attendance_date, session, status, remarks)
+       VALUES (?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE status = VALUES(status), remarks = VALUES(remarks), coach_id = VALUES(coach_id)`,
-      [athlete_id, coach_id, attendance_date, status, remarks || '']
+      [athlete_id, coach_id, attendance_date, sessionVal, status, remarks || '']
     );
 
     // Audit log
     await pool.query(
       `INSERT INTO attendance_history (attendance_id, athlete_id, action_type, description, changed_by, new_values)
        VALUES (0, ?, 'updated', ?, ?, ?)`,
-      [athlete_id, `Marked attendance as ${status} on ${attendance_date}`, userId || null, JSON.stringify(item)]
+      [athlete_id, `Marked attendance as ${status} on ${attendance_date} (${sessionVal})`, userId || null, JSON.stringify(item)]
     );
 
     // Sync central intelligence (non-blocking fault tolerant)
@@ -250,22 +284,31 @@ async function markAttendance(data, userId) {
   return { success: true, count: processed.length, message: `Successfully marked attendance for ${processed.length} athlete(s).` };
 }
 
-async function updateAttendance(id, data, userId) {
-  const [rows] = await pool.query(`SELECT * FROM attendance WHERE id = ?`, [id]);
+async function updateAttendance(id, data, userObj) {
+  const userId = userObj?.id || (typeof userObj === 'number' ? userObj : null);
+  const userRole = userObj?.role?.toLowerCase();
+  const userCoachId = userObj?.coach_id;
+
+  const [rows] = await pool.query(`SELECT att.*, a.coach_id FROM attendance att JOIN athletes a ON a.id = att.athlete_id WHERE att.id = ?`, [id]);
   if (rows.length === 0) throw new Error('Attendance record not found.');
   const oldRecord = rows[0];
 
+  if (userRole === 'coach' && userCoachId && oldRecord.coach_id !== userCoachId) {
+    throw new Error('Unauthorized: You can only update attendance for your assigned students.');
+  }
+
   const todayStr = new Date().toISOString().split('T')[0];
-  const { status, remarks, attendance_date } = data;
+  const { status, remarks, attendance_date, session } = data;
   const finalDate = attendance_date || oldRecord.attendance_date;
+  const finalSession = session || oldRecord.session || 'Morning';
 
   if (finalDate > todayStr) {
     throw new Error('Future dates are not allowed for attendance.');
   }
 
   await pool.query(
-    `UPDATE attendance SET status = ?, remarks = ?, attendance_date = ? WHERE id = ?`,
-    [status || oldRecord.status, remarks !== undefined ? remarks : oldRecord.remarks, finalDate, id]
+    `UPDATE attendance SET status = ?, remarks = ?, attendance_date = ?, session = ? WHERE id = ?`,
+    [status || oldRecord.status, remarks !== undefined ? remarks : oldRecord.remarks, finalDate, finalSession, id]
   );
 
   await pool.query(

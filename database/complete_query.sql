@@ -581,11 +581,12 @@ CREATE TABLE IF NOT EXISTS attendance (
     athlete_id INT UNSIGNED NOT NULL,
     coach_id INT UNSIGNED,
     attendance_date DATE NOT NULL,
+    session ENUM('Morning', 'Evening') DEFAULT 'Morning',
     status ENUM('present', 'absent', 'leave', 'half_day', 'late') DEFAULT 'present',
     remarks TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_athlete_date (athlete_id, attendance_date),
+    UNIQUE KEY uq_athlete_date_session (athlete_id, attendance_date, session),
     FOREIGN KEY (athlete_id) REFERENCES athletes(id) ON DELETE CASCADE,
     FOREIGN KEY (coach_id) REFERENCES coaches(id) ON DELETE SET NULL
 );
@@ -876,7 +877,10 @@ INSERT INTO users (id, role_id, username, email, password_hash, first_name, last
 (16, 4, 'athlete.sanjay',    'sanjays.cs24@bitsathy.ac.in',   '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'SANJAY',    'S',     '+91-9876543224', 'google', TRUE),
 (17, 4, 'athlete.shanjai',   'shanjai.it23@bitsathy.ac.in',   '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'SHANJAI',   'M R',   '+91-9876543225', 'google', TRUE),
 (18, 4, 'athlete.vignesh',   'vigneshc.cs24@bitsathy.ac.in',  '$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u', 'VIGNESH',   'C',     '+91-9876543226', 'google', TRUE),
-(19, 4, 'athlete.rahulsanjay','rahulsanjay.it23@bitsathy.ac.in','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u','RAHUL SANJAY','G',    '+91-9876543227', 'google', TRUE);
+(19, 4, 'athlete.rahulsanjay','rahulsanjay.it23@bitsathy.ac.in','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u','RAHUL SANJAY','G',    '+91-9876543227', 'google', TRUE),
+(20, 4, 'athlete.haroniharoniharoni','haroniharoniharoni@gmail.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u','Haroniharoniharoni', 'A',NULL, 'google', TRUE),
+(21, 2, 'coach.shibin1125','shibin1125@gmail.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u','Shibin', 'A',NULL, 'google', TRUE),
+(22, 3, 'selector.boythunder575','boythunder575@gmail.com','$2a$12$RF1NBErlmKGEyAj/FFIwveuUsIPWJhTTrZCLZdF336ecW85eGj35u','Boythunder', 'A',NULL, 'google', TRUE);
 
 -- Sports
 INSERT INTO sports (id, name, description, icon, is_active) VALUES
@@ -1424,6 +1428,20 @@ INSERT INTO rankings (athlete_id, sport_id, category_id, rank_position, performa
 (2, 2, 14,3, 88.4, 87.6, 87.0, 87.80, 'overall', '2026-08-01'),
 (5, 3, 9, 4, 89.0, 87.5, 86.0, 87.80, 'overall', '2026-08-01'),
 (4, 2, 13,5, 88.0, 86.0, 85.0, 86.50, 'overall', '2026-08-01');
+
+-- ── Session Sample Attendance Data ──────────────────────────────
+INSERT IGNORE INTO attendance (athlete_id, coach_id, attendance_date, session, status, remarks) VALUES
+(1, 1, '2026-08-14', 'Morning', 'present', 'Morning track drill'),
+(1, 1, '2026-08-14', 'Evening', 'present', 'Evening fitness workout'),
+(3, 1, '2026-08-14', 'Morning', 'present', 'Sprint warmup'),
+(3, 1, '2026-08-14', 'Evening', 'absent',  'Excused'),
+(2, 2, '2026-08-14', 'Morning', 'present', 'Lap training'),
+(2, 2, '2026-08-14', 'Evening', 'present', 'Endurance sets'),
+(4, 2, '2026-08-14', 'Morning', 'present', 'Swimming drills'),
+(4, 2, '2026-08-14', 'Evening', 'absent',  'Rest day'),
+(5, 3, '2026-08-14', 'Morning', 'present', 'Tactical session'),
+(5, 3, '2026-08-14', 'Evening', 'present', 'Match practice');
+
 
 
 

@@ -27,7 +27,7 @@ async function getAttendanceRecords(req, res, next) {
 
 async function markAttendance(req, res, next) {
   try {
-    const result = await attendanceService.markAttendance(req.body, req.user?.id);
+    const result = await attendanceService.markAttendance(req.body, req.user);
     res.status(201).json({ success: true, ...result });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -36,7 +36,7 @@ async function markAttendance(req, res, next) {
 
 async function updateAttendance(req, res, next) {
   try {
-    const record = await attendanceService.updateAttendance(req.params.id, req.body, req.user?.id);
+    const record = await attendanceService.updateAttendance(req.params.id, req.body, req.user);
     res.json({ success: true, message: 'Attendance record updated successfully.', data: record });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
