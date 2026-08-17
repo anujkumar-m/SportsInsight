@@ -12,49 +12,49 @@ async function safeQuery(sql, params = [], fallback = []) {
 
 // ─── Dashboard Summary ────────────────────────────────────────────────────────
 async function getDashboardAnalytics() {
-  const [athletesRows] = await safeQuery(`
+  const athletesRows = await safeQuery(`
     SELECT
       COUNT(*) AS total,
-      SUM(is_active = 1 AND current_status = 'active') AS active,
-      SUM(current_status = 'archived') AS archived,
-      SUM(medical_status = 'injured') AS injured
+      COALESCE(SUM(is_active = 1 AND current_status = 'active'), 0) AS active,
+      COALESCE(SUM(current_status = 'archived'), 0) AS archived,
+      COALESCE(SUM(medical_status = 'injured'), 0) AS injured
     FROM athletes`);
 
-  const [perfRows] = await safeQuery(`
+  const perfRows = await safeQuery(`
     SELECT
-      ROUND(AVG(performance_score), 2) AS avg_score,
+      COALESCE(ROUND(AVG(performance_score), 2), 0) AS avg_score,
       COUNT(*) AS total_records,
-      ROUND(AVG(improvement_rate), 2) AS avg_improvement
+      COALESCE(ROUND(AVG(improvement_rate), 2), 0) AS avg_improvement
     FROM performance_records`);
 
-  const [fitRows] = await safeQuery(`
+  const fitRows = await safeQuery(`
     SELECT
-      ROUND(AVG(overall_fitness_score), 2) AS avg_score,
-      ROUND(AVG(bmi), 2) AS avg_bmi,
+      COALESCE(ROUND(AVG(overall_fitness_score), 2), 0) AS avg_score,
+      COALESCE(ROUND(AVG(bmi), 2), 0) AS avg_bmi,
       COUNT(*) AS total_assessments
     FROM fitness_assessments`);
 
-  const [attRows] = await safeQuery(`
+  const attRows = await safeQuery(`
     SELECT
       COUNT(*) AS total_records,
-      ROUND(SUM(status = 'present') / COUNT(*) * 100, 2) AS attendance_pct,
-      ROUND(SUM(status = 'absent') / COUNT(*) * 100, 2) AS absent_pct
+      COALESCE(ROUND(SUM(status = 'present') / NULLIF(COUNT(*), 0) * 100, 2), 0) AS attendance_pct,
+      COALESCE(ROUND(SUM(status = 'absent') / NULLIF(COUNT(*), 0) * 100, 2), 0) AS absent_pct
     FROM attendance`);
 
-  const [injRows] = await safeQuery(`
+  const injRows = await safeQuery(`
     SELECT
       COUNT(*) AS total,
-      SUM(recovery_status = 'recovering') AS active_injuries,
-      SUM(availability_status = 'fit') AS fit_athletes,
-      SUM(availability_status = 'unfit') AS unfit_athletes
+      COALESCE(SUM(recovery_status = 'recovering'), 0) AS active_injuries,
+      COALESCE(SUM(availability_status = 'fit'), 0) AS fit_athletes,
+      COALESCE(SUM(availability_status = 'unfit'), 0) AS unfit_athletes
     FROM injuries`);
 
-  const [selRows] = await safeQuery(`
+  const selRows = await safeQuery(`
     SELECT
       COUNT(*) AS total,
-      SUM(status = 'selected') AS selected,
-      SUM(status = 'recommended') AS recommended,
-      ROUND(AVG(selection_score), 2) AS avg_score
+      COALESCE(SUM(status = 'selected'), 0) AS selected,
+      COALESCE(SUM(status = 'recommended'), 0) AS recommended,
+      COALESCE(ROUND(AVG(selection_score), 2), 0) AS avg_score
     FROM selections`);
 
   const sportBreakdown = await safeQuery(`
@@ -99,7 +99,7 @@ async function getPerformanceAnalytics(query = {}) {
     JOIN athletes a ON pr.athlete_id = a.id
     JOIN users u ON a.user_id = u.id
     JOIN sports s ON pr.sport_id = s.id
-    ${where} ORDER BY pr.record_date DESC LIMIT ?`, [...params, parseInt(limit)]);
+    ${where} ORDER BY pr.record_date DESC LIMIT ?`, [...params, parseInt(limit, 10)]);
 
   const trendData = await safeQuery(`
     SELECT DATE_FORMAT(record_date,'%Y-%m') AS month,
@@ -116,7 +116,7 @@ async function getPerformanceAnalytics(query = {}) {
     JOIN athletes a ON pr.athlete_id = a.id
     JOIN users u ON a.user_id = u.id
     JOIN sports s ON pr.sport_id = s.id
-    GROUP BY a.id ORDER BY avg_score DESC LIMIT 10`);
+    GROUP BY a.id, a.athlete_code, u.first_name, u.last_name, s.name ORDER BY avg_score DESC LIMIT 10`);
 
   const byMetric = await safeQuery(`
     SELECT metric_name, ROUND(AVG(metric_value),4) AS avg_value,
@@ -166,7 +166,7 @@ async function getFitnessAnalytics(query = {}) {
     JOIN athletes a ON fa.athlete_id = a.id
     JOIN users u ON a.user_id = u.id
     JOIN sports s ON a.sport_id = s.id
-    GROUP BY a.id ORDER BY avg_fitness DESC LIMIT 10`);
+    GROUP BY a.id, a.athlete_code, u.first_name, u.last_name, s.name ORDER BY avg_fitness DESC LIMIT 10`);
 
   const bmiDistribution = await safeQuery(`
     SELECT CASE
@@ -195,10 +195,10 @@ async function getAttendanceAnalytics(query = {}) {
            COUNT(*) AS total,
            SUM(status='present') AS present,
            SUM(status='absent') AS absent,
-           SUM(status='leave') AS leave,
+           SUM(status='leave') AS \`leave\`,
            SUM(status='half_day') AS half_day,
            SUM(status='late') AS late,
-           ROUND(SUM(status='present')/COUNT(*)*100,2) AS pct
+           ROUND(SUM(status='present')/NULLIF(COUNT(*),0)*100,2) AS pct
     FROM attendance att
     JOIN athletes a ON att.athlete_id = a.id
     ${where} GROUP BY month ORDER BY month ASC LIMIT 12`, params);
@@ -210,13 +210,13 @@ async function getAttendanceAnalytics(query = {}) {
 
   const topAttendees = await safeQuery(`
     SELECT u.first_name, u.last_name, a.athlete_code,
-           ROUND(SUM(att.status='present')/COUNT(*)*100,2) AS pct,
+           ROUND(SUM(att.status='present')/NULLIF(COUNT(*),0)*100,2) AS pct,
            s.name AS sport
     FROM attendance att
     JOIN athletes a ON att.athlete_id = a.id
     JOIN users u ON a.user_id = u.id
     JOIN sports s ON a.sport_id = s.id
-    GROUP BY a.id ORDER BY pct DESC LIMIT 10`);
+    GROUP BY a.id, a.athlete_code, u.first_name, u.last_name, s.name ORDER BY pct DESC LIMIT 10`);
 
   return { trendData, byStatus, topAttendees };
 }
@@ -262,7 +262,7 @@ async function getRankingAnalytics(query = {}) {
            COUNT(DISTINCT r.athlete_id) AS athletes
     FROM rankings r
     JOIN sports s ON r.sport_id = s.id
-    GROUP BY s.id ORDER BY avg_score DESC`);
+    GROUP BY s.id, s.name ORDER BY avg_score DESC`);
 
   return { topRanked, bySport };
 }
@@ -295,14 +295,12 @@ async function getSelectionAnalytics(query = {}) {
 async function getSportAnalytics(query = {}) {
   const sportSummary = await safeQuery(`
     SELECT s.id, s.name AS sport,
-           COUNT(DISTINCT a.id) AS athlete_count,
-           ROUND(AVG(pr.performance_score),2) AS avg_performance,
-           ROUND(AVG(fa.overall_fitness_score),2) AS avg_fitness
+           (SELECT COUNT(*) FROM athletes a WHERE a.sport_id = s.id AND a.is_active = 1) AS athlete_count,
+           (SELECT ROUND(AVG(pr.performance_score),2) FROM performance_records pr WHERE pr.sport_id = s.id) AS avg_performance,
+           (SELECT ROUND(AVG(fa.overall_fitness_score),2) FROM fitness_assessments fa JOIN athletes a ON fa.athlete_id = a.id WHERE a.sport_id = s.id) AS avg_fitness
     FROM sports s
-    LEFT JOIN athletes a ON a.sport_id = s.id AND a.is_active = 1
-    LEFT JOIN performance_records pr ON pr.sport_id = s.id
-    LEFT JOIN fitness_assessments fa ON fa.athlete_id = a.id
-    GROUP BY s.id, s.name ORDER BY athlete_count DESC`);
+    WHERE s.is_active = 1
+    ORDER BY athlete_count DESC, s.name ASC`);
 
   return { sportSummary };
 }
@@ -312,18 +310,15 @@ async function getCoachAnalytics(query = {}) {
   const coachStats = await safeQuery(`
     SELECT c.id, u.first_name, u.last_name,
            s.name AS sport,
-           COUNT(DISTINCT a.id) AS athlete_count,
-           ROUND(AVG(pr.performance_score),2) AS avg_performance,
-           ROUND(AVG(fa.overall_fitness_score),2) AS avg_fitness,
-           ROUND(SUM(att.status='present')/NULLIF(COUNT(att.id),0)*100,2) AS attendance_pct
+           (SELECT COUNT(*) FROM athletes a WHERE a.coach_id = c.id AND a.is_active = 1) AS athlete_count,
+           (SELECT ROUND(AVG(pr.performance_score),2) FROM performance_records pr WHERE pr.coach_id = c.id) AS avg_performance,
+           (SELECT ROUND(AVG(fa.overall_fitness_score),2) FROM fitness_assessments fa WHERE fa.coach_id = c.id) AS avg_fitness,
+           (SELECT ROUND(SUM(att.status='present')/NULLIF(COUNT(att.id),0)*100,2) FROM attendance att WHERE att.coach_id = c.id) AS attendance_pct
     FROM coaches c
     JOIN users u ON c.user_id = u.id
     LEFT JOIN sports s ON c.sport_id = s.id
-    LEFT JOIN athletes a ON a.coach_id = c.id AND a.is_active = 1
-    LEFT JOIN performance_records pr ON pr.coach_id = c.id
-    LEFT JOIN fitness_assessments fa ON fa.coach_id = c.id
-    LEFT JOIN attendance att ON att.coach_id = c.id
-    GROUP BY c.id ORDER BY avg_performance DESC`);
+    WHERE c.is_active = 1
+    ORDER BY avg_performance DESC`);
 
   return { coachStats };
 }
@@ -355,7 +350,7 @@ async function getAthleteAnalytics(athleteId) {
   const attSummaryRows = await safeQuery(`
     SELECT COUNT(*) AS total,
            SUM(status='present') AS present,
-           ROUND(SUM(status='present')/COUNT(*)*100,2) AS pct
+           ROUND(SUM(status='present')/NULLIF(COUNT(*),0)*100,2) AS pct
     FROM attendance WHERE athlete_id = ?`, [athleteId]);
 
   const injuries = await safeQuery(`

@@ -49,13 +49,14 @@ const AnalyticsDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-foreground">Academy Analytics</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Live insights across all modules · No data duplication</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Live insights across all modules · Real-time academy intelligence</p>
         </div>
         <div className="flex gap-2">
           {[
-            { label: 'Performance', path: '/analytics/performance' },
-            { label: 'Fitness', path: '/analytics/fitness' },
-            { label: 'Attendance', path: '/analytics/attendance' },
+            { label: 'Performance', path: '/performance/analytics' },
+            { label: 'Fitness', path: '/fitness/analytics' },
+            { label: 'Attendance', path: '/attendance/reports' },
+            { label: 'Athletes', path: '/analytics/athlete' },
           ].map(({ label, path }) => (
             <button key={path} onClick={() => navigate(path)}
               className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-card hover:bg-secondary text-foreground transition">
@@ -67,14 +68,14 @@ const AnalyticsDashboard = () => {
 
       {/* Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Users}        label="Total Athletes"    value={athletes?.total}          sub={`${athletes?.active} active`}             color="primary" />
-        <StatCard icon={TrendingUp}   label="Avg Performance"  value={`${performance?.avg_score || 0}%`} sub={`${performance?.total_records} records`}   color="emerald-500" />
-        <StatCard icon={HeartPulse}   label="Avg Fitness"      value={`${fitness?.avg_score || 0}%`}    sub={`BMI avg: ${fitness?.avg_bmi}`}           color="cyan-500" />
-        <StatCard icon={CalendarCheck} label="Attendance Rate" value={`${attendance?.attendance_pct || 0}%`} sub={`${attendance?.total_records} records`} color="amber-500" />
-        <StatCard icon={ShieldAlert}  label="Active Injuries"  value={injuries?.active_injuries}  sub={`${injuries?.fit_athletes} fit`}          color="rose-500" />
-        <StatCard icon={Trophy}       label="Selections Made"  value={selections?.selected}       sub={`${selections?.recommended} recommended`} color="violet-500" />
+        <StatCard icon={Users}        label="Total Athletes"    value={athletes?.total}          sub={`${athletes?.active || 0} active`}             color="primary" />
+        <StatCard icon={TrendingUp}   label="Avg Performance"  value={`${performance?.avg_score || 0}%`} sub={`${performance?.total_records || 0} records`}   color="emerald-500" />
+        <StatCard icon={HeartPulse}   label="Avg Fitness"      value={`${fitness?.avg_score || 0}%`}    sub={`BMI avg: ${fitness?.avg_bmi || 0}`}           color="cyan-500" />
+        <StatCard icon={CalendarCheck} label="Attendance Rate" value={`${attendance?.attendance_pct || 0}%`} sub={`${attendance?.total_records || 0} records`} color="amber-500" />
+        <StatCard icon={ShieldAlert}  label="Active Injuries"  value={injuries?.active_injuries || 0}  sub={`${injuries?.fit_athletes || 0} fit`}          color="rose-500" />
+        <StatCard icon={Trophy}       label="Selections Made"  value={selections?.selected || 0}       sub={`${selections?.recommended || 0} recommended`} color="violet-500" />
         <StatCard icon={Medal}        label="Avg Selection Score" value={`${selections?.avg_score || 0}%`} sub="across all selections"             color="orange-500" />
-        <StatCard icon={Activity}     label="Injured Athletes" value={athletes?.injured}          sub="needs medical attention"                  color="red-500" />
+        <StatCard icon={Activity}     label="Injured Athletes" value={athletes?.injured || 0}          sub="needs medical attention"                  color="red-500" />
       </div>
 
       {/* Charts Row 1 */}
@@ -105,9 +106,9 @@ const AnalyticsDashboard = () => {
               <PieChart>
                 <Pie
                   data={[
-                    { name: 'Selected', value: selections.selected || 0 },
-                    { name: 'Recommended', value: selections.recommended || 0 },
-                    { name: 'Total', value: (selections.total || 0) - (selections.selected || 0) - (selections.recommended || 0) },
+                    { name: 'Selected', value: parseInt(selections.selected || 0, 10) },
+                    { name: 'Recommended', value: parseInt(selections.recommended || 0, 10) },
+                    { name: 'Other', value: Math.max(0, (parseInt(selections.total || 0, 10)) - (parseInt(selections.selected || 0, 10)) - (parseInt(selections.recommended || 0, 10))) },
                   ]}
                   cx="50%" cy="50%" innerRadius={55} outerRadius={90}
                   dataKey="value" paddingAngle={3}
@@ -125,12 +126,15 @@ const AnalyticsDashboard = () => {
       {/* Quick Links to Sub-Analytics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[
-          { label: 'Performance Analytics', desc: 'Scores, trends, top performers', path: '/analytics/performance', color: 'from-indigo-500 to-violet-600' },
-          { label: 'Fitness Analytics', desc: 'BMI, radar, fitness trends', path: '/analytics/fitness', color: 'from-cyan-500 to-blue-600' },
-          { label: 'Attendance Analytics', desc: 'Consistency scores and rates', path: '/analytics/attendance', color: 'from-amber-500 to-orange-600' },
-          { label: 'Injury Analytics', desc: 'Severity, body parts, recovery', path: '/analytics/injury', color: 'from-rose-500 to-red-600' },
-          { label: 'Coach Analytics', desc: 'Coach effectiveness metrics', path: '/analytics/coach', color: 'from-emerald-500 to-green-600' },
+          { label: 'Athlete Analytics', desc: 'Individual development & trends', path: '/analytics/athlete', color: 'from-blue-500 to-teal-500' },
           { label: 'Sport Analytics', desc: 'Per-sport performance summary', path: '/analytics/sport', color: 'from-purple-500 to-pink-600' },
+          { label: 'Coach Analytics', desc: 'Coach effectiveness metrics', path: '/analytics/coach', color: 'from-emerald-500 to-green-600' },
+          { label: 'Performance Analytics', desc: 'Scores, trends, top performers', path: '/performance/analytics', color: 'from-indigo-500 to-violet-600' },
+          { label: 'Fitness Analytics', desc: 'BMI, radar, fitness trends', path: '/fitness/analytics', color: 'from-cyan-500 to-blue-600' },
+          { label: 'Attendance Reports', desc: 'Consistency scores and rates', path: '/attendance/reports', color: 'from-amber-500 to-orange-600' },
+          { label: 'Injury Management', desc: 'Severity, body parts, recovery', path: '/injuries', color: 'from-rose-500 to-red-600' },
+          { label: 'Rankings Intelligence', desc: 'Academy leaderboard & breakdown', path: '/rankings', color: 'from-amber-600 to-yellow-500' },
+          { label: 'Selection Intelligence', desc: 'AI recommendations & history', path: '/selections', color: 'from-fuchsia-500 to-pink-500' },
         ].map(card => (
           <button key={card.path} onClick={() => navigate(card.path)}
             className="rounded-2xl border border-border bg-card p-5 text-left shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group">

@@ -22,7 +22,7 @@ const AthleteAnalytics = () => {
   useEffect(() => {
     athleteService.getAthletes({ limit: 100 })
       .then(r => {
-        const list = r.data.athletes || r.data || [];
+        const list = r.data?.data || r.data?.athletes || (Array.isArray(r.data) ? r.data : []);
         setAthletes(list);
         if (!selectedId && list.length > 0) {
           setSelectedId(list[0].id);
