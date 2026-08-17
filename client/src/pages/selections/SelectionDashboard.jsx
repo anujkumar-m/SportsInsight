@@ -44,9 +44,7 @@ const SelectionDashboard = () => {
         title="Selection Intelligence Command"
         subtitle="AI-assisted objective selection using 40% Perf + 30% Fitness + 20% Attendance + 10% Coach Rating"
         action={
-          <Button size="sm" onClick={() => navigate('/selections/recommended')}>
-            <Sparkles size={14} className="mr-1.5" /> AI Recommendation Engine
-          </Button>
+          <Button size="sm" leftIcon={Sparkles} onClick={() => navigate('/selections/recommended')}>AI Recommendation Engine</Button>
         }
       />
 

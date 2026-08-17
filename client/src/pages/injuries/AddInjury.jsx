@@ -74,9 +74,7 @@ const AddInjury = () => {
         title="Record New Injury"
         subtitle="Log athlete medical diagnosis, recovery timeline, doctor details, and availability status."
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/injuries')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to Register
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/injuries')}>Back to Register</Button>
         }
       />
 
@@ -226,9 +224,7 @@ const AddInjury = () => {
           <Button variant="ghost" type="button" onClick={() => navigate('/injuries')}>
             Cancel
           </Button>
-          <Button type="submit" loading={loading}>
-            <Save size={14} className="mr-1.5" /> Save Injury Record
-          </Button>
+          <Button type="submit" leftIcon={Save} loading={loading}>Save Injury Record</Button>
         </div>
       </form>
     </div>

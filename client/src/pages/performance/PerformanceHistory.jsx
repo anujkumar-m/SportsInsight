@@ -46,9 +46,7 @@ const PerformanceHistory = () => {
         title={`Performance History - ${athlete?.first_name} ${athlete?.last_name}`}
         subtitle={`Athlete Code: ${athlete?.athlete_code} • ${athlete?.sport_name || 'General'}`}
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/performance')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to Records
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/performance')}>Back to Records</Button>
         }
       />
 

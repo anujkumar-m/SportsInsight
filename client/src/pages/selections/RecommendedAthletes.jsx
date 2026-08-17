@@ -69,12 +69,8 @@ const RecommendedAthletes = () => {
         subtitle="Objective multi-variate scoring (40% Performance, 30% Fitness, 20% Attendance, 10% Coach)"
         action={
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/selections')}>
-              <ArrowLeft size={14} className="mr-1.5" /> Back to Dashboard
-            </Button>
-            <Button size="sm" loading={saving} onClick={handleSaveList} disabled={recommendations.length === 0}>
-              <Save size={14} className="mr-1.5" /> Save Official Selection List
-            </Button>
+            <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/selections')}>Back to Dashboard</Button>
+            <Button size="sm" leftIcon={Save} loading={saving} onClick={handleSaveList} disabled={recommendations.length === 0}>Save Official Selection List</Button>
           </div>
         }
       />

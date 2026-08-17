@@ -41,9 +41,7 @@ const RankingHistory = () => {
         title={`Ranking History - ${athlete?.first_name} ${athlete?.last_name}`}
         subtitle={`Athlete Code: ${athlete?.athlete_code} • Sport: ${athlete?.sport_name || 'General'}`}
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/rankings')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to Leaderboard
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/rankings')}>Back to Leaderboard</Button>
         }
       />
 

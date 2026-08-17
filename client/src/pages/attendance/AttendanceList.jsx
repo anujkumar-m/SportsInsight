@@ -232,17 +232,15 @@ const AttendanceList = () => {
               size="sm"
               onClick={() => navigate('/attendance/calendar')}
               className="rounded-xl border-border bg-card/60 backdrop-blur-sm text-foreground hover:bg-secondary hover:text-primary transition-all duration-200"
-            >
-              <CalendarIcon size={15} className="mr-1.5 text-primary" /> Calendar View
-            </Button>
+              leftIcon={CalendarIcon}
+            >Calendar View</Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate('/attendance/reports')}
               className="rounded-xl border-border bg-card/60 backdrop-blur-sm text-foreground hover:bg-secondary hover:text-primary transition-all duration-200"
-            >
-              <FileText size={15} className="mr-1.5 text-amber-500" /> Reports & AI Alerts
-            </Button>
+              leftIcon={FileText}
+            >Reports &amp; AI Alerts</Button>
             <button
               type="button"
               onClick={openProvideModal}
@@ -305,9 +303,9 @@ const AttendanceList = () => {
             ))}
           </select>
         )}
-        <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setDate(''); setSessionFilter(''); setStatus(''); setAthleteId(''); }}>
-          <RefreshCw size={13} className="mr-1" /> Reset
-        </Button>
+          <Button variant="ghost" size="sm" leftIcon={RefreshCw} onClick={() => { setSearch(''); setDate(''); setSessionFilter(''); setStatus(''); setAthleteId(''); }}>
+            Reset
+          </Button>
       </div>
 
       <DataTable

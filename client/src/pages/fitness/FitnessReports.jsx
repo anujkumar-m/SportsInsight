@@ -36,12 +36,8 @@ const FitnessReports = () => {
         subtitle="Printable and exportable official fitness assessment report sheets for coaches and selectors."
         action={
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/fitness')}>
-              <ArrowLeft size={14} className="mr-1.5" /> Back to List
-            </Button>
-            <Button size="sm" onClick={handlePrint}>
-              <Printer size={14} className="mr-1.5" /> Print Reports
-            </Button>
+            <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/fitness')}>Back to List</Button>
+            <Button size="sm" leftIcon={Printer} onClick={handlePrint}>Print Reports</Button>
           </div>
         }
       />

@@ -26,9 +26,7 @@ const SelectionHistory = () => {
         title="Selection Audit Trail & History"
         subtitle="Historical selection recommendations, trial results, and decisions"
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/selections')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to Dashboard
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/selections')}>Back to Dashboard</Button>
         }
       />
 

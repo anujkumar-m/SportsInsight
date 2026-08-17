@@ -112,9 +112,7 @@ const AddFitness = () => {
         title="Add Fitness Assessment"
         subtitle="Log physical assessment parameters for real-time BMI and AI fitness scoring."
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/fitness')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to List
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/fitness')}>Back to List</Button>
         }
       />
 
@@ -346,9 +344,7 @@ const AddFitness = () => {
           <Button variant="ghost" type="button" onClick={() => navigate('/fitness')}>
             Cancel
           </Button>
-          <Button type="submit" loading={loading}>
-            <Save size={14} className="mr-1.5" /> Save Fitness Assessment
-          </Button>
+          <Button type="submit" leftIcon={Save} loading={loading}>Save Fitness Assessment</Button>
         </div>
       </form>
     </div>

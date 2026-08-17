@@ -62,9 +62,7 @@ const RankingDashboard = () => {
         subtitle="Auto-calculated rankings using formula: 50% Performance + 30% Fitness + 20% Consistency Score"
         action={
           role !== 'athlete' && (
-            <Button size="sm" loading={calculating} onClick={handleRecalculate}>
-              <RefreshCw size={14} className="mr-1.5" /> Recalculate Rankings
-            </Button>
+            <Button size="sm" leftIcon={RefreshCw} loading={calculating} onClick={handleRecalculate}>Recalculate Rankings</Button>
           )
         }
       />

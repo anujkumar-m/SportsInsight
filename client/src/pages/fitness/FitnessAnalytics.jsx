@@ -35,9 +35,7 @@ const FitnessAnalytics = () => {
         title="Fitness Analytics & Parameter Breakdown"
         subtitle="Academy-wide fitness parameter distribution and strength/endurance trends."
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/fitness')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to List
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/fitness')}>Back to List</Button>
         }
       />
 

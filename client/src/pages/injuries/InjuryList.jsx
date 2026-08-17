@@ -214,9 +214,7 @@ const InjuryList = () => {
         action={
           <div className="flex flex-wrap items-center gap-2">
             {(role === 'admin' || role === 'coach') && (
-              <Button size="sm" onClick={() => navigate('/injuries/add')}>
-                <Plus size={14} className="mr-1.5" /> Record New Injury
-              </Button>
+              <Button size="sm" leftIcon={Plus} onClick={() => navigate('/injuries/add')}>Record New Injury</Button>
             )}
           </div>
         }
@@ -255,8 +253,8 @@ const InjuryList = () => {
           <option value="restricted">Restricted Training</option>
           <option value="under_observation">Under Observation</option>
         </select>
-        <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setSeverity(''); setAvailabilityStatus(''); setAthleteId(''); }}>
-          <RefreshCw size={13} className="mr-1" /> Reset
+        <Button variant="ghost" size="sm" leftIcon={RefreshCw} onClick={() => { setSearch(''); setSeverity(''); setAvailabilityStatus(''); setAthleteId(''); }}>
+          Reset
         </Button>
       </div>
 

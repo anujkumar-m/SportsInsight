@@ -292,30 +292,18 @@ const PerformanceList = () => {
           <div className="flex flex-wrap items-center gap-2">
             {role !== 'athlete' && (
               <>
-                <Button variant="outline" size="sm" onClick={() => navigate('/performance/analytics')}>
-                  <BarChart2 size={14} className="mr-1.5" /> Analytics
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate('/performance/compare')}>
-                  <Sparkles size={14} className="mr-1.5" /> Compare
-                </Button>
+                <Button variant="outline" size="sm" leftIcon={BarChart2} onClick={() => navigate('/performance/analytics')}>Analytics</Button>
+                <Button variant="outline" size="sm" leftIcon={Sparkles} onClick={() => navigate('/performance/compare')}>Compare</Button>
               </>
             )}
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download size={14} className="mr-1.5" /> Export
-            </Button>
+            <Button variant="outline" size="sm" leftIcon={Download} onClick={handleExport}>Export</Button>
             {(role === 'admin' || role === 'coach') && (
               <>
-                <Button variant="outline" size="sm" onClick={() => setImportModalOpen(true)}>
-                  <Upload size={14} className="mr-1.5" /> Import
-                </Button>
+                <Button variant="outline" size="sm" leftIcon={Upload} onClick={() => setImportModalOpen(true)}>Import</Button>
                 {role === 'admin' && (
-                  <Button variant="outline" size="sm" onClick={() => setCustomMetricModalOpen(true)}>
-                    + Custom Metric
-                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setCustomMetricModalOpen(true)}>+ Custom Metric</Button>
                 )}
-                <Button size="sm" onClick={() => navigate('/performance/add')}>
-                  <Plus size={14} className="mr-1.5" /> Add Performance
-                </Button>
+                <Button size="sm" leftIcon={Plus} onClick={() => navigate('/performance/add')}>Add Performance</Button>
               </>
             )}
           </div>
@@ -394,8 +382,8 @@ const PerformanceList = () => {
             onChange={(e) => setDateTo(e.target.value)}
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none"
           />
-          <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setSportId(''); setAthleteId(''); setDateFrom(''); setDateTo(''); }}>
-            <RefreshCw size={13} className="mr-1" /> Reset
+          <Button variant="ghost" size="sm" leftIcon={RefreshCw} onClick={() => { setSearch(''); setSportId(''); setAthleteId(''); setDateFrom(''); setDateTo(''); }}>
+            Reset
           </Button>
         </div>
       </div>

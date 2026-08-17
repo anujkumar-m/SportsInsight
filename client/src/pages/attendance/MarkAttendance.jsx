@@ -166,14 +166,9 @@ const MarkAttendance = () => {
               <UserCheck size={16} className="shrink-0 text-emerald-100" />
               <span className="whitespace-nowrap">Provide Attendance</span>
             </button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/attendance')}
+            <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/attendance')}
               className="rounded-xl border-border bg-card/60 backdrop-blur-sm text-foreground hover:bg-secondary transition-all duration-200"
-            >
-              <ArrowLeft size={14} className="mr-1.5" /> Back to Records
-            </Button>
+            >Back to Records</Button>
           </div>
         }
       />
@@ -267,9 +262,7 @@ const MarkAttendance = () => {
           <Button variant="ghost" type="button" onClick={() => navigate('/attendance')}>
             Cancel
           </Button>
-          <Button type="submit" loading={loading}>
-            <Save size={14} className="mr-1.5" /> Submit Attendance
-          </Button>
+          <Button type="submit" leftIcon={Save} loading={loading}>Submit Attendance</Button>
         </div>
       </form>
 

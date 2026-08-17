@@ -74,9 +74,7 @@ const EditPerformance = () => {
         title="Edit Performance Record"
         subtitle="Modify performance metric entry and update AI confidence scores."
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/performance')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to List
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/performance')}>Back to List</Button>
         }
       />
 
@@ -149,9 +147,7 @@ const EditPerformance = () => {
           <Button variant="ghost" type="button" onClick={() => navigate('/performance')}>
             Cancel
           </Button>
-          <Button type="submit" loading={loading}>
-            <Save size={14} className="mr-1.5" /> Save Changes
-          </Button>
+          <Button type="submit" leftIcon={Save} loading={loading}>Save Changes</Button>
         </div>
       </form>
     </div>

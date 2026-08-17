@@ -108,9 +108,7 @@ const AddPerformance = () => {
         title="Add Performance Record"
         subtitle="Record sport-specific athlete metrics to trigger automated AI performance scoring."
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/performance')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to List
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/performance')}>Back to List</Button>
         }
       />
 
@@ -253,9 +251,7 @@ const AddPerformance = () => {
           <Button variant="ghost" type="button" onClick={() => navigate('/performance')}>
             Cancel
           </Button>
-          <Button type="submit" loading={loading}>
-            <Save size={14} className="mr-1.5" /> Save Performance Record
-          </Button>
+          <Button type="submit" leftIcon={Save} loading={loading}>Save Performance Record</Button>
         </div>
       </form>
     </div>

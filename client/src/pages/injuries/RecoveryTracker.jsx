@@ -72,12 +72,8 @@ const RecoveryTracker = () => {
         subtitle={`Injury: ${injury.injury_type} (${injury.body_part || 'General'}) • Doctor: ${injury.doctor_name || 'N/A'}`}
         action={
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/injuries')}>
-              <ArrowLeft size={14} className="mr-1.5" /> Back to List
-            </Button>
-            <Button size="sm" onClick={() => setModalOpen(true)}>
-              <Plus size={14} className="mr-1.5" /> Log Doctor Checkup
-            </Button>
+            <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/injuries')}>Back to List</Button>
+            <Button size="sm" leftIcon={Plus} onClick={() => setModalOpen(true)}>Log Doctor Checkup</Button>
           </div>
         }
       />

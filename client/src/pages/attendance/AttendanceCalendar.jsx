@@ -87,9 +87,7 @@ const AttendanceCalendar = () => {
         title="Attendance Calendar View"
         subtitle="Visual monthly attendance log and status distribution."
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/attendance')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to Records
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/attendance')}>Back to Records</Button>
         }
       />
 

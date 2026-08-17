@@ -206,18 +206,12 @@ const FitnessList = () => {
           <div className="flex flex-wrap items-center gap-2">
             {role !== 'athlete' && (
               <>
-                <Button variant="outline" size="sm" onClick={() => navigate('/fitness/analytics')}>
-                  <BarChart2 size={14} className="mr-1.5" /> Analytics
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate('/fitness/reports')}>
-                  <FileText size={14} className="mr-1.5" /> Reports
-                </Button>
+                <Button variant="outline" size="sm" leftIcon={BarChart2} onClick={() => navigate('/fitness/analytics')}>Analytics</Button>
+                <Button variant="outline" size="sm" leftIcon={FileText} onClick={() => navigate('/fitness/reports')}>Reports</Button>
               </>
             )}
             {(role === 'admin' || role === 'coach') && (
-              <Button size="sm" onClick={() => navigate('/fitness/add')}>
-                <Plus size={14} className="mr-1.5" /> Add Assessment
-              </Button>
+              <Button size="sm" leftIcon={Plus} onClick={() => navigate('/fitness/add')}>Add Assessment</Button>
             )}
           </div>
         }
@@ -272,9 +266,9 @@ const FitnessList = () => {
             ))}
           </select>
         )}
-        <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setAthleteId(''); }}>
-          <RefreshCw size={13} className="mr-1" /> Reset
-        </Button>
+          <Button variant="ghost" size="sm" leftIcon={RefreshCw} onClick={() => { setSearch(''); setSportId(''); setAthleteId(''); }}>
+            Reset
+          </Button>
       </div>
 
       <DataTable

@@ -90,9 +90,7 @@ const EditInjury = () => {
         title="Edit Injury Record"
         subtitle={`Athlete: ${athleteName}`}
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/injuries')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to Register
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/injuries')}>Back to Register</Button>
         }
       />
 
@@ -162,7 +160,7 @@ const EditInjury = () => {
 
         <div className="flex justify-end gap-3">
           <Button variant="ghost" type="button" onClick={() => navigate('/injuries')}>Cancel</Button>
-          <Button type="submit" loading={loading}><Save size={14} className="mr-1.5" /> Save Changes</Button>
+          <Button type="submit" leftIcon={Save} loading={loading}>Save Changes</Button>
         </div>
       </form>
     </div>

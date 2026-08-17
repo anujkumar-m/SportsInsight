@@ -89,9 +89,7 @@ const EditFitness = () => {
         title="Edit Fitness Assessment"
         subtitle={`Athlete: ${athleteName}`}
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/fitness')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to List
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/fitness')}>Back to List</Button>
         }
       />
 
@@ -198,7 +196,7 @@ const EditFitness = () => {
 
         <div className="flex justify-end gap-3">
           <Button variant="ghost" type="button" onClick={() => navigate('/fitness')}>Cancel</Button>
-          <Button type="submit" loading={loading}><Save size={14} className="mr-1.5" /> Save Changes</Button>
+          <Button type="submit" leftIcon={Save} loading={loading}>Save Changes</Button>
         </div>
       </form>
     </div>

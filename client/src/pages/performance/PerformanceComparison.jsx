@@ -75,9 +75,7 @@ const PerformanceComparison = () => {
         title="Side-by-Side Performance Comparison"
         subtitle="Compare athlete metrics, AI scores, and trends to assist squad selection decisions."
         action={
-          <Button variant="outline" size="sm" onClick={() => navigate('/performance')}>
-            <ArrowLeft size={14} className="mr-1.5" /> Back to Records
-          </Button>
+          <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/performance')}>Back to Records</Button>
         }
       />
 
