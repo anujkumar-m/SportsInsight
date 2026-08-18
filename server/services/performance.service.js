@@ -315,6 +315,30 @@ async function createPerformanceRecord(data, userId) {
     console.error('Central sync non-fatal warning:', syncErr);
   }
 
+  // Trigger Notifications
+  try {
+    const notificationService = require('./notification.service');
+    await notificationService.notifyAthlete(
+      athlete_id,
+      '🏆 New Performance Score Logged',
+      `Your performance record for ${metric_name} (${metric_value} ${metric_unit || ''}) was logged. Performance Score: ${aiResult.performanceScore}/100.`,
+      aiResult.performanceScore >= 80 ? 'success' : 'info',
+      '/performance'
+    );
+
+    if (coach_id) {
+      await notificationService.notifyCoach(
+        coach_id,
+        'Performance Record Logged',
+        `Performance for metric ${metric_name} logged. Score: ${aiResult.performanceScore}/100.`,
+        'info',
+        '/performance'
+      );
+    }
+  } catch (notifErr) {
+    console.error('[Notification Trigger Warning] Performance logged notification:', notifErr.message);
+  }
+
   return getPerformanceById(newId);
 }
 
@@ -350,6 +374,18 @@ async function updatePerformanceRecord(id, data, userId) {
       id
     ]
   );
+
+  // Trigger update notification
+  try {
+    const notificationService = require('./notification.service');
+    await notificationService.notifyAthlete(
+      oldRecord.athlete_id,
+      'Performance Record Updated',
+      `Performance record for ${finalMetric} on ${finalDate} was updated. New Score: ${aiResult.performanceScore}/100.`,
+      'info',
+      '/performance'
+    );
+  } catch (_) {}
 
   await pool.query(
     `INSERT INTO performance_history (performance_id, athlete_id, action_type, description, changed_by, old_values, new_values)

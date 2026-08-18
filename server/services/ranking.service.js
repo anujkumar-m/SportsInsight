@@ -119,6 +119,28 @@ async function calculateRankings() {
     }
 
     await conn.commit();
+
+    // Trigger rankings updated notifications
+    try {
+      const notificationService = require('./notification.service');
+      await notificationService.notifyRole(
+        'admin',
+        '📊 Rankings Recalculated',
+        `AI Ranking Engine recalculated overall, sport, and category rankings for ${athletes.length} athletes.`,
+        'info',
+        '/rankings'
+      );
+      await notificationService.notifyRole(
+        'selector',
+        '📊 State Rankings Updated',
+        `Updated athlete rankings have been calculated and are ready for selection evaluations.`,
+        'info',
+        '/rankings'
+      );
+    } catch (notifErr) {
+      console.error('[Notification Trigger Warning] Rankings calculation notification:', notifErr.message);
+    }
+
     return { success: true, calculated: athletes.length, date: rankDate };
   } catch (err) {
     await conn.rollback();

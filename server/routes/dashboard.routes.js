@@ -9,6 +9,8 @@ const {
   getListTypes,
   getNotifications,
   markNotificationRead,
+  markAllNotificationsRead,
+  deleteNotification,
   getAIListHistory,
 } = require('../controllers/dashboard.controller');
 const { authenticate } = require('../middleware/auth.middleware');
@@ -30,6 +32,8 @@ router.get('/ai/history', requireRole('admin'), getAIListHistory);
 
 // Notifications
 router.get('/notifications', getNotifications);
+router.patch('/notifications/read-all', markAllNotificationsRead);
 router.patch('/notifications/:id/read', markNotificationRead);
+router.delete('/notifications/:id', deleteNotification);
 
 module.exports = router;

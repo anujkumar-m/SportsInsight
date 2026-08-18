@@ -89,20 +89,62 @@ const getAthleteById = async (id) => {
 
   const athlete = rows[0];
 
-  // medical history
-  const [medical] = await pool.query(
-    'SELECT * FROM athlete_medical_history WHERE athlete_id = ? ORDER BY record_date DESC LIMIT 10', [id]
-  );
-  // achievements
-  const [achievements] = await pool.query(
-    'SELECT ah.*, s.name AS sport_name FROM athlete_achievements ah LEFT JOIN sports s ON s.id = ah.sport_id WHERE ah.athlete_id = ? ORDER BY ah.achievement_date DESC LIMIT 20', [id]
-  );
-  // history/timeline
-  const [history] = await pool.query(
-    'SELECT ah.*, CONCAT(u.first_name,\" \",u.last_name) AS changed_by_name FROM athlete_history ah LEFT JOIN users u ON u.id = ah.changed_by WHERE ah.athlete_id = ? ORDER BY ah.created_at DESC LIMIT 30', [id]
-  );
+  // Parallel fetch of all sub-datasets
+  const [
+    [medical],
+    [achievements],
+    [history],
+    [performance],
+    [fitness],
+    [attendanceStats],
+    [remarks],
+    [rankings],
+    [injuries],
+    [selections],
+  ] = await Promise.all([
+    pool.query('SELECT * FROM athlete_medical_history WHERE athlete_id = ? ORDER BY record_date DESC LIMIT 15', [id]),
+    pool.query('SELECT ah.*, s.name AS sport_name FROM athlete_achievements ah LEFT JOIN sports s ON s.id = ah.sport_id WHERE ah.athlete_id = ? ORDER BY ah.achievement_date DESC LIMIT 20', [id]),
+    pool.query('SELECT ah.*, CONCAT(u.first_name," ",u.last_name) AS changed_by_name FROM athlete_history ah LEFT JOIN users u ON u.id = ah.changed_by WHERE ah.athlete_id = ? ORDER BY ah.created_at DESC LIMIT 30', [id]),
+    pool.query('SELECT pr.*, s.name AS sport_name FROM performance_records pr LEFT JOIN sports s ON pr.sport_id=s.id WHERE pr.athlete_id = ? ORDER BY pr.record_date DESC LIMIT 25', [id]),
+    pool.query('SELECT fa.* FROM fitness_assessments fa WHERE fa.athlete_id = ? ORDER BY fa.assessment_date DESC LIMIT 25', [id]),
+    pool.query(`
+      SELECT COUNT(*) AS total_sessions,
+             SUM(status = 'present') AS present_count,
+             SUM(status = 'absent') AS absent_count,
+             SUM(status = 'leave') AS leave_count,
+             ROUND(SUM(status = 'present') / NULLIF(COUNT(*), 0) * 100, 1) AS attendance_rate
+      FROM attendance WHERE athlete_id = ?`, [id]),
+    pool.query(`
+      SELECT cr.*, CONCAT(u.first_name, ' ', u.last_name) AS coach_name
+      FROM coach_remarks cr
+      LEFT JOIN coaches co ON cr.coach_id = co.id
+      LEFT JOIN users u ON co.user_id = u.id
+      WHERE cr.athlete_id = ?
+      ORDER BY cr.remark_date DESC, cr.id DESC LIMIT 25`, [id]),
+    pool.query('SELECT * FROM rankings WHERE athlete_id = ? ORDER BY rank_date DESC LIMIT 5', [id]),
+    pool.query('SELECT * FROM injuries WHERE athlete_id = ? ORDER BY injury_date DESC LIMIT 15', [id]),
+    pool.query('SELECT sel.* FROM selections sel WHERE sel.athlete_id = ? ORDER BY sel.selection_date DESC, sel.id DESC LIMIT 15', [id]),
+  ]);
 
-  return { ...athlete, medical_history: medical, achievements, history };
+  const latestMedReason = medical.length > 0 ? (medical[0].notes || medical[0].condition_name) : null;
+  const overallRank = rankings.find(r => r.rank_type === 'overall') || rankings[0] || null;
+
+  return {
+    ...athlete,
+    medical_reason: latestMedReason,
+    medical_history: medical,
+    achievements,
+    history,
+    performance_records: performance,
+    fitness_assessments: fitness,
+    attendance_stats: attendanceStats[0] || { total_sessions: 0, present_count: 0, absent_count: 0, attendance_rate: 0 },
+    coach_remarks: remarks,
+    rankings,
+    overall_rank: overallRank?.rank_position || null,
+    overall_ranking_score: overallRank?.overall_ranking_score || null,
+    injuries,
+    selections,
+  };
 };
 
 // ─── Create athlete ─────────────────────────────────────────
@@ -238,6 +280,41 @@ const createAthlete = async (data, createdBy) => {
     );
 
     await conn.commit();
+
+    // Trigger Notifications
+    try {
+      const notificationService = require('./notification.service');
+      await notificationService.notifyUser(
+        userId,
+        'Welcome to SportsInsight!',
+        `Your athlete profile has been registered with ID ${athlete_code}. You are ready to log attendance, performance, and view your ranking.`,
+        'success',
+        '/dashboard'
+      );
+
+      if (coach_id) {
+        await notificationService.notifyCoach(
+          coach_id,
+          'New Athlete Assigned',
+          `Athlete ${firstName} ${lastName} (${athlete_code}) has been assigned to your coaching roster.`,
+          'info',
+          `/athletes/${athleteId}`
+        );
+      }
+
+      if (medStatus !== 'fit') {
+        await notificationService.notifyRole(
+          'admin',
+          '⚠️ Athlete Medical Advisory',
+          `Athlete ${firstName} ${lastName} was registered with status: ${medStatus.toUpperCase()} (${data.medical_reason || 'No diagnosis'}).`,
+          'warning',
+          `/athletes/${athleteId}`
+        );
+      }
+    } catch (notifErr) {
+      console.error('[Notification Trigger Warning] Athlete created notification:', notifErr.message);
+    }
+
     return { id: athleteId, athlete_code, email, defaultPassword };
   } catch (err) {
     await conn.rollback();
@@ -314,6 +391,43 @@ const updateAthlete = async (id, data, updatedBy) => {
     );
 
     await conn.commit();
+
+    // Trigger update notifications
+    try {
+      const notificationService = require('./notification.service');
+      await notificationService.notifyAthlete(
+        id,
+        'Profile Updated',
+        'Your athlete profile information has been updated.',
+        'info',
+        '/profile'
+      );
+
+      if (data.medical_status !== undefined && data.medical_status !== 'fit') {
+        const [athRows] = await pool.query('SELECT coach_id, first_name, last_name FROM athletes a JOIN users u ON a.user_id=u.id WHERE a.id = ?', [id]);
+        const athName = athRows.length > 0 ? `${athRows[0].first_name} ${athRows[0].last_name}` : `Athlete ID ${id}`;
+        
+        if (athRows.length > 0 && athRows[0].coach_id) {
+          await notificationService.notifyCoach(
+            athRows[0].coach_id,
+            '🚨 Medical Status Update',
+            `Athlete ${athName} medical status was set to ${data.medical_status.toUpperCase()}: ${data.medical_reason || ''}`,
+            'warning',
+            `/athletes/${id}`
+          );
+        }
+        await notificationService.notifyRole(
+          'admin',
+          '🚨 Medical Status Update',
+          `Athlete ${athName} medical status was set to ${data.medical_status.toUpperCase()}: ${data.medical_reason || ''}`,
+          'warning',
+          `/athletes/${id}`
+        );
+      }
+    } catch (notifErr) {
+      console.error('[Notification Trigger Warning] Athlete updated notification:', notifErr.message);
+    }
+
     return true;
   } catch (err) {
     await conn.rollback();
@@ -333,6 +447,17 @@ const archiveAthlete = async (id, archivedBy) => {
     `INSERT INTO athlete_history (athlete_id, action_type, description, changed_by) VALUES (?,?,?,?)`,
     [id, 'archived', 'Athlete archived', archivedBy]
   );
+
+  try {
+    const notificationService = require('./notification.service');
+    await notificationService.notifyAthlete(
+      id,
+      'Account Archived',
+      'Your athlete profile has been archived by the academy administration.',
+      'warning',
+      '/dashboard'
+    );
+  } catch (_) {}
 };
 
 const restoreAthlete = async (id, restoredBy) => {

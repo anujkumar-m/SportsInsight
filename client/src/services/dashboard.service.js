@@ -270,6 +270,22 @@ const dashboardAPI = {
       return { success: true };
     }
   },
+
+  markAllNotificationsRead: async () => {
+    try {
+      return await api.patch('/dashboard/notifications/read-all');
+    } catch (err) {
+      return { success: true };
+    }
+  },
+
+  deleteNotification: async (id) => {
+    try {
+      return await api.delete(`/dashboard/notifications/${id}`);
+    } catch (err) {
+      return { success: true };
+    }
+  },
 };
 
 export default dashboardAPI;

@@ -336,6 +336,30 @@ async function createFitnessAssessment(data, userId) {
     console.error('Central sync non-fatal warning:', syncErr);
   }
 
+  // Trigger Notifications
+  try {
+    const notificationService = require('./notification.service');
+    await notificationService.notifyAthlete(
+      athlete_id,
+      '💪 New Fitness Assessment Logged',
+      `Your fitness evaluation on ${assessment_date} was completed. Overall Fitness Score: ${overallScore}/100 (Grade: ${aiResult.fitnessGrade}).`,
+      overallScore >= 80 ? 'success' : overallScore < 55 ? 'warning' : 'info',
+      '/fitness'
+    );
+
+    if (coach_id) {
+      await notificationService.notifyCoach(
+        coach_id,
+        'Fitness Assessment Logged',
+        `Fitness assessment recorded. Overall Score: ${overallScore}/100.`,
+        'info',
+        '/fitness'
+      );
+    }
+  } catch (notifErr) {
+    console.error('[Notification Trigger Warning] Fitness assessment notification:', notifErr.message);
+  }
+
   return getFitnessById(newId);
 }
 
@@ -384,6 +408,18 @@ async function updateFitnessAssessment(id, data, userId) {
       id
     ]
   );
+
+  // Trigger update notification
+  try {
+    const notificationService = require('./notification.service');
+    await notificationService.notifyAthlete(
+      oldRecord.athlete_id,
+      'Fitness Assessment Updated',
+      `Your fitness assessment on ${updatedData.assessment_date} was updated. New Score: ${overallScore}/100.`,
+      'info',
+      '/fitness'
+    );
+  } catch (_) {}
 
   await pool.query(
     `INSERT INTO fitness_history (fitness_id, athlete_id, action_type, description, changed_by, old_values, new_values)

@@ -55,12 +55,26 @@ exports.listArchived = async (req, res, next) => {
 // GET /api/athletes/:id
 exports.getOne = async (req, res, next) => {
   try {
-    const athlete = await athleteService.getAthleteById(req.params.id);
-    if (!athlete) return res.status(404).json({ success: false, message: 'Athlete not found' });
-    if (req.user.role?.toLowerCase() === 'coach' && athlete.coach_id !== req.user.coach_id) {
-      return res.status(403).json({ success: false, message: 'Access denied. You can only view your assigned athletes.' });
+    let targetId = req.params.id;
+    if (targetId === 'me' || targetId === 'profile' || (!targetId && req.user.role?.toLowerCase() === 'athlete')) {
+      const { pool } = require('../config/database');
+      const [athRows] = await pool.query('SELECT id FROM athletes WHERE user_id = ?', [req.user.id]);
+      if (!athRows.length) {
+        return res.status(404).json({ success: false, message: 'Athlete profile not found for this user account.' });
+      }
+      targetId = athRows[0].id;
     }
-    if (req.user.role?.toLowerCase() === 'selector' || req.user.role?.toLowerCase() === 'state_selector') {
+
+    const athlete = await athleteService.getAthleteById(targetId);
+    if (!athlete) return res.status(404).json({ success: false, message: 'Athlete not found' });
+
+    if (req.user.role?.toLowerCase() === 'athlete') {
+      if (athlete.user_id !== req.user.id && athlete.id !== req.user.athlete_id) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only view your own profile.' });
+      }
+    } else if (req.user.role?.toLowerCase() === 'coach' && athlete.coach_id !== req.user.coach_id) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only view your assigned athletes.' });
+    } else if (req.user.role?.toLowerCase() === 'selector' || req.user.role?.toLowerCase() === 'state_selector') {
       const sportIds = await selectorService.getSelectorSportIds(req.user.selector_id);
       if (sportIds && sportIds.length > 0 && !sportIds.includes(Number(athlete.sport_id))) {
         return res.status(403).json({ success: false, message: 'Access denied. You can only view athletes in your assigned sports.' });

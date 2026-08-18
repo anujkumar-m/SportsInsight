@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Award, Bell, CalendarCheck, Gauge, HeartPulse, TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Award, Bell, CalendarCheck, Gauge, HeartPulse, TrendingUp, User } from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -79,8 +80,26 @@ export default function AthleteDashboard() {
         title="My Performance"
         subtitle="Your progress, fitness, attendance and selection status."
         breadcrumb="Athlete Dashboard"
+        actions={
+          <Link
+            to="/profile"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
+          >
+            <User size={14} /> View Full Profile
+          </Link>
+        }
       />
-      <Panel title="Profile Summary">
+      <Panel
+        title="Profile Summary"
+        action={
+          <Link
+            to="/profile"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+          >
+            <User size={13} /> View Full Profile →
+          </Link>
+        }
+      >
         <div className="flex flex-wrap items-center gap-4">
           <span className="grid size-16 place-items-center rounded-2xl bg-gradient-primary text-lg font-bold text-primary-foreground">
             {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}

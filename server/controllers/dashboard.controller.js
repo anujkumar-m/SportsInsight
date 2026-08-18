@@ -220,7 +220,7 @@ const getListTypes = async (req, res, next) => {
 const getNotifications = async (req, res, next) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20',
+      'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 30',
       [req.user.id]
     );
     res.status(200).json({ success: true, data: { notifications: rows } });
@@ -236,6 +236,30 @@ const markNotificationRead = async (req, res, next) => {
       [req.params.id, req.user.id]
     );
     res.status(200).json({ success: true, message: 'Notification marked as read' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const markAllNotificationsRead = async (req, res, next) => {
+  try {
+    await pool.query(
+      'UPDATE notifications SET is_read = TRUE WHERE user_id = ?',
+      [req.user.id]
+    );
+    res.status(200).json({ success: true, message: 'All notifications marked as read' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteNotification = async (req, res, next) => {
+  try {
+    await pool.query(
+      'DELETE FROM notifications WHERE id = ? AND user_id = ?',
+      [req.params.id, req.user.id]
+    );
+    res.status(200).json({ success: true, message: 'Notification deleted' });
   } catch (err) {
     next(err);
   }
@@ -270,5 +294,7 @@ module.exports = {
   getListTypes,
   getNotifications,
   markNotificationRead,
+  markAllNotificationsRead,
+  deleteNotification,
   getAIListHistory,
 };

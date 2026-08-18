@@ -5,10 +5,15 @@ import PageHeader from '../../components/common/PageHeader';
 import { toast } from 'react-hot-toast';
 import { User, Key, Shield, Phone, Mail, CheckCircle2, Lock, Sparkles, Activity } from 'lucide-react';
 import { ROLE_LABELS } from '../../theme';
+import AthleteProfile from '../athletes/AthleteProfile';
 
 export default function UserProfile() {
   const { user, role, setUser } = useAuth();
   const [activeTab, setActiveTab] = useState('personal');
+
+  if (role === 'athlete') {
+    return <AthleteProfile />;
+  }
 
   // Profile Form State
   const [formData, setFormData] = useState({

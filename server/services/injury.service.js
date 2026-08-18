@@ -269,6 +269,41 @@ async function createInjury(data, userId) {
     console.error('Central sync non-fatal warning:', syncErr);
   }
 
+  // Trigger Notifications
+  try {
+    const notificationService = require('./notification.service');
+    await notificationService.notifyAthlete(
+      athlete_id,
+      '🚑 Injury Record Logged',
+      `An injury record for "${injury_type}" (${severity || 'minor'}) has been logged. Recovery protocol has been initiated.`,
+      'danger',
+      '/injuries'
+    );
+
+    const [athRows] = await pool.query('SELECT coach_id, first_name, last_name FROM athletes a JOIN users u ON a.user_id=u.id WHERE a.id = ?', [athlete_id]);
+    const athName = athRows.length > 0 ? `${athRows[0].first_name} ${athRows[0].last_name}` : `Athlete ID ${athlete_id}`;
+
+    if (athRows.length > 0 && athRows[0].coach_id) {
+      await notificationService.notifyCoach(
+        athRows[0].coach_id,
+        '🚨 Athlete Injury Alert',
+        `Athlete ${athName} suffered "${injury_type}" (${severity || 'minor'}). Medical status set to UNFIT.`,
+        'danger',
+        '/injuries'
+      );
+    }
+
+    await notificationService.notifyRole(
+      'admin',
+      '🚨 Athlete Injury Alert',
+      `Athlete ${athName} suffered "${injury_type}" (${severity || 'minor'}).`,
+      'warning',
+      '/injuries'
+    );
+  } catch (notifErr) {
+    console.error('[Notification Trigger Warning] Injury notification:', notifErr.message);
+  }
+
   return getInjuryById(newId);
 }
 
@@ -319,6 +354,20 @@ async function updateInjury(id, data, userId) {
   } catch (syncErr) {
     console.error('Central sync non-fatal warning:', syncErr);
   }
+
+  // Trigger recovery notification
+  try {
+    const notificationService = require('./notification.service');
+    if (updated.recovery_status === 'recovered' || updated.availability_status === 'fit') {
+      await notificationService.notifyAthlete(
+        oldRecord.athlete_id,
+        '🎉 Medical Clearance: Recovered',
+        `Congratulations! You have completed recovery from "${updated.injury_type}" and are medically cleared for play.`,
+        'success',
+        '/injuries'
+      );
+    }
+  } catch (_) {}
 
   return getInjuryById(id);
 }

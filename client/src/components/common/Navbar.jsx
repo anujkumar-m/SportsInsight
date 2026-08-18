@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Search, User, Settings } from 'lucide-react';
+import { Bell, Search, User, Settings, CheckCheck, Trash2, Info, AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import dashboardAPI from '../../services/dashboard.service';
 import { ROLE_LABELS } from '../../theme';
@@ -39,11 +39,20 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
   const crumb = BREADCRUMB_MAP[location.pathname] || title;
   const initials = `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase() || 'U';
 
-  useEffect(() => {
+  const loadNotifications = () => {
     dashboardAPI
       .getNotifications()
-      .then((d) => setNotifications(d.notifications || []))
+      .then((d) => {
+        const list = d?.data?.notifications || d?.notifications || [];
+        setNotifications(list);
+      })
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadNotifications();
+    const interval = setInterval(loadNotifications, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -57,7 +66,48 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
     }
   }, [notifOpen, profileOpen]);
 
+  const handleMarkRead = async (id, link) => {
+    try {
+      await dashboardAPI.markNotificationRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: 1 } : n))
+      );
+      if (link) {
+        setNotifOpen(false);
+        navigate(link);
+      }
+    } catch (_) {}
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await dashboardAPI.markAllNotificationsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: 1 })));
+    } catch (_) {}
+  };
+
+  const handleDeleteNotif = async (e, id) => {
+    e.stopPropagation();
+    try {
+      await dashboardAPI.deleteNotification(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch (_) {}
+  };
+
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  const renderTypeIcon = (type) => {
+    switch (type) {
+      case 'success':
+        return <CheckCircle2 className="size-4 text-success shrink-0" />;
+      case 'warning':
+        return <AlertTriangle className="size-4 text-warning shrink-0" />;
+      case 'danger':
+        return <ShieldAlert className="size-4 text-destructive shrink-0" />;
+      default:
+        return <Info className="size-4 text-primary shrink-0" />;
+    }
+  };
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-card/90 px-4 backdrop-blur sm:px-6">
@@ -85,20 +135,74 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
           >
             <Bell className="size-5" />
             {unreadCount > 0 && (
-              <span className="absolute right-2 top-2 size-2 rounded-full bg-destructive" />
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white shadow-sm">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
             )}
           </button>
           {notifOpen && (
-            <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-80 overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-elevated)]">
-              <div className="border-b border-border px-4 py-3 text-sm font-semibold">Notifications</div>
-              <div className="max-h-72 overflow-y-auto">
+            <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-84 sm:w-96 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl fade-in">
+              <div className="flex items-center justify-between border-b border-border bg-secondary/30 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-foreground">Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                      {unreadCount} unread
+                    </span>
+                  )}
+                </div>
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleMarkAllRead}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                  >
+                    <CheckCheck className="size-3.5" /> Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="max-h-80 overflow-y-auto divide-y divide-border/60">
                 {notifications.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-sm text-muted-foreground">No notifications</p>
+                  <div className="px-4 py-8 text-center">
+                    <Bell className="mx-auto size-8 text-muted-foreground/40 mb-2" />
+                    <p className="text-xs text-muted-foreground">No notifications yet</p>
+                  </div>
                 ) : (
-                  notifications.slice(0, 6).map((n) => (
-                    <div key={n.id} className="border-b border-border px-4 py-3 last:border-0">
-                      <p className="text-sm font-medium">{n.title}</p>
-                      <p className="text-xs text-muted-foreground">{n.message || n.body}</p>
+                  notifications.slice(0, 15).map((n) => (
+                    <div
+                      key={n.id}
+                      onClick={() => handleMarkRead(n.id, n.link)}
+                      className={`flex items-start gap-3 p-3.5 transition-colors cursor-pointer hover:bg-secondary/40 ${
+                        !n.is_read ? 'bg-primary/5' : ''
+                      }`}
+                    >
+                      <div className="mt-0.5">{renderTypeIcon(n.type)}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <p className={`text-xs ${!n.is_read ? 'font-bold text-foreground' : 'font-semibold text-foreground/80'}`}>
+                            {n.title}
+                          </p>
+                          {!n.is_read && (
+                            <span className="size-2 shrink-0 rounded-full bg-primary" />
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
+                          {n.message || n.body}
+                        </p>
+                        {n.created_at && (
+                          <span className="text-[10px] text-muted-foreground/70 mt-1 block">
+                            {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(n.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteNotif(e, n.id)}
+                        className="opacity-0 group-hover:opacity-100 hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all"
+                        title="Dismiss"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
                     </div>
                   ))
                 )}

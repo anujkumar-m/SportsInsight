@@ -144,6 +144,33 @@ async function saveSelections(recommendations, selectorId, selectionType, filter
       inserted.push(result.insertId);
     }
     await conn.commit();
+
+    // Trigger notifications for shortlisted/selected athletes
+    try {
+      const notificationService = require('./notification.service');
+      for (const rec of recommendations) {
+        if (['strongly_recommended', 'recommended'].includes(rec.recommendation)) {
+          await notificationService.notifyAthlete(
+            rec.athlete_id,
+            '🎉 Selection Nomination',
+            `Congratulations! You have been shortlisted for ${selectionType} with an AI selection score of ${rec.selectionScore}%.`,
+            'success',
+            '/selections'
+          );
+        }
+      }
+
+      await notificationService.notifyRole(
+        'admin',
+        '🏆 New Selection Register Published',
+        `A new candidate roster for ${selectionType} (${inserted.length} athletes) was approved and saved.`,
+        'info',
+        '/selections'
+      );
+    } catch (notifErr) {
+      console.error('[Notification Trigger Warning] Selection save notification:', notifErr.message);
+    }
+
     return { saved: inserted.length };
   } catch (err) {
     await conn.rollback();
