@@ -14,6 +14,7 @@ import {
 import toast from 'react-hot-toast';
 import { rankingService } from '../../services/rankingService';
 import { sportService } from '../../services/sportService';
+import dashboardAPI from '../../services/dashboard.service';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
@@ -29,6 +30,7 @@ const RankingDashboard = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
+  const [athleteSportName, setAthleteSportName] = useState('');
 
   // Filters: 1. Sport (dropdown), 2. Category (dropdown checkbox)
   const [sportId, setSportId] = useState('');
@@ -36,6 +38,22 @@ const RankingDashboard = () => {
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
 
   const categoryDropdownRef = useRef(null);
+
+  // If role is athlete, fetch athlete's sport and lock the ranking to that sport only
+  useEffect(() => {
+    if (role === 'athlete') {
+      dashboardAPI
+        .getAthleteDashboard()
+        .then((res) => {
+          const ath = res?.data?.athlete || res?.athlete || null;
+          if (ath?.sport_id) {
+            setSportId(String(ath.sport_id));
+            setAthleteSportName(ath.sport_name || '');
+          }
+        })
+        .catch(() => {});
+    }
+  }, [role]);
 
   // Load available sports and categories
   useEffect(() => {
@@ -200,8 +218,14 @@ const RankingDashboard = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Academy Leaderboard & Rankings"
-        subtitle="Auto-calculated rankings using formula: 50% Performance + 30% Fitness + 20% Consistency Score"
+        title={role === 'athlete' ? (athleteSportName ? `${athleteSportName} Leaderboard & Rankings` : 'Sport Leaderboard & Rankings') : 'Academy Leaderboard & Rankings'}
+        subtitle={
+          role === 'athlete'
+            ? athleteSportName
+              ? `Official standings and benchmark scores for ${athleteSportName}.`
+              : 'Official standings and benchmark scores for your registered sport.'
+            : 'Auto-calculated rankings using formula: 50% Performance + 30% Fitness + 20% Consistency Score'
+        }
         action={
           role !== 'athlete' && (
             <Button size="sm" leftIcon={RefreshCw} loading={calculating} onClick={handleRecalculate}>
@@ -211,7 +235,8 @@ const RankingDashboard = () => {
         }
       />
 
-      {/* Filter Bar (Sports Dropdown & Category Multi-Select Checkbox Dropdown) */}
+      {/* Filter Bar (Sports Dropdown & Category Multi-Select Checkbox Dropdown) - Hidden for athlete */}
+      {role !== 'athlete' && (
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-4">
           <div className="flex flex-wrap items-center gap-4">
@@ -400,6 +425,7 @@ const RankingDashboard = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* Rankings Leaderboard Table */}
       {loading ? (

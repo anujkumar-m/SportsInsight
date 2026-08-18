@@ -20,11 +20,17 @@ const FitnessHistory = () => {
     async function loadData() {
       try {
         const [athRes, fitRes] = await Promise.all([
-          athleteService.getAthleteById(athleteId).catch(() => ({ data: null })),
+          athleteService.getById(athleteId).catch(() => ({ data: null })),
           fitnessService.getHistory(athleteId).catch(() => ({ data: { assessments: [], timeline: [] } })),
         ]);
-        setAthlete(athRes.data);
-        setHistoryData(fitRes.data || { assessments: [], timeline: [] });
+        const athleteObj = athRes?.data?.data || athRes?.data || null;
+        const fitObj = fitRes?.data?.data || fitRes?.data || { assessments: [], timeline: [] };
+
+        setAthlete(athleteObj);
+        setHistoryData({
+          assessments: Array.isArray(fitObj?.assessments) ? fitObj.assessments : Array.isArray(fitObj) ? fitObj : [],
+          timeline: Array.isArray(fitObj?.timeline) ? fitObj.timeline : [],
+        });
       } catch (e) {
         toast.error('Failed to load fitness history.');
       } finally {
@@ -36,7 +42,8 @@ const FitnessHistory = () => {
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Loading fitness history...</div>;
 
-  const { assessments, timeline } = historyData;
+  const assessments = historyData.assessments || [];
+  const timeline = historyData.timeline || [];
 
   return (
     <div className="space-y-6">

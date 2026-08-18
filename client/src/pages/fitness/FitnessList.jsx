@@ -48,8 +48,10 @@ const FitnessList = () => {
         search,
         athleteId: athleteId || undefined,
       });
-      setAssessments(res.data.assessments);
-      setTotal(res.data.pagination.total);
+      const recordList = res?.data?.data?.assessments || res?.data?.assessments || res?.assessments || (Array.isArray(res?.data) ? res.data : []);
+      const totalCount = res?.data?.data?.pagination?.total ?? res?.data?.pagination?.total ?? res?.pagination?.total ?? recordList.length;
+      setAssessments(recordList);
+      setTotal(totalCount);
     } catch (e) {
       toast.error('Failed to load fitness assessments.');
     } finally {
@@ -95,6 +97,7 @@ const FitnessList = () => {
     {
       key: 'athlete',
       label: 'Athlete',
+      width: '26%',
       render: (_, row) => (
         <div className="flex items-center gap-3">
           {row.profile_photo ? (
@@ -114,11 +117,13 @@ const FitnessList = () => {
     {
       key: 'assessment_date',
       label: 'Date',
+      width: '14%',
       render: (_, row) => <span className="text-xs text-muted-foreground">{new Date(row.assessment_date).toLocaleDateString()}</span>,
     },
     {
       key: 'bmi',
       label: 'BMI & Body Fat',
+      width: '16%',
       render: (_, row) => (
         <div className="text-xs">
           <div className="font-semibold text-foreground">BMI: {row.bmi || 'N/A'}</div>
@@ -129,6 +134,7 @@ const FitnessList = () => {
     {
       key: 'fitness_score',
       label: 'Fitness Score & Grade',
+      width: '20%',
       render: (_, row) => {
         const score = Math.round(row.overall_fitness_score || 0);
         const grade = row.ai_analysis?.fitnessGrade || (score >= 80 ? 'A' : score >= 60 ? 'B' : 'C');
@@ -145,6 +151,7 @@ const FitnessList = () => {
     {
       key: 'ai_insights',
       label: 'Readiness & Injury Risk',
+      width: ['admin', 'coach'].includes(role) ? '16%' : '24%',
       render: (_, row) => {
         const ai = row.ai_analysis;
         return (
@@ -162,39 +169,33 @@ const FitnessList = () => {
         );
       },
     },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (_, row) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => { e.stopPropagation(); navigate(`/fitness/history/${row.athlete_id}`); }}
-            title="View Fitness History"
-            className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-          >
-            <Eye size={15} />
-          </button>
-          {(role === 'admin' || role === 'coach') && (
-            <>
-              <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/fitness/${row.id}/edit`); }}
-                title="Edit Assessment"
-                className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-              >
-                <Pencil size={15} />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}
-                title="Delete Assessment"
-                className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
-              >
-                <Trash2 size={15} />
-              </button>
-            </>
-          )}
-        </div>
-      ),
-    },
+    ...(['admin', 'coach'].includes(role)
+      ? [
+          {
+            key: 'actions',
+            label: 'Actions',
+            width: '8%',
+            render: (_, row) => (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate(`/fitness/${row.id}/edit`); }}
+                  title="Edit Assessment"
+                  className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                >
+                  <Pencil size={15} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}
+                  title="Delete Assessment"
+                  className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -204,14 +205,20 @@ const FitnessList = () => {
         subtitle="Evaluate 13 physical fitness parameters, real-time BMI, recovery readiness, and injury risk."
         action={
           <div className="flex flex-wrap items-center gap-2">
+            {role === 'admin' && (
+              <Button variant="outline" size="sm" leftIcon={BarChart2} onClick={() => navigate('/fitness/analytics')}>
+                Analytics
+              </Button>
+            )}
             {role !== 'athlete' && (
-              <>
-                <Button variant="outline" size="sm" leftIcon={BarChart2} onClick={() => navigate('/fitness/analytics')}>Analytics</Button>
-                <Button variant="outline" size="sm" leftIcon={FileText} onClick={() => navigate('/fitness/reports')}>Reports</Button>
-              </>
+              <Button variant="outline" size="sm" leftIcon={FileText} onClick={() => navigate('/fitness/reports')}>
+                Reports
+              </Button>
             )}
             {(role === 'admin' || role === 'coach') && (
-              <Button size="sm" leftIcon={Plus} onClick={() => navigate('/fitness/add')}>Add Assessment</Button>
+              <Button size="sm" leftIcon={Plus} onClick={() => navigate('/fitness/add')}>
+                Add Assessment
+              </Button>
             )}
           </div>
         }

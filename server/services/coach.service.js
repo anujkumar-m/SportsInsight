@@ -175,7 +175,7 @@ const generateCoachAiList = async (coach_id, list_type, limit = 20) => {
   return athleteService.generateAiList({ list_type, coach_id, limit });
 };
 
-const getCoachRemarks = async ({ athlete_id, coach_id, limit = 50, remark_type }) => {
+const getCoachRemarks = async ({ athlete_id, coach_id, limit = 100, remark_type }) => {
   const where = ['1=1'];
   const params = [];
   if (athlete_id) { where.push('cr.athlete_id = ?'); params.push(athlete_id); }
@@ -183,22 +183,87 @@ const getCoachRemarks = async ({ athlete_id, coach_id, limit = 50, remark_type }
   if (remark_type && remark_type !== 'all') { where.push('cr.remark_type = ?'); params.push(remark_type); }
 
   const sql = `
-    SELECT cr.*,
+    SELECT cr.id, cr.athlete_id, cr.coach_id, cr.remark_date, cr.remark_type, cr.rating, cr.remarks,
+           'coach' AS source,
            CONCAT(u_ath.first_name, ' ', u_ath.last_name) AS athlete_name,
            a.athlete_code,
            CONCAT(u_coa.first_name, ' ', u_coa.last_name) AS coach_name
     FROM coach_remarks cr
     JOIN athletes a ON a.id = cr.athlete_id
     JOIN users u_ath ON u_ath.id = a.user_id
-    JOIN coaches co ON co.id = cr.coach_id
-    JOIN users u_coa ON u_coa.id = co.user_id
+    LEFT JOIN coaches co ON co.id = cr.coach_id
+    LEFT JOIN users u_coa ON u_coa.id = co.user_id
     WHERE ${where.join(' AND ')}
     ORDER BY cr.remark_date DESC, cr.id DESC
     LIMIT ?
   `;
   params.push(Number(limit));
-  const [rows] = await pool.query(sql, params);
-  return rows;
+  const [directRows] = await pool.query(sql, params);
+  const combined = [...directRows];
+
+  // Include remarks from Performance evaluations
+  if (!remark_type || remark_type === 'all' || remark_type === 'performance') {
+    const perfWhere = ['pr.notes IS NOT NULL', "TRIM(pr.notes) != ''"];
+    const perfParams = [];
+    if (athlete_id) { perfWhere.push('pr.athlete_id = ?'); perfParams.push(athlete_id); }
+    if (coach_id) { perfWhere.push('a.coach_id = ?'); perfParams.push(coach_id); }
+
+    const perfSql = `
+      SELECT CONCAT('perf_', pr.id) AS id, pr.athlete_id, a.coach_id, pr.record_date AS remark_date,
+             'performance' AS remark_type,
+             ROUND(COALESCE(pr.performance_score, 75) / 10, 1) AS rating,
+             pr.notes AS remarks,
+             'performance' AS source,
+             CONCAT(u_ath.first_name, ' ', u_ath.last_name) AS athlete_name,
+             a.athlete_code,
+             COALESCE(CONCAT(u_coa.first_name, ' ', u_coa.last_name), 'Assigned Coach') AS coach_name
+      FROM performance_records pr
+      JOIN athletes a ON a.id = pr.athlete_id
+      JOIN users u_ath ON u_ath.id = a.user_id
+      LEFT JOIN coaches co ON co.id = a.coach_id
+      LEFT JOIN users u_coa ON u_coa.id = co.user_id
+      WHERE ${perfWhere.join(' AND ')}
+      ORDER BY pr.record_date DESC
+      LIMIT ?
+    `;
+    perfParams.push(Number(limit));
+    const [perfRows] = await pool.query(perfSql, perfParams);
+    combined.push(...perfRows);
+  }
+
+  // Include remarks from Fitness assessments
+  if (!remark_type || remark_type === 'all' || remark_type === 'fitness') {
+    const fitWhere = ['fa.notes IS NOT NULL', "TRIM(fa.notes) != ''"];
+    const fitParams = [];
+    if (athlete_id) { fitWhere.push('fa.athlete_id = ?'); fitParams.push(athlete_id); }
+    if (coach_id) { fitWhere.push('a.coach_id = ?'); fitParams.push(coach_id); }
+
+    const fitSql = `
+      SELECT CONCAT('fit_', fa.id) AS id, fa.athlete_id, a.coach_id, fa.assessment_date AS remark_date,
+             'fitness' AS remark_type,
+             ROUND(COALESCE(fa.overall_fitness_score, 75) / 10, 1) AS rating,
+             fa.notes AS remarks,
+             'fitness' AS source,
+             CONCAT(u_ath.first_name, ' ', u_ath.last_name) AS athlete_name,
+             a.athlete_code,
+             COALESCE(CONCAT(u_coa.first_name, ' ', u_coa.last_name), 'Fitness Coach') AS coach_name
+      FROM fitness_assessments fa
+      JOIN athletes a ON a.id = fa.athlete_id
+      JOIN users u_ath ON u_ath.id = a.user_id
+      LEFT JOIN coaches co ON co.id = a.coach_id
+      LEFT JOIN users u_coa ON u_coa.id = co.user_id
+      WHERE ${fitWhere.join(' AND ')}
+      ORDER BY fa.assessment_date DESC
+      LIMIT ?
+    `;
+    fitParams.push(Number(limit));
+    const [fitRows] = await pool.query(fitSql, fitParams);
+    combined.push(...fitRows);
+  }
+
+  // Sort by date descending
+  combined.sort((a, b) => new Date(b.remark_date) - new Date(a.remark_date));
+  return combined.slice(0, Number(limit));
 };
 
 const createCoachRemark = async (data) => {

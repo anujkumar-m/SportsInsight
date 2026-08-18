@@ -2,25 +2,29 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const Pagination = ({ page, limit, total, onPageChange, onLimitChange }) => {
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const start = (page - 1) * limit + 1;
-  const end = Math.min(page * limit, total);
+const Pagination = ({ page = 1, limit = 10, total = 0, onPageChange, onLimitChange }) => {
+  const safePage = Math.max(1, parseInt(page, 10) || 1);
+  const safeLimit = Math.max(1, parseInt(limit, 10) || 10);
+  const safeTotal = Math.max(0, parseInt(total, 10) || 0);
+
+  const totalPages = Math.max(1, Math.ceil(safeTotal / safeLimit));
+  const start = safeTotal === 0 ? 0 : (safePage - 1) * safeLimit + 1;
+  const end = Math.min(safePage * safeLimit, safeTotal);
 
   const pages = Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
     if (totalPages <= 5) return i + 1;
-    if (page <= 3) return i + 1;
-    if (page >= totalPages - 2) return totalPages - 4 + i;
-    return page - 2 + i;
+    if (safePage <= 3) return i + 1;
+    if (safePage >= totalPages - 2) return totalPages - 4 + i;
+    return safePage - 2 + i;
   });
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3 px-1">
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span>
-          Showing <strong className="text-foreground">{total === 0 ? 0 : start}</strong>–
+          Showing <strong className="text-foreground">{start}</strong>–
           <strong className="text-foreground">{end}</strong> of{' '}
-          <strong className="text-foreground">{total}</strong> results
+          <strong className="text-foreground">{safeTotal}</strong> results
         </span>
         <select
           value={limit}

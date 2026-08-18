@@ -6,6 +6,7 @@ export const athleteService = {
   getAthletes: (params = {}) => api.get('/athletes', { params }),
   listArchived: (params = {}) => api.get('/athletes/archived', { params }),
   getById: (id) => api.get(`/athletes/${id}`),
+  getAthleteById: (id) => api.get(`/athletes/${id}`),
   create: (data) => api.post('/athletes', data),
   update: (id, data) => api.put(`/athletes/${id}`, data),
   remove: (id) => api.delete(`/athletes/${id}`),

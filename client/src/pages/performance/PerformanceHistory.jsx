@@ -20,11 +20,17 @@ const PerformanceHistory = () => {
     async function loadData() {
       try {
         const [athRes, histRes] = await Promise.all([
-          athleteService.getAthleteById(athleteId).catch(() => ({ data: null })),
+          athleteService.getById(athleteId).catch(() => ({ data: null })),
           performanceService.getHistory(athleteId).catch(() => ({ data: { records: [], timeline: [] } })),
         ]);
-        setAthlete(athRes.data);
-        setHistoryData(histRes.data || { records: [], timeline: [] });
+        const athleteObj = athRes?.data?.data || athRes?.data || null;
+        const histObj = histRes?.data?.data || histRes?.data || { records: [], timeline: [] };
+
+        setAthlete(athleteObj);
+        setHistoryData({
+          records: Array.isArray(histObj?.records) ? histObj.records : Array.isArray(histObj) ? histObj : [],
+          timeline: Array.isArray(histObj?.timeline) ? histObj.timeline : [],
+        });
       } catch (e) {
         toast.error('Failed to load athlete performance history.');
       } finally {
@@ -38,7 +44,8 @@ const PerformanceHistory = () => {
     return <div className="p-8 text-center text-muted-foreground">Loading performance history...</div>;
   }
 
-  const { records, timeline } = historyData;
+  const records = historyData.records || [];
+  const timeline = historyData.timeline || [];
 
   return (
     <div className="space-y-6">

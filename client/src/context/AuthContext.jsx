@@ -27,9 +27,11 @@ export const AuthProvider = ({ children }) => {
       return;
     }
     try {
-      const data = await authAPI.getProfile();
-      if (data && data.user) {
-        setUser(data.user);
+      const res = await authAPI.getProfile();
+      const userObj = res?.data?.user || res?.user || (res?.data && !res?.data?.success ? res.data : null);
+      if (userObj && userObj.id) {
+        setUser(userObj);
+        localStorage.setItem('user', JSON.stringify(userObj));
         setIsAuthenticated(true);
       } else {
         const savedUser = localStorage.getItem('user');
@@ -42,9 +44,6 @@ export const AuthProvider = ({ children }) => {
       const savedUser = localStorage.getItem('user');
       if (savedUser) {
         setUser(JSON.parse(savedUser));
-        setIsAuthenticated(true);
-      } else {
-        setUser(MOCK_USERS.admin);
         setIsAuthenticated(true);
       }
     } finally {

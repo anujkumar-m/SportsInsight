@@ -32,6 +32,7 @@ import authAPI from '../../services/auth.service';
 import { Panel, ScoreBar, StatCard, StatusPill } from '../../components/widgets';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import PageHeader from '../../components/common/PageHeader';
+import { toast } from 'react-hot-toast';
 
 const pieColors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
 
@@ -74,10 +75,11 @@ export default function AdminDashboard() {
       setGoogleUsers(users);
       // Init pending role selections to current role_id
       const init = {};
-      users.forEach(u => { init[u.id] = u.role_id; });
+      users.forEach(u => { init[u.id] = Number(u.role_id); });
       setPendingRoles(init);
     } catch (err) {
       console.error('Failed to fetch Google users', err);
+      toast.error('Failed to load Google users');
     } finally {
       setGoogleUsersLoading(false);
     }
@@ -93,12 +95,20 @@ export default function AdminDashboard() {
     if (!roleId) return;
     setRoleAssigning(prev => ({ ...prev, [userId]: true }));
     try {
-      await authAPI.assignRole(userId, roleId);
+      const res = await authAPI.assignRole(userId, Number(roleId));
+      const assignedRoleObj = ASSIGNABLE_ROLES.find(r => r.id === Number(roleId));
+      toast.success(res?.message || `Role updated to ${assignedRoleObj?.label || 'new role'} successfully!`);
       setGoogleUsers(prev =>
-        prev.map(u => u.id === userId ? { ...u, role_id: roleId, role: ASSIGNABLE_ROLES.find(r => r.id === Number(roleId))?.name || u.role } : u)
+        prev.map(u => u.id === userId ? {
+          ...u,
+          role_id: Number(roleId),
+          role: assignedRoleObj?.name || u.role
+        } : u)
       );
+      setPendingRoles(prev => ({ ...prev, [userId]: Number(roleId) }));
     } catch (err) {
       console.error('Role assignment failed', err);
+      toast.error(err.response?.data?.message || err?.message || 'Failed to update role');
     } finally {
       setRoleAssigning(prev => ({ ...prev, [userId]: false }));
     }

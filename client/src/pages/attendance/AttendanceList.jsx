@@ -77,8 +77,8 @@ const AttendanceList = () => {
         status: status || undefined,
         athleteId: athleteId || undefined,
       });
-      const recordList = res?.data?.records || res?.records || [];
-      const totalCount = res?.data?.pagination?.total || res?.pagination?.total || recordList.length;
+      const recordList = res?.data?.data?.records || res?.data?.records || res?.records || (Array.isArray(res?.data) ? res.data : []);
+      const totalCount = res?.data?.data?.pagination?.total ?? res?.data?.pagination?.total ?? res?.pagination?.total ?? recordList.length;
       setRecords(recordList);
       setTotal(totalCount);
     } catch (e) {
@@ -162,6 +162,7 @@ const AttendanceList = () => {
     {
       key: 'athlete',
       label: 'Athlete',
+      width: '32%',
       render: (_, row) => (
         <div className="flex items-center gap-3">
           {row.profile_photo ? (
@@ -181,11 +182,13 @@ const AttendanceList = () => {
     {
       key: 'attendance_date',
       label: 'Date',
+      width: '16%',
       render: (_, row) => <span className="text-xs text-muted-foreground">{new Date(row.attendance_date).toLocaleDateString()}</span>,
     },
     {
       key: 'session',
       label: 'Session',
+      width: '16%',
       render: (_, row) => (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-secondary text-foreground border border-border">
           {row.session || 'Morning'}
@@ -195,29 +198,39 @@ const AttendanceList = () => {
     {
       key: 'status',
       label: 'Status',
+      width: '16%',
       render: (_, row) => <AttendanceStatusBadge status={row.status} />,
     },
     {
       key: 'remarks',
       label: 'Remarks',
+      width: role !== 'athlete' ? '14%' : '20%',
       render: (_, row) => <span className="text-xs text-muted-foreground italic">{row.remarks || '—'}</span>,
     },
-    {
-      key: 'actions',
-      label: '',
-      render: (_, row) => (
-        <div className="flex justify-end">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-destructive hover:bg-destructive/10"
-            onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}
-          >
-            <Trash2 size={14} />
-          </Button>
-        </div>
-      ),
-    },
+    ...(role !== 'athlete'
+      ? [
+          {
+            key: 'actions',
+            label: '',
+            width: '6%',
+            render: (_, row) => (
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-destructive hover:bg-destructive/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDelete(row);
+                  }}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (

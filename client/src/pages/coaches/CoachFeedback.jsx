@@ -237,9 +237,15 @@ export default function CoachFeedback() {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="capitalize rounded-md bg-secondary px-2 py-0.5 font-medium text-foreground">
-                    {item.remark_type || 'General'}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                  <span className={`capitalize rounded-md px-2 py-0.5 font-semibold text-[11px] ${
+                    item.source === 'performance'
+                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
+                      : item.source === 'fitness'
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                      : 'bg-secondary text-foreground'
+                  }`}>
+                    {item.source === 'performance' ? '⚡ Performance Record' : item.source === 'fitness' ? '💪 Fitness Assessment' : (item.remark_type || 'General Feedback')}
                   </span>
                   <span>•</span>
                   <span className="flex items-center gap-1">
@@ -254,9 +260,9 @@ export default function CoachFeedback() {
 
               <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1 font-medium">
-                  <User className="size-3 text-primary" /> Coach: {item.coach_name || 'Assigned Coach'}
+                  <User className="size-3 text-primary" /> {item.coach_name || 'Assigned Coach'}
                 </span>
-                {['admin', 'coach'].includes(role) && (
+                {['admin', 'coach'].includes(role) && item.source === 'coach' && (
                   <button
                     type="button"
                     onClick={() => handleDeleteRemark(item.id)}

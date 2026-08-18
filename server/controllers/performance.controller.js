@@ -91,12 +91,6 @@ async function deletePerformance(req, res, next) {
 
 async function getAthletePerformanceHistory(req, res, next) {
   try {
-    if (req.user?.role?.toLowerCase() === 'coach') {
-      const athlete = await athleteService.getAthleteById(req.params.athleteId);
-      if (!athlete || athlete.coach_id !== req.user.coach_id) {
-        return res.status(403).json({ success: false, message: 'Access denied. You can only view performance history for your assigned athletes.' });
-      }
-    }
     if (req.user?.role?.toLowerCase() === 'athlete' && Number(req.params.athleteId) !== req.user.athlete_id) {
       return res.status(403).json({ success: false, message: 'Access denied. You can only view your own performance history.' });
     }

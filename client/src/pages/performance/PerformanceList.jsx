@@ -76,8 +76,10 @@ const PerformanceList = () => {
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
       });
-      setRecords(res.data.records);
-      setTotal(res.data.pagination.total);
+      const recordList = res?.data?.data?.records || res?.data?.records || res?.records || (Array.isArray(res?.data) ? res.data : []);
+      const totalCount = res?.data?.data?.pagination?.total ?? res?.data?.pagination?.total ?? res?.pagination?.total ?? recordList.length;
+      setRecords(recordList);
+      setTotal(totalCount);
     } catch (e) {
       toast.error(e.message || 'Failed to load performance records.');
     } finally {
@@ -171,6 +173,7 @@ const PerformanceList = () => {
     {
       key: 'athlete',
       label: 'Athlete',
+      width: '26%',
       render: (_, row) => (
         <div className="flex items-center gap-3">
           {row.profile_photo ? (
@@ -190,6 +193,7 @@ const PerformanceList = () => {
     {
       key: 'metric_name',
       label: 'Metric & Value',
+      width: '20%',
       render: (_, row) => (
         <div>
           <div className="font-medium text-foreground text-sm">{row.metric_name}</div>
@@ -202,11 +206,13 @@ const PerformanceList = () => {
     {
       key: 'record_date',
       label: 'Record Date',
+      width: '14%',
       render: (_, row) => <span className="text-xs text-muted-foreground">{new Date(row.record_date).toLocaleDateString()}</span>,
     },
     {
       key: 'performance_score',
       label: 'AI Performance Score',
+      width: '18%',
       render: (_, row) => (
         <div className="flex items-center gap-2">
           <div className="text-base font-bold text-foreground">{row.performance_score ?? 75}</div>
@@ -228,59 +234,44 @@ const PerformanceList = () => {
     },
     {
       key: 'ai_insights',
-      label: 'AI Trend / Insights',
+      label: 'AI Trend',
+      width: ['admin', 'coach'].includes(role) ? '14%' : '22%',
       render: (_, row) => {
         const ai = row.ai_analysis;
         return (
-          <div className="space-y-1 max-w-xs">
-            <div className="flex items-center gap-1.5">
-              <Badge variant={ai?.isExceptional ? 'success' : ai?.isDeclining ? 'danger' : 'info'}>
-                {ai?.trend || 'Stable'}
-              </Badge>
-              {ai?.isDeclining && (
-                <span className="flex items-center gap-1 text-[11px] text-destructive font-medium">
-                  <ShieldAlert size={12} /> Decline
-                </span>
-              )}
-            </div>
-            {ai?.reason && <p className="text-[11px] text-muted-foreground line-clamp-1">{ai.reason}</p>}
-          </div>
+          <Badge variant={ai?.isExceptional ? 'success' : ai?.isDeclining ? 'danger' : 'info'}>
+            {ai?.trend || 'Stable'}
+          </Badge>
         );
       },
     },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (_, row) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => { e.stopPropagation(); navigate(`/performance/history/${row.athlete_id}`); }}
-            title="View Athlete History"
-            className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-          >
-            <Eye size={15} />
-          </button>
-          {(role === 'admin' || role === 'coach') && (
-            <>
-              <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/performance/${row.id}/edit`); }}
-                title="Edit Record"
-                className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-              >
-                <Pencil size={15} />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}
-                title="Delete Record"
-                className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
-              >
-                <Trash2 size={15} />
-              </button>
-            </>
-          )}
-        </div>
-      ),
-    },
+    ...(['admin', 'coach'].includes(role)
+      ? [
+          {
+            key: 'actions',
+            label: 'Actions',
+            width: '8%',
+            render: (_, row) => (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate(`/performance/${row.id}/edit`); }}
+                  title="Edit Record"
+                  className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                >
+                  <Pencil size={15} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}
+                  title="Delete Record"
+                  className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -290,21 +281,36 @@ const PerformanceList = () => {
         subtitle="Track sport-specific athlete metrics, AI trend predictions, and coach remarks."
         action={
           <div className="flex flex-wrap items-center gap-2">
+            {/* Compare is available for coaches and admin */}
             {role !== 'athlete' && (
+              <Button variant="outline" size="sm" leftIcon={Sparkles} onClick={() => navigate('/performance/compare')}>
+                Compare
+              </Button>
+            )}
+
+            {/* Admin-only tools: Analytics, Export, Import, Custom Metric */}
+            {role === 'admin' && (
               <>
-                <Button variant="outline" size="sm" leftIcon={BarChart2} onClick={() => navigate('/performance/analytics')}>Analytics</Button>
-                <Button variant="outline" size="sm" leftIcon={Sparkles} onClick={() => navigate('/performance/compare')}>Compare</Button>
+                <Button variant="outline" size="sm" leftIcon={BarChart2} onClick={() => navigate('/performance/analytics')}>
+                  Analytics
+                </Button>
+                <Button variant="outline" size="sm" leftIcon={Download} onClick={handleExport}>
+                  Export
+                </Button>
+                <Button variant="outline" size="sm" leftIcon={Upload} onClick={() => setImportModalOpen(true)}>
+                  Import
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setCustomMetricModalOpen(true)}>
+                  + Custom Metric
+                </Button>
               </>
             )}
-            <Button variant="outline" size="sm" leftIcon={Download} onClick={handleExport}>Export</Button>
+
+            {/* Add Performance for coach and admin */}
             {(role === 'admin' || role === 'coach') && (
-              <>
-                <Button variant="outline" size="sm" leftIcon={Upload} onClick={() => setImportModalOpen(true)}>Import</Button>
-                {role === 'admin' && (
-                  <Button variant="outline" size="sm" onClick={() => setCustomMetricModalOpen(true)}>+ Custom Metric</Button>
-                )}
-                <Button size="sm" leftIcon={Plus} onClick={() => navigate('/performance/add')}>Add Performance</Button>
-              </>
+              <Button size="sm" leftIcon={Plus} onClick={() => navigate('/performance/add')}>
+                Add Performance
+              </Button>
             )}
           </div>
         }

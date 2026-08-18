@@ -322,9 +322,9 @@ const getAthletePerformanceHistory = async (athleteId, months = 6) => {
 };
 
 const getAthleteCoachRemarks = async (athleteId, limit = 5) => {
-  const [rows] = await pool.query(
+  const [directRemarks] = await pool.query(
     `SELECT cr.remark_type, cr.rating, cr.remarks, cr.remark_date,
-            u.first_name AS coach_first, u.last_name AS coach_last
+            u.first_name AS coach_first, u.last_name AS coach_last, 'coach' AS source
      FROM coach_remarks cr
      JOIN coaches co ON cr.coach_id = co.id
      JOIN users u ON co.user_id = u.id
@@ -333,7 +333,46 @@ const getAthleteCoachRemarks = async (athleteId, limit = 5) => {
      LIMIT ?`,
     [athleteId, limit]
   );
-  return rows;
+
+  const [perfRemarks] = await pool.query(
+    `SELECT 'performance' AS remark_type,
+            ROUND(COALESCE(pr.performance_score, 75) / 10, 1) AS rating,
+            pr.notes AS remarks,
+            pr.record_date AS remark_date,
+            COALESCE(u.first_name, 'Head') AS coach_first,
+            COALESCE(u.last_name, 'Coach') AS coach_last,
+            'performance' AS source
+     FROM performance_records pr
+     JOIN athletes a ON a.id = pr.athlete_id
+     LEFT JOIN coaches co ON co.id = a.coach_id
+     LEFT JOIN users u ON co.user_id = u.id
+     WHERE pr.athlete_id = ? AND pr.notes IS NOT NULL AND TRIM(pr.notes) != ''
+     ORDER BY pr.record_date DESC
+     LIMIT ?`,
+    [athleteId, limit]
+  );
+
+  const [fitRemarks] = await pool.query(
+    `SELECT 'fitness' AS remark_type,
+            ROUND(COALESCE(fa.overall_fitness_score, 75) / 10, 1) AS rating,
+            fa.notes AS remarks,
+            fa.assessment_date AS remark_date,
+            COALESCE(u.first_name, 'Fitness') AS coach_first,
+            COALESCE(u.last_name, 'Coach') AS coach_last,
+            'fitness' AS source
+     FROM fitness_assessments fa
+     JOIN athletes a ON a.id = fa.athlete_id
+     LEFT JOIN coaches co ON co.id = a.coach_id
+     LEFT JOIN users u ON co.user_id = u.id
+     WHERE fa.athlete_id = ? AND fa.notes IS NOT NULL AND TRIM(fa.notes) != ''
+     ORDER BY fa.assessment_date DESC
+     LIMIT ?`,
+    [athleteId, limit]
+  );
+
+  const combined = [...directRemarks, ...perfRemarks, ...fitRemarks];
+  combined.sort((a, b) => new Date(b.remark_date) - new Date(a.remark_date));
+  return combined.slice(0, limit);
 };
 
 module.exports = {
