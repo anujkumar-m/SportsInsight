@@ -110,8 +110,14 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-card/90 px-4 backdrop-blur sm:px-6">
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-card/90 px-3.5 backdrop-blur sm:px-6">
       <MobileMenuButton onClick={onMenuOpen} />
+
+      <div className="flex items-center gap-2 min-w-0 md:hidden">
+        <span className="truncate text-sm font-bold text-foreground">
+          {crumb}
+        </span>
+      </div>
 
       <div className="relative hidden max-w-sm flex-1 md:block">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -121,7 +127,7 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
         />
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
         <div className="relative" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
@@ -141,7 +147,7 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
             )}
           </button>
           {notifOpen && (
-            <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-84 sm:w-96 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl fade-in">
+            <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+8px)] z-50 sm:w-96 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl fade-in">
               <div className="flex items-center justify-between border-b border-border bg-secondary/30 px-4 py-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-foreground">Notifications</span>

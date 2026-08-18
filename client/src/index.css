@@ -498,3 +498,55 @@
   border-radius: 0.375rem;
 }
 
+/* ─── Global Responsive Helpers & Touch Optimization ───── */
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+  min-height: 100vh;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Smooth momentum scrolling for responsive containers */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Responsive custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.554 0.046 257.417 / 20%);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.554 0.046 257.417 / 40%);
+}
+
+/* Prevent layout shift on small screens */
+img, svg, video, canvas, audio, iframe, embed, object {
+  display: block;
+  max-width: 100%;
+}
+
+/* Modal responsive viewport constraints */
+@media (max-width: 640px) {
+  .modal-container {
+    width: 100% !important;
+    max-height: calc(100vh - 2rem) !important;
+    margin: 1rem !important;
+  }
+}
+

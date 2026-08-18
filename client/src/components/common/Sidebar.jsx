@@ -140,14 +140,14 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex">{panel}</div>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 flex lg:hidden animate-in fade-in duration-200" role="dialog" aria-modal="true">
           <button
             type="button"
             aria-label="Close navigation"
             onClick={onMobileClose}
-            className="fixed inset-0 bg-navy/60"
+            className="fixed inset-0 bg-navy/60 backdrop-blur-xs cursor-pointer"
           />
-          <div className="relative z-10 h-full shadow-2xl">{panel}</div>
+          <div className="relative z-10 h-full max-w-[85vw] shadow-2xl animate-in slide-in-from-left duration-200">{panel}</div>
         </div>
       )}
     </>
@@ -155,7 +155,12 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
 };
 
 export const MobileMenuButton = ({ onClick }) => (
-  <button type="button" className="lg:hidden" onClick={onClick} aria-label="Open navigation">
+  <button
+    type="button"
+    className="lg:hidden grid size-9 place-items-center rounded-lg border border-border bg-card text-foreground hover:bg-secondary transition-colors"
+    onClick={onClick}
+    aria-label="Open navigation"
+  >
     <Menu className="size-5" />
   </button>
 );
