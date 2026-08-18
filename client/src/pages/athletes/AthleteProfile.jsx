@@ -1,11 +1,11 @@
 // ─── pages/athletes/AthleteProfile.jsx ───────────────────
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, Edit, Activity, Calendar, Award, HeartPulse,
   User, MapPin, ShieldCheck, Mail, Phone, CalendarRange, Droplets,
   Ruler, Weight, Dna, Gauge, TrendingUp, CalendarCheck, MessageSquare,
-  Sparkles, AlertTriangle, ShieldAlert, CheckCircle2, Trophy, Clock
+  Sparkles, AlertTriangle, ShieldAlert, CheckCircle2, Trophy, Clock, Plus
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { athleteService } from '../../services/athleteService';
@@ -14,6 +14,7 @@ import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import PageHeader from '../../components/common/PageHeader';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import AddAchievementModal from './AddAchievementModal';
 
 /* ─── Sub-components ────────────────────────────────────── */
 
@@ -76,23 +77,25 @@ const AthleteProfile = () => {
   const [athlete, setAthlete] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [achievementModalOpen, setAchievementModalOpen] = useState(false);
 
   const effectiveId = id || (role === 'athlete' ? 'me' : user?.athlete_id || user?.id);
 
-  useEffect(() => {
-    const fetchAthlete = async () => {
-      try {
-        const res = await athleteService.getById(effectiveId);
-        setAthlete(res.data);
-      } catch (err) {
-        toast.error('Failed to load athlete profile');
-        if (role !== 'athlete') navigate('/athletes');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAthlete();
+  const fetchAthlete = useCallback(async () => {
+    try {
+      const res = await athleteService.getById(effectiveId);
+      setAthlete(res.data);
+    } catch (err) {
+      toast.error('Failed to load athlete profile');
+      if (role !== 'athlete') navigate('/athletes');
+    } finally {
+      setLoading(false);
+    }
   }, [effectiveId, navigate, role]);
+
+  useEffect(() => {
+    fetchAthlete();
+  }, [fetchAthlete]);
 
   if (loading) return <LoadingSkeleton />;
   if (!athlete) {
@@ -115,16 +118,24 @@ const AthleteProfile = () => {
     .slice(0, 2)
     .toUpperCase() || 'AP';
 
-  const TABS = [
-    { id: 'overview',     label: 'Overview',              icon: User },
-    { id: 'performance',  label: `Performance (${athlete.performance_records?.length || 0})`, icon: TrendingUp },
-    { id: 'fitness',      label: `Fitness (${athlete.fitness_assessments?.length || 0})`,       icon: Gauge },
-    { id: 'attendance',   label: 'Attendance Stats',      icon: CalendarCheck },
-    { id: 'medical',      label: `Medical & Injuries (${(athlete.medical_history?.length || 0) + (athlete.injuries?.length || 0)})`, icon: HeartPulse },
-    { id: 'feedback',     label: `Coach Feedback (${athlete.coach_remarks?.length || 0})`, icon: MessageSquare },
-    { id: 'achievements', label: `Achievements & Trials (${(athlete.achievements?.length || 0) + (athlete.selections?.length || 0)})`, icon: Award },
-    { id: 'history',      label: 'Activity Log',          icon: Calendar },
+  const athleteTabs = [
+    { id: 'overview',     label: 'Overview',                                                                icon: User },
+    { id: 'achievements', label: `Achievements (${(athlete.achievements?.length || 0) + (athlete.selections?.length || 0)})`, icon: Award },
+    { id: 'history',      label: 'Activity Log',                                                            icon: Calendar },
   ];
+
+  const adminCoachTabs = [
+    { id: 'overview',     label: 'Overview',                                                                icon: User },
+    { id: 'performance',  label: `Performance (${athlete.performance_records?.length || 0})`,               icon: TrendingUp },
+    { id: 'fitness',      label: `Fitness (${athlete.fitness_assessments?.length || 0})`,                    icon: Gauge },
+    { id: 'attendance',   label: 'Attendance Stats',                                                        icon: CalendarCheck },
+    { id: 'medical',      label: `Medical & Injuries (${(athlete.medical_history?.length || 0) + (athlete.injuries?.length || 0)})`, icon: HeartPulse },
+    { id: 'feedback',     label: `Coach Feedback (${athlete.coach_remarks?.length || 0})`,                  icon: MessageSquare },
+    { id: 'achievements', label: `Achievements & Trials (${(athlete.achievements?.length || 0) + (athlete.selections?.length || 0)})`, icon: Award },
+    { id: 'history',      label: 'Activity Log',                                                            icon: Calendar },
+  ];
+
+  const TABS = role === 'athlete' ? athleteTabs : adminCoachTabs;
 
   const latestFitness = athlete.fitness_assessments?.[0];
   const attendanceRate = athlete.attendance_stats?.attendance_rate ?? 0;
@@ -642,24 +653,61 @@ const AthleteProfile = () => {
         {activeTab === 'achievements' && (
           <div className="space-y-6">
             <div className="ui-card p-6">
-              <div className="mb-4 flex items-center gap-2.5 border-b border-border pb-3">
-                <Trophy size={18} className="text-amber-500" />
-                <h3 className="text-sm font-bold uppercase tracking-wide text-foreground">Medals & Achievements</h3>
+              <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
+                <div className="flex items-center gap-2.5">
+                  <Trophy size={18} className="text-amber-500" />
+                  <h3 className="text-sm font-bold uppercase tracking-wide text-foreground">Medals & Achievements</h3>
+                </div>
+                {(role === 'admin' || role === 'coach' || role === 'head_coach') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    leftIcon={Plus}
+                    className="border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 text-xs"
+                    onClick={() => setAchievementModalOpen(true)}
+                  >
+                    Record Achievement
+                  </Button>
+                )}
               </div>
 
               {athlete.achievements?.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2">
                   {athlete.achievements.map((ach) => (
-                    <div key={ach.id} className="flex gap-4 rounded-xl border border-border bg-background p-4">
+                    <div key={ach.id} className="flex gap-4 rounded-xl border border-border bg-background p-4 relative overflow-hidden group hover:border-amber-500/40 transition-colors">
                       <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-amber-500/15 text-2xl">
                         🏆
                       </span>
-                      <div className="min-w-0">
-                        <p className="font-bold text-foreground truncate">{ach.title}</p>
-                        <p className="mt-0.5 text-xs font-medium text-muted-foreground">
-                          {ach.competition_name} &bull; {new Date(ach.achievement_date).toLocaleDateString()}
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-bold text-foreground truncate text-sm">{ach.title}</p>
+                          {ach.position && (
+                            <span className="inline-flex shrink-0 items-center rounded-md bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                              {ach.position}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs font-semibold text-primary">
+                          {ach.competition_name}
                         </p>
-                        {ach.description && <p className="mt-2 text-xs leading-relaxed text-foreground/80">{ach.description}</p>}
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                          <span>{new Date(ach.achievement_date).toLocaleDateString()}</span>
+                          {ach.level && (
+                            <>
+                              <span>•</span>
+                              <span className="capitalize font-medium text-foreground/80 bg-secondary px-1.5 py-0.5 rounded">
+                                Category: {ach.level}
+                              </span>
+                            </>
+                          )}
+                          {ach.sport_name && (
+                            <>
+                              <span>•</span>
+                              <span>{ach.sport_name}</span>
+                            </>
+                          )}
+                        </div>
+                        {ach.description && <p className="mt-1 text-xs leading-relaxed text-foreground/75 italic">"{ach.description}"</p>}
                       </div>
                     </div>
                   ))}
@@ -729,6 +777,14 @@ const AthleteProfile = () => {
           </div>
         )}
       </div>
+
+      {/* Add Achievement Modal */}
+      <AddAchievementModal
+        isOpen={achievementModalOpen}
+        onClose={() => setAchievementModalOpen(false)}
+        athlete={athlete}
+        onSuccess={fetchAthlete}
+      />
     </div>
   );
 };

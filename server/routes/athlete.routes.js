@@ -18,6 +18,12 @@ router.post('/bulk-delete', authorize(['admin']), ctrl.bulkDelete);
 router.post('/bulk-update', authorize(['admin', 'coach']), ctrl.bulkUpdate);
 router.post('/generate-list', authorize(['admin', 'coach', 'selector']), ctrl.generateList);
 
+// Achievements routes
+router.get('/achievements', authorize(['admin', 'coach', 'selector', 'athlete']), ctrl.listAchievements);
+router.post('/achievements', authorize(['admin', 'coach']), ctrl.createAchievement);
+router.delete('/achievements/:id', authorize(['admin', 'coach']), ctrl.deleteAchievement);
+router.get('/:id/achievements', authorize(['admin', 'coach', 'selector', 'athlete']), ctrl.getAthleteAchievements);
+
 // CRUD
 router.get('/', authorize(['admin', 'coach', 'selector']), ctrl.list);
 router.get('/:id', authorize(['admin', 'coach', 'selector', 'athlete']), ctrl.getOne);

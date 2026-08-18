@@ -203,3 +203,39 @@ exports.generateList = async (req, res, next) => {
     res.json({ success: true, list_type, count: result.length, data: result });
   } catch (err) { next(err); }
 };
+
+// POST /api/athletes/achievements
+exports.createAchievement = async (req, res, next) => {
+  try {
+    const achievement = await athleteService.addAchievement(req.body, req.user.id);
+    res.status(201).json({ success: true, message: 'Achievement recorded successfully', data: achievement });
+  } catch (err) { next(err); }
+};
+
+// GET /api/athletes/achievements
+exports.listAchievements = async (req, res, next) => {
+  try {
+    const data = await athleteService.listAchievements(req.query);
+    res.json({ success: true, data });
+  } catch (err) { next(err); }
+};
+
+// GET /api/athletes/:id/achievements
+exports.getAthleteAchievements = async (req, res, next) => {
+  try {
+    let targetId = req.params.id;
+    if (targetId === 'me' && req.user.role === 'athlete') {
+      targetId = req.user.athlete_id;
+    }
+    const data = await athleteService.listAchievements({ athlete_id: targetId });
+    res.json({ success: true, data });
+  } catch (err) { next(err); }
+};
+
+// DELETE /api/athletes/achievements/:id
+exports.deleteAchievement = async (req, res, next) => {
+  try {
+    const result = await athleteService.deleteAchievement(req.params.id, req.user.id);
+    res.json(result);
+  } catch (err) { next(err); }
+};

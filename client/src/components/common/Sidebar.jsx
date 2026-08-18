@@ -50,7 +50,6 @@ const navByRole = {
   ],
   athlete: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { label: 'My Profile', icon: User, path: '/profile' },
     { label: 'My Performance', icon: Activity, path: '/performance' },
     { label: 'Fitness', icon: Gauge, path: '/fitness' },
     { label: 'Attendance', icon: CalendarCheck, path: '/attendance' },

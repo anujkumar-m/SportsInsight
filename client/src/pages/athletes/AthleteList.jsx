@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Download, Upload, Trash2, Archive, RefreshCw,
-  Sparkles, Eye, Pencil, MoreVertical, UserCheck, MessageSquare, X, Star,
+  Sparkles, Eye, Pencil, MoreVertical, UserCheck, MessageSquare, X, Star, Trophy,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { athleteService } from '../../services/athleteService';
@@ -20,6 +20,7 @@ import PageHeader from '../../components/common/PageHeader';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import AiAthleteListModal from './AiAthleteListModal';
 import ImportAthleteModal from './ImportAthleteModal';
+import AddAchievementModal from './AddAchievementModal';
 
 // ─── Status Badge Helper ─────────────────────────────────
 const MedicalBadge = ({ status }) => {
@@ -38,7 +39,7 @@ const StatusBadge = ({ status }) => {
 };
 
 // ─── Row Action Menu ─────────────────────────────────────
-const RowActions = ({ athlete, onView, onEdit, onArchive, onDelete, onFeedback, role }) => {
+const RowActions = ({ athlete, onView, onEdit, onArchive, onDelete, onFeedback, onAddAchievement, role }) => {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState({ top: 0, right: 0 });
   const btnRef = React.useRef(null);
@@ -48,7 +49,7 @@ const RowActions = ({ athlete, onView, onEdit, onArchive, onDelete, onFeedback, 
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
-      const menuHeight = 175;
+      const menuHeight = 210;
       const openUpward = rect.bottom + menuHeight > windowHeight;
       setCoords({
         top: openUpward ? Math.max(8, rect.top - menuHeight) : rect.bottom + 2,
@@ -80,7 +81,7 @@ const RowActions = ({ athlete, onView, onEdit, onArchive, onDelete, onFeedback, 
           />
           <div
             style={{ position: 'fixed', top: `${coords.top}px`, right: `${coords.right}px` }}
-            className="z-[999] min-w-[165px] rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-card p-1.5 shadow-xl space-y-0.5"
+            className="z-[999] min-w-[175px] rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-card p-1.5 shadow-xl space-y-0.5"
           >
             <button
               onClick={(e) => {
@@ -92,7 +93,19 @@ const RowActions = ({ athlete, onView, onEdit, onArchive, onDelete, onFeedback, 
             >
               <Eye size={13} className="text-gray-500 dark:text-muted-foreground" /> View Profile
             </button>
-            {(role === 'admin' || role === 'coach') && (
+            {(role === 'admin' || role === 'coach' || role === 'head_coach') && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                  onAddAchievement(athlete);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium transition-colors"
+              >
+                <Trophy size={13} /> Add Achievement
+              </button>
+            )}
+            {(role === 'admin' || role === 'coach' || role === 'head_coach') && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -104,7 +117,7 @@ const RowActions = ({ athlete, onView, onEdit, onArchive, onDelete, onFeedback, 
                 <Pencil size={13} className="text-gray-500 dark:text-muted-foreground" /> Edit
               </button>
             )}
-            {(role === 'admin' || role === 'coach') && (
+            {(role === 'admin' || role === 'coach' || role === 'head_coach') && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -171,6 +184,10 @@ const AthleteList = () => {
 
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
+
+  // Achievement Modal State
+  const [achievementModalOpen, setAchievementModalOpen] = useState(false);
+  const [selectedAchievementAthlete, setSelectedAchievementAthlete] = useState(null);
 
   // Feedback Modal State
   const [feedbackAthlete, setFeedbackAthlete] = useState(null);
@@ -320,6 +337,10 @@ const AthleteList = () => {
           role={role}
           onView={(a) => navigate(`/athletes/${a.id}`)}
           onEdit={(a) => navigate(`/athletes/${a.id}/edit`)}
+          onAddAchievement={(a) => {
+            setSelectedAchievementAthlete(a);
+            setAchievementModalOpen(true);
+          }}
           onFeedback={(a) => {
             setFeedbackAthlete(a);
             setFeedbackForm({ remark_type: 'Performance', remarks: '', rating: 8.0 });
@@ -357,6 +378,20 @@ const AthleteList = () => {
         breadcrumb="Management"
         actions={
           <>
+            {(role === 'admin' || role === 'coach' || role === 'head_coach') && (
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={Trophy}
+                className="border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+                onClick={() => {
+                  setSelectedAchievementAthlete(null);
+                  setAchievementModalOpen(true);
+                }}
+              >
+                Add Achievement
+              </Button>
+            )}
             {role === 'admin' && (
               <>
                 <Button variant="outline" size="sm" leftIcon={Upload} onClick={() => setImportModalOpen(true)}>
@@ -611,6 +646,15 @@ const AthleteList = () => {
           </div>,
           document.body
         )}
+
+      {/* Add Achievement Modal */}
+      <AddAchievementModal
+        isOpen={achievementModalOpen}
+        onClose={() => setAchievementModalOpen(false)}
+        athlete={selectedAchievementAthlete}
+        athletes={data}
+        onSuccess={fetchData}
+      />
     </div>
   );
 };

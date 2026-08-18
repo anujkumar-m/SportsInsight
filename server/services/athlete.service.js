@@ -644,8 +644,118 @@ const scoreAndRank = (athletes, list_type, limit) => {
   return scored.slice(0, Number(limit));
 };
 
+// ─── Athlete Achievements ──────────────────────────────────
+const addAchievement = async (data, createdBy) => {
+  const {
+    athlete_id,
+    event_name,
+    competition_name,
+    title,
+    achievement_date,
+    sport_id,
+    level = 'district',
+    position,
+    achievement_type = 'medal',
+    description = '',
+  } = data;
+
+  if (!athlete_id) throw new Error('Athlete ID is required.');
+  const compName = (competition_name || event_name || title || 'Competition').trim();
+  const achTitle = (title || event_name || `${position || 'Award'} - ${compName}`).trim();
+  const achDate = achievement_date ? new Date(achievement_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
+  // Resolve sport_id if missing from athlete
+  let finalSportId = sport_id ? Number(sport_id) : null;
+  if (!finalSportId) {
+    const [ath] = await pool.query('SELECT sport_id FROM athletes WHERE id = ?', [athlete_id]);
+    finalSportId = ath[0]?.sport_id || null;
+  }
+
+  const [result] = await pool.query(
+    `INSERT INTO athlete_achievements 
+     (athlete_id, sport_id, title, competition_name, achievement_date, level, position, achievement_type, description)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      athlete_id,
+      finalSportId,
+      achTitle,
+      compName,
+      achDate,
+      (level || 'district').toLowerCase(),
+      position || 'Winner',
+      achievement_type || 'medal',
+      description || null,
+    ]
+  );
+
+  const newId = result.insertId;
+
+  // Log in athlete_history
+  await pool.query(
+    `INSERT INTO athlete_history (athlete_id, action_type, description, changed_by) VALUES (?,?,?,?)`,
+    [
+      athlete_id,
+      'status_change',
+      `Achievement recorded: ${achTitle} (${position || 'Winner'}) at ${compName} (${level})`,
+      createdBy || null,
+    ]
+  );
+
+  // Trigger notification
+  try {
+    const notificationService = require('./notification.service');
+    await notificationService.notifyAthlete(
+      athlete_id,
+      '🏆 New Achievement Recorded!',
+      `Congratulations! Your achievement "${achTitle}" (${position || 'Winner'}) at ${compName} (${(level || '').toUpperCase()}) has been officially added.`,
+      'success',
+      '/profile'
+    );
+  } catch (_) {}
+
+  return { id: newId, athlete_id, title: achTitle, competition_name: compName, level, position, achievement_date: achDate };
+};
+
+const listAchievements = async (params = {}) => {
+  const { athlete_id, sport_id, level, limit = 50 } = params;
+  let where = ['1=1'];
+  const args = [];
+
+  if (athlete_id) { where.push('ah.athlete_id = ?'); args.push(athlete_id); }
+  if (sport_id) { where.push('ah.sport_id = ?'); args.push(sport_id); }
+  if (level) { where.push('LOWER(ah.level) = LOWER(?)'); args.push(level); }
+
+  const [rows] = await pool.query(
+    `SELECT ah.*, s.name AS sport_name,
+            u.first_name, u.last_name, a.athlete_code, a.profile_photo
+     FROM athlete_achievements ah
+     JOIN athletes a ON ah.athlete_id = a.id
+     JOIN users u ON a.user_id = u.id
+     LEFT JOIN sports s ON ah.sport_id = s.id
+     WHERE ${where.join(' AND ')}
+     ORDER BY ah.achievement_date DESC, ah.id DESC
+     LIMIT ?`,
+    [...args, Number(limit)]
+  );
+  return rows;
+};
+
+const deleteAchievement = async (id, deletedBy) => {
+  const [rows] = await pool.query('SELECT athlete_id, title FROM athlete_achievements WHERE id = ?', [id]);
+  if (!rows.length) throw new Error('Achievement not found');
+  const ach = rows[0];
+
+  await pool.query('DELETE FROM athlete_achievements WHERE id = ?', [id]);
+  await pool.query(
+    `INSERT INTO athlete_history (athlete_id, action_type, description, changed_by) VALUES (?,?,?,?)`,
+    [ach.athlete_id, 'other', `Achievement removed: ${ach.title}`, deletedBy || null]
+  );
+  return { success: true, message: 'Achievement deleted' };
+};
+
 module.exports = {
   listAthletes, getAthleteById, createAthlete, updateAthlete,
   archiveAthlete, restoreAthlete, deleteAthlete, bulkDelete, bulkUpdate,
   exportAthletes, generateAiList,
+  addAchievement, listAchievements, deleteAchievement,
 };

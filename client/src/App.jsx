@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RoleRoute from './routes/RoleRoute';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
@@ -161,8 +162,9 @@ const App = () => {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <Suspense fallback={<Loader />}>
-            <Routes>
+          <ErrorBoundary>
+            <Suspense fallback={<Loader />}>
+              <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
@@ -271,6 +273,7 @@ const App = () => {
 
             </Routes>
           </Suspense>
+          </ErrorBoundary>
 
           <Toaster
             position="top-right"

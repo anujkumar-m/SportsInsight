@@ -17,6 +17,10 @@ export const athleteService = {
   exportData: (params = {}) => api.get('/athletes/export', { params }),
   importData: (athletes) => api.post('/athletes/import', { athletes }),
   generateList: (payload) => api.post('/athletes/generate-list', payload),
+  addAchievement: (data) => api.post('/athletes/achievements', data),
+  listAchievements: (params = {}) => api.get('/athletes/achievements', { params }),
+  getAthleteAchievements: (athleteId) => api.get(`/athletes/${athleteId}/achievements`),
+  deleteAchievement: (id) => api.delete(`/athletes/achievements/${id}`),
 };
 
 export default athleteService;
