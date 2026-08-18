@@ -1,7 +1,5 @@
-// ─── controllers/athlete.controller.js ────────────────────
-'use strict';
-
 const athleteService = require('../services/athlete.service');
+const selectorService = require('../services/selector.service');
 const { parsePagination } = require('../utils/helpers');
 
 // GET /api/athletes
@@ -10,10 +8,19 @@ exports.list = async (req, res, next) => {
     const { page, limit } = parsePagination(req.query);
     const queryParams = { ...req.query, page, limit };
     if (req.user.role?.toLowerCase() === 'coach') {
-      // Always derive coach_id from the authenticated session.
-      // Delete any coach_id the client may have sent to prevent tampering.
       delete queryParams.coach_id;
       queryParams.coach_id = req.user.coach_id ?? -1;
+    } else if (req.user.role?.toLowerCase() === 'selector' || req.user.role?.toLowerCase() === 'state_selector') {
+      const sportIds = await selectorService.getSelectorSportIds(req.user.selector_id);
+      if (sportIds && sportIds.length > 0) {
+        if (queryParams.sport_id) {
+          if (!sportIds.includes(Number(queryParams.sport_id))) {
+            queryParams.sport_id = -999;
+          }
+        } else {
+          queryParams.sport_ids = sportIds;
+        }
+      }
     }
     const result = await athleteService.listAthletes(queryParams);
     res.json({ success: true, ...result });
@@ -26,10 +33,19 @@ exports.listArchived = async (req, res, next) => {
     const { page, limit } = parsePagination(req.query);
     const queryParams = { ...req.query, page, limit, current_status: 'archived' };
     if (req.user.role?.toLowerCase() === 'coach') {
-      // Always derive coach_id from the authenticated session.
-      // Delete any coach_id the client may have sent to prevent tampering.
       delete queryParams.coach_id;
       queryParams.coach_id = req.user.coach_id ?? -1;
+    } else if (req.user.role?.toLowerCase() === 'selector' || req.user.role?.toLowerCase() === 'state_selector') {
+      const sportIds = await selectorService.getSelectorSportIds(req.user.selector_id);
+      if (sportIds && sportIds.length > 0) {
+        if (queryParams.sport_id) {
+          if (!sportIds.includes(Number(queryParams.sport_id))) {
+            queryParams.sport_id = -999;
+          }
+        } else {
+          queryParams.sport_ids = sportIds;
+        }
+      }
     }
     const result = await athleteService.listAthletes(queryParams);
     res.json({ success: true, ...result });
@@ -43,6 +59,12 @@ exports.getOne = async (req, res, next) => {
     if (!athlete) return res.status(404).json({ success: false, message: 'Athlete not found' });
     if (req.user.role?.toLowerCase() === 'coach' && athlete.coach_id !== req.user.coach_id) {
       return res.status(403).json({ success: false, message: 'Access denied. You can only view your assigned athletes.' });
+    }
+    if (req.user.role?.toLowerCase() === 'selector' || req.user.role?.toLowerCase() === 'state_selector') {
+      const sportIds = await selectorService.getSelectorSportIds(req.user.selector_id);
+      if (sportIds && sportIds.length > 0 && !sportIds.includes(Number(athlete.sport_id))) {
+        return res.status(403).json({ success: false, message: 'Access denied. You can only view athletes in your assigned sports.' });
+      }
     }
     res.json({ success: true, data: athlete });
   } catch (err) { next(err); }

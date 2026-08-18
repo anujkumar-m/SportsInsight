@@ -4,10 +4,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -38,8 +34,6 @@ function mapStatus(status) {
 export default function SelectorDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [left, setLeft] = useState(0);
-  const [right, setRight] = useState(1);
 
   useEffect(() => {
     dashboardAPI
@@ -61,8 +55,12 @@ export default function SelectorDashboard() {
     );
   }
 
-  const { stats = {}, topRankedAthletes = [] } = data;
-  const ranked = Array.isArray(topRankedAthletes) ? topRankedAthletes : [];
+  const { stats = {}, topRankedAthletes = [], topAthletes = [], recommendations = [] } = data;
+  const ranked = (Array.isArray(topRankedAthletes) && topRankedAthletes.length > 0)
+    ? topRankedAthletes
+    : (Array.isArray(topAthletes) && topAthletes.length > 0)
+    ? topAthletes
+    : (Array.isArray(recommendations) ? recommendations : []);
 
   const sportWisePerformanceData = Object.entries(
     ranked.reduce((acc, r) => {
@@ -81,19 +79,6 @@ export default function SelectorDashboard() {
     ranked.length > 0
       ? Math.round(ranked.reduce((s, a) => s + toNum(a.confidence_score), 0) / ranked.length)
       : 84;
-
-  const athleteA = ranked[left];
-  const athleteB = ranked[right];
-
-  const comparisonMetrics =
-    athleteA && athleteB
-      ? [
-          { metric: 'Performance', A: toNum(athleteA.avg_performance), B: toNum(athleteB.avg_performance) },
-          { metric: 'Fitness', A: toNum(athleteA.avg_fitness), B: toNum(athleteB.avg_fitness) },
-          { metric: 'Selection', A: toNum(athleteA.selection_score), B: toNum(athleteB.selection_score) },
-          { metric: 'Confidence', A: toNum(athleteA.confidence_score), B: toNum(athleteB.confidence_score) },
-        ]
-      : [];
 
   return (
     <div className="fade-in space-y-6">
@@ -164,56 +149,6 @@ export default function SelectorDashboard() {
           </ResponsiveContainer>
         </Panel>
       </div>
-
-      {ranked.length >= 2 && (
-        <Panel
-          title="Comparison Tool"
-          description="Head-to-head athlete comparison across all scoring pillars."
-        >
-          <div className="grid gap-4 lg:grid-cols-[220px_220px_1fr]">
-            {[
-              { value: left, set: setLeft, label: 'Athlete A' },
-              { value: right, set: setRight, label: 'Athlete B' },
-            ].map((s) => (
-              <label key={s.label} className="block">
-                <span className="text-xs font-medium text-muted-foreground">{s.label}</span>
-                <select
-                  value={s.value}
-                  onChange={(e) => s.set(Number(e.target.value))}
-                  className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-2.5 text-sm outline-none focus:border-primary"
-                >
-                  {ranked.map((x, idx) => (
-                    <option key={x.athlete_code || idx} value={idx}>
-                      {x.first_name} {x.last_name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ))}
-            <ResponsiveContainer width="100%" height={280}>
-              <RadarChart data={comparisonMetrics}>
-                <PolarGrid stroke="var(--border)" />
-                <PolarAngleAxis dataKey="metric" tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} />
-                <Radar
-                  name={`${athleteA?.first_name} ${athleteA?.last_name}`}
-                  dataKey="A"
-                  stroke="var(--chart-1)"
-                  fill="var(--chart-1)"
-                  fillOpacity={0.28}
-                />
-                <Radar
-                  name={`${athleteB?.first_name} ${athleteB?.last_name}`}
-                  dataKey="B"
-                  stroke="var(--chart-2)"
-                  fill="var(--chart-2)"
-                  fillOpacity={0.22}
-                />
-                <Tooltip contentStyle={tooltipStyle} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </Panel>
-      )}
     </div>
   );
 }

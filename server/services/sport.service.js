@@ -4,13 +4,17 @@
 const { pool } = require('../config/database');
 
 // ─── Sports ─────────────────────────────────────────────────
-const listSports = async ({ page = 1, limit = 20, search = '', is_active }) => {
+const listSports = async ({ page = 1, limit = 20, search = '', is_active, sport_ids }) => {
   const offset = (page - 1) * limit;
   const where = ['1=1'];
   const params = [];
 
   if (search) { where.push('(s.name LIKE ? OR s.description LIKE ?)'); const sw = `%${search}%`; params.push(sw, sw); }
   if (is_active !== undefined) { where.push('s.is_active = ?'); params.push(is_active); }
+  if (sport_ids && Array.isArray(sport_ids) && sport_ids.length > 0) {
+    where.push(`s.id IN (${sport_ids.map(() => '?').join(',')})`);
+    params.push(...sport_ids);
+  }
 
   const wc = `WHERE ${where.join(' AND ')}`;
   const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM sports s ${wc}`, params);
@@ -61,13 +65,29 @@ const deleteSport = async (id) => { await pool.query('DELETE FROM sports WHERE i
 
 // ─── Sport Metrics ───────────────────────────────────────────
 const upsertMetrics = async (sport_id, metrics) => {
-  for (const m of metrics) {
+  if (!Array.isArray(metrics) || metrics.length === 0) return;
+  for (let i = 0; i < metrics.length; i++) {
+    const m = metrics[i];
+    const label = (m.metric_label || m.name || '').trim();
+    if (!label) continue;
+
+    let key = (m.metric_key || label)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    if (!key) key = `metric_${i + 1}`;
+
+    const unit = (m.metric_unit || m.unit || '').trim() || null;
+    const type = ['number', 'time', 'percentage', 'text'].includes(m.metric_type) ? m.metric_type : 'number';
+    const isHigherBetter = m.is_higher_better === false || m.is_higher_better === 0 || m.is_higher_better === 'false' ? 0 : 1;
+    const displayOrder = m.display_order ?? i;
+
     await pool.query(`
-      INSERT INTO sport_metrics (sport_id, metric_key, metric_label, metric_unit, metric_type, is_higher_better, display_order)
-      VALUES (?,?,?,?,?,?,?)
+      INSERT INTO sport_metrics (sport_id, metric_key, metric_label, metric_unit, metric_type, is_higher_better, display_order, is_active)
+      VALUES (?,?,?,?,?,?,?,1)
       ON DUPLICATE KEY UPDATE metric_label=VALUES(metric_label), metric_unit=VALUES(metric_unit),
-        metric_type=VALUES(metric_type), is_higher_better=VALUES(is_higher_better), display_order=VALUES(display_order)
-    `, [sport_id, m.metric_key, m.metric_label, m.metric_unit || null, m.metric_type || 'number', m.is_higher_better !== false, m.display_order || 0]);
+        metric_type=VALUES(metric_type), is_higher_better=VALUES(is_higher_better), display_order=VALUES(display_order), is_active=1
+    `, [sport_id, key, label, unit, type, isHigherBetter, displayOrder]);
   }
 };
 

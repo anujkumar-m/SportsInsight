@@ -8,6 +8,6 @@ router.use(authenticateJWT);
 router.get('/',                           c.getRankings);
 router.get('/history/:athleteId',         c.getAthleteRankingHistory);
 router.get('/comparison',                 c.getRankingComparison);
-router.post('/calculate', authorizeRoles('admin'), c.calculateRankings);
+router.post('/calculate', authorizeRoles('admin', 'selector', 'state_selector', 'head_coach', 'coach'), c.calculateRankings);
 
 module.exports = router;

@@ -352,35 +352,38 @@ async function getAttendanceReport(filters = {}) {
   const { athleteId, sportId, dateFrom, dateTo } = filters;
   const coachId = filters.coach_id ?? filters.coachId;
 
-  let whereClauses = ['1=1'];
-  const params = [];
+  let attWhereClauses = ['1=1'];
+  const attParams = [];
 
-  if (athleteId) {
-    whereClauses.push('att.athlete_id = ?');
-    params.push(athleteId);
-  }
-  if (sportId) {
-    whereClauses.push('a.sport_id = ?');
-    params.push(sportId);
-  }
   if (dateFrom) {
-    whereClauses.push('att.attendance_date >= ?');
-    params.push(dateFrom);
+    attWhereClauses.push('att.attendance_date >= ?');
+    attParams.push(dateFrom);
   }
   if (dateTo) {
-    whereClauses.push('att.attendance_date <= ?');
-    params.push(dateTo);
+    attWhereClauses.push('att.attendance_date <= ?');
+    attParams.push(dateTo);
   }
 
-  const whereSql = whereClauses.join(' AND ');
+  const attWhereSql = attWhereClauses.join(' AND ');
 
   const athleteWhereClauses = ['a.is_active = TRUE'];
-  const athleteParams = [...params];
+  const athleteParams = [];
+
+  if (athleteId) {
+    athleteWhereClauses.push('a.id = ?');
+    athleteParams.push(athleteId);
+  }
+  if (sportId) {
+    athleteWhereClauses.push('a.sport_id = ?');
+    athleteParams.push(sportId);
+  }
   if (coachId !== undefined && coachId !== null && coachId !== '') {
     athleteWhereClauses.push('a.coach_id = ?');
     athleteParams.push(coachId);
   }
   const athleteWhereSql = athleteWhereClauses.join(' AND ');
+
+  const allParams = [...attParams, ...athleteParams];
 
   const [summary] = await pool.query(
     `SELECT 
@@ -394,10 +397,10 @@ async function getAttendanceReport(filters = {}) {
      FROM athletes a
      JOIN users u ON u.id = a.user_id
      LEFT JOIN sports s ON s.id = a.sport_id
-     LEFT JOIN attendance att ON att.athlete_id = a.id AND ${whereSql}
+     LEFT JOIN attendance att ON att.athlete_id = a.id AND ${attWhereSql}
      WHERE ${athleteWhereSql}
      GROUP BY a.id, u.first_name, u.last_name, a.athlete_code, s.name`,
-    athleteParams
+    allParams
   );
 
   const reportData = [];

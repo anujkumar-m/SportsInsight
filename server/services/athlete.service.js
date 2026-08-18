@@ -37,6 +37,7 @@ const listAthletes = async ({
   limit = 20,
   search = '',
   sport_id,
+  sport_ids,
   category_id,
   gender,
   medical_status,
@@ -54,7 +55,13 @@ const listAthletes = async ({
     const s = `%${search}%`;
     params.push(s, s, s, s);
   }
-  if (sport_id) { where.push('a.sport_id = ?'); params.push(sport_id); }
+  if (sport_ids && Array.isArray(sport_ids) && sport_ids.length > 0) {
+    where.push(`a.sport_id IN (${sport_ids.map(() => '?').join(',')})`);
+    params.push(...sport_ids);
+  } else if (sport_id) {
+    where.push('a.sport_id = ?');
+    params.push(sport_id);
+  }
   if (category_id) { where.push('a.category_id = ?'); params.push(category_id); }
   if (gender) { where.push('a.gender = ?'); params.push(gender); }
   if (medical_status) { where.push('a.medical_status = ?'); params.push(medical_status); }
@@ -210,6 +217,20 @@ const createAthlete = async (data, createdBy) => {
     );
     const athleteId = athResult.insertId;
 
+    if (medStatus !== 'fit' && data.medical_reason) {
+      await conn.query(
+        `INSERT INTO athlete_medical_history (athlete_id, record_date, condition_type, condition_name, notes, cleared_to_play)
+         VALUES (?, CURDATE(), ?, ?, ?, ?)`,
+        [
+          athleteId,
+          medStatus === 'injured' ? 'injury' : 'illness',
+          data.medical_reason.slice(0, 255),
+          data.medical_reason,
+          medStatus === 'fit' ? 1 : 0,
+        ]
+      );
+    }
+
     // 3. History
     await conn.query(
       `INSERT INTO athlete_history (athlete_id, action_type, description, changed_by) VALUES (?,?,?,?)`,
@@ -269,9 +290,27 @@ const updateAthlete = async (id, data, updatedBy) => {
       );
     }
 
+    if (data.medical_status !== undefined && data.medical_status !== 'fit' && data.medical_reason) {
+      await conn.query(
+        `INSERT INTO athlete_medical_history (athlete_id, record_date, condition_type, condition_name, notes, cleared_to_play)
+         VALUES (?, CURDATE(), ?, ?, ?, ?)`,
+        [
+          id,
+          data.medical_status === 'injured' ? 'injury' : 'illness',
+          data.medical_reason.slice(0, 255),
+          data.medical_reason,
+          data.medical_status === 'fit' ? 1 : 0,
+        ]
+      );
+    }
+
+    const historyDesc = data.medical_status && data.medical_status !== 'fit' && data.medical_reason
+      ? `Athlete profile updated. Medical: ${data.medical_status} (${data.medical_reason})`
+      : 'Athlete profile updated';
+
     await conn.query(
       `INSERT INTO athlete_history (athlete_id, action_type, description, changed_by) VALUES (?,?,?,?)`,
-      [id, 'updated', 'Athlete profile updated', updatedBy]
+      [id, 'updated', historyDesc, updatedBy]
     );
 
     await conn.commit();

@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle, ShieldAlert, Sparkles, CheckCircle2, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { attendanceService } from '../../services/attendanceService';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import PageHeader from '../../components/common/PageHeader';
 
 const AttendanceReports = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [report, setReport] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,8 +33,12 @@ const AttendanceReports = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Attendance Reports & AI Intelligence"
-        subtitle="Consistency scores, selection impact assessment, and automated attendance alerts."
+        title={role === 'athlete' ? "My Attendance Report & AI Intelligence" : "Attendance Reports & AI Intelligence"}
+        subtitle={
+          role === 'athlete'
+            ? "Your participation analytics, consistency rating, and attendance status."
+            : "Consistency scores, selection impact assessment, and automated attendance alerts."
+        }
         action={
           <Button variant="outline" size="sm" leftIcon={ArrowLeft} onClick={() => navigate('/attendance')}>Back to Records</Button>
         }

@@ -81,7 +81,6 @@ export default function AthleteDashboard() {
         breadcrumb="Athlete Dashboard"
       />
       <Panel title="Profile Summary">
-
         <div className="flex flex-wrap items-center gap-4">
           <span className="grid size-16 place-items-center rounded-2xl bg-gradient-primary text-lg font-bold text-primary-foreground">
             {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
@@ -92,20 +91,54 @@ export default function AthleteDashboard() {
               {athlete.sport_name} · {athlete.category_name} · Coach {athlete.coach_first} {athlete.coach_last}
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex flex-wrap items-center gap-2.5">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold capitalize border ${
+                athlete.medical_status === 'fit' || !athlete.medical_status
+                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                  : athlete.medical_status === 'injured'
+                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+              }`}
+            >
+              <HeartPulse size={13} />
+              Medical: {athlete.medical_status?.replace(/_/g, ' ') || 'Fit'}
+            </span>
             <StatusPill status={athleteStatus} />
-            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary border border-primary/20">
               Academy rank #{rank}
             </span>
           </div>
         </div>
+
+        {athlete.medical_status && athlete.medical_status !== 'fit' && (
+          <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50/80 p-3 text-xs text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300">
+            <HeartPulse className="size-4 shrink-0 mt-0.5 text-rose-600" />
+            <div>
+              <span className="font-bold capitalize">Medical Advisory ({athlete.medical_status.replace(/_/g, ' ')}):</span>{' '}
+              {athlete.medical_reason || 'Currently under medical observation. Please adhere to team recovery protocol.'}
+            </div>
+          </div>
+        )}
       </Panel>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Performance Score" value={performanceScore.toFixed(1)} icon={TrendingUp} delta={2} />
         <StatCard label="Fitness Score" value={fitnessScore.toFixed(1)} icon={Gauge} delta={4} tone="success" />
         <StatCard label="Attendance" value={`${attendanceScore.toFixed(0)}%`} icon={CalendarCheck} tone="warning" />
-        <StatCard label="Injury Status" value={"Cleared"} icon={HeartPulse} tone="info" />
+        <StatCard
+          label="Medical Status"
+          value={
+            athlete.medical_status
+              ? athlete.medical_status === 'fit'
+                ? 'Fit & Cleared'
+                : athlete.medical_status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+              : 'Fit & Cleared'
+          }
+          icon={HeartPulse}
+          tone={athlete.medical_status === 'fit' || !athlete.medical_status ? 'success' : athlete.medical_status === 'injured' ? 'danger' : 'warning'}
+          helper={athlete.medical_reason || (athlete.medical_status === 'fit' || !athlete.medical_status ? 'Cleared for active training' : 'Medical notes logged')}
+        />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-3">
@@ -166,11 +199,13 @@ export default function AthleteDashboard() {
                   <div className="flex justify-between items-start mb-1">
                     <p className="text-sm">{r.remarks}</p>
                     <span className="text-xs font-bold bg-background px-2 py-0.5 rounded border border-border">
-                      {Number(r.rating).toFixed(1)}
+                      {Number(r.rating || 0).toFixed(1)}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Coach {r.coach_last} · {new Date(r.remark_date).toLocaleDateString()} · <span className="capitalize">{r.remark_type}</span>
+                    Coach {r.coach_last || 'Coach'} · {new Date(r.remark_date).toLocaleDateString()} · <span className="font-semibold text-foreground">
+                      {r.remark_type === 'behavior' ? '🌟 Behavior & Discipline' : r.remark_type === 'general' ? '💬 General Feedback' : r.remark_type === 'performance' ? '⚡ Performance' : r.remark_type === 'fitness' ? '💪 Fitness' : r.remark_type}
+                    </span>
                   </p>
                 </li>
               ))}

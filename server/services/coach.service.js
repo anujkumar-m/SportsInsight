@@ -175,19 +175,31 @@ const generateCoachAiList = async (coach_id, list_type, limit = 20) => {
   return athleteService.generateAiList({ list_type, coach_id, limit });
 };
 
+const normalizeRemarkType = (type) => {
+  const t = String(type || '').toLowerCase();
+  if (t.includes('behavior') || t.includes('discipline')) return 'behavior';
+  if (t.includes('performance')) return 'performance';
+  if (t.includes('fitness')) return 'fitness';
+  return 'general';
+};
+
 const getCoachRemarks = async ({ athlete_id, coach_id, limit = 100, remark_type }) => {
   const where = ['1=1'];
   const params = [];
   if (athlete_id) { where.push('cr.athlete_id = ?'); params.push(athlete_id); }
   if (coach_id) { where.push('cr.coach_id = ?'); params.push(coach_id); }
-  if (remark_type && remark_type !== 'all') { where.push('cr.remark_type = ?'); params.push(remark_type); }
+  if (remark_type && remark_type !== 'all') {
+    const norm = normalizeRemarkType(remark_type);
+    where.push('(cr.remark_type = ? OR LOWER(cr.remark_type) = ?)');
+    params.push(norm, norm);
+  }
 
   const sql = `
     SELECT cr.id, cr.athlete_id, cr.coach_id, cr.remark_date, cr.remark_type, cr.rating, cr.remarks,
            'coach' AS source,
            CONCAT(u_ath.first_name, ' ', u_ath.last_name) AS athlete_name,
            a.athlete_code,
-           CONCAT(u_coa.first_name, ' ', u_coa.last_name) AS coach_name
+           COALESCE(CONCAT(u_coa.first_name, ' ', u_coa.last_name), 'Head Coach') AS coach_name
     FROM coach_remarks cr
     JOIN athletes a ON a.id = cr.athlete_id
     JOIN users u_ath ON u_ath.id = a.user_id
@@ -201,8 +213,8 @@ const getCoachRemarks = async ({ athlete_id, coach_id, limit = 100, remark_type 
   const [directRows] = await pool.query(sql, params);
   const combined = [...directRows];
 
-  // Include remarks from Performance evaluations
-  if (!remark_type || remark_type === 'all' || remark_type === 'performance') {
+  // Include remarks from Performance evaluations ONLY when filtering all or performance
+  if (!remark_type || remark_type === 'all' || normalizeRemarkType(remark_type) === 'performance') {
     const perfWhere = ['pr.notes IS NOT NULL', "TRIM(pr.notes) != ''"];
     const perfParams = [];
     if (athlete_id) { perfWhere.push('pr.athlete_id = ?'); perfParams.push(athlete_id); }
@@ -231,8 +243,8 @@ const getCoachRemarks = async ({ athlete_id, coach_id, limit = 100, remark_type 
     combined.push(...perfRows);
   }
 
-  // Include remarks from Fitness assessments
-  if (!remark_type || remark_type === 'all' || remark_type === 'fitness') {
+  // Include remarks from Fitness assessments ONLY when filtering all or fitness
+  if (!remark_type || remark_type === 'all' || normalizeRemarkType(remark_type) === 'fitness') {
     const fitWhere = ['fa.notes IS NOT NULL', "TRIM(fa.notes) != ''"];
     const fitParams = [];
     if (athlete_id) { fitWhere.push('fa.athlete_id = ?'); fitParams.push(athlete_id); }
@@ -269,12 +281,13 @@ const getCoachRemarks = async ({ athlete_id, coach_id, limit = 100, remark_type 
 const createCoachRemark = async (data) => {
   const { athlete_id, coach_id, remark_type = 'general', rating = 8.0, remarks, remark_date } = data;
   const dateStr = remark_date || new Date().toISOString().split('T')[0];
+  const normType = normalizeRemarkType(remark_type);
   const [res] = await pool.query(
     `INSERT INTO coach_remarks (athlete_id, coach_id, remark_date, remark_type, rating, remarks)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [athlete_id, coach_id, dateStr, remark_type, rating, remarks]
+    [athlete_id, coach_id, dateStr, normType, rating, remarks]
   );
-  return { id: res.insertId, ...data, remark_date: dateStr };
+  return { id: res.insertId, ...data, remark_type: normType, remark_date: dateStr };
 };
 
 const deleteCoachRemark = async (id) => {

@@ -3,9 +3,8 @@ import { Download, FileSpreadsheet, Loader2, Sparkles } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Panel, ScoreBar } from "./widgets";
 import dashboardAPI from "../services/dashboard.service";
+import { sportService } from "../services/sportService";
 
-const sportOptions = ["All Sports", "Athletics", "Swimming", "Football", "Cricket"];
-const categoryOptions = ["All Categories", "Under 16", "Under 19", "Senior"];
 const ageGroupOptions = ["All Ages", "10-15", "16-20", "21+"];
 const genderOptions = ["All Genders", "Male", "Female"];
 
@@ -19,8 +18,8 @@ function Select({ label, value, onChange, options, valueMap }) {
         className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/30"
       >
         {options.map((o, idx) => (
-          <option key={o} value={valueMap ? valueMap[idx] : o}>
-            {o}
+          <option key={typeof o === 'object' ? o.id : o} value={valueMap ? valueMap[idx] : (typeof o === 'object' ? o.id : o)}>
+            {typeof o === 'object' ? o.name : o}
           </option>
         ))}
       </select>
@@ -30,6 +29,8 @@ function Select({ label, value, onChange, options, valueMap }) {
 
 export function AiGenerateList({ scopeNote, predefinedListTypes }) {
   const [listTypes, setListTypes] = useState(predefinedListTypes || []);
+  const [sports, setSports] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [sport, setSport] = useState("");
   const [category, setCategory] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
@@ -39,6 +40,29 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
   const [typeId, setTypeId] = useState("");
   const [rows, setRows] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    sportService.listSports({ limit: 100 })
+      .then((res) => {
+        const list = res.data?.data || res.data?.sports || res.data || [];
+        if (Array.isArray(list)) {
+          setSports(list);
+          if (list.length === 1) {
+            setSport(String(list[0].id));
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    sportService.listCategories({ ...(sport ? { sport_id: sport } : {}), limit: 100 })
+      .then((res) => {
+        const list = res.data?.data || res.data?.categories || res.data || [];
+        if (Array.isArray(list)) setCategories(list);
+      })
+      .catch(() => {});
+  }, [sport]);
 
   useEffect(() => {
     if (!predefinedListTypes || predefinedListTypes.length === 0) {
@@ -144,8 +168,38 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
       }
     >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Select label="Sport" value={sport} onChange={setSport} options={sportOptions} valueMap={["", "1", "2", "3", "4"]} />
-        <Select label="Category" value={category} onChange={setCategory} options={categoryOptions} valueMap={["", "1", "2", "3"]} />
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground">Sport</span>
+          <select
+            value={sport}
+            onChange={(e) => setSport(e.target.value)}
+            className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/30"
+          >
+            <option value="">{sports.length > 1 ? "All Assigned Sports" : "-- Select Sport --"}</option>
+            {sports.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground">Category</span>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/30"
+          >
+            <option value="">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <Select label="Age group" value={ageGroup} onChange={setAgeGroup} options={ageGroupOptions} />
         <Select label="Gender" value={gender} onChange={setGender} options={genderOptions} />
         <label className="block">

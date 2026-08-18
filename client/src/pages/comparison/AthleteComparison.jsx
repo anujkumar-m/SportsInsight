@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  LineChart, Line,
+  PieChart, Pie, Cell,
 } from 'recharts';
-import { Sparkles, X, Users, BarChart2, RotateCcw, ChevronDown } from 'lucide-react';
+import { Sparkles, X, Users, BarChart2, RotateCcw, ChevronDown, PieChart as PieChartIcon, Activity, TrendingUp } from 'lucide-react';
 import { comparisonService } from '../../services/comparisonService';
 import { athleteService } from '../../services/athleteService';
 import api from '../../services/api';
@@ -59,6 +62,8 @@ const AthleteComparison = () => {
   const [comparisonData, setComparisonData] = useState(null);
   const [loading, setLoading]             = useState(false);
   const [hasCompared, setHasCompared]     = useState(false);
+  const [chartType, setChartType]         = useState('bar'); // 'bar', 'pie', 'radar', 'line'
+  const [pieMetric, setPieMetric]         = useState('overall');
   const { toasts, show: showToast }       = useToast();
 
   // Load sports list from DB on mount and auto-select first sport
@@ -92,9 +97,8 @@ const AthleteComparison = () => {
           })).filter((s) => s.id && s.name);
         }
 
-        const finalList = normalized.length > 0 ? normalized : DEFAULT_SPORTS;
-        setSports(finalList);
-        setSelectedSport((prev) => prev || finalList[0]);
+        setSports(normalized);
+        setSelectedSport(normalized[0] || null);
       }
     };
 
@@ -435,29 +439,192 @@ const AthleteComparison = () => {
             </div>
           </div>
 
-          {/* Comparative Bar Chart */}
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-              <BarChart2 size={16} className="text-primary" />
-              Multi-Dimensional Comparative Chart
-            </h3>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="metric" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickLine={false} axisLine={false} domain={[0, 100]} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v) => `${Number(v).toFixed(1)}%`} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                {comparedAthletes.map((a, idx) => (
-                  <Bar
-                    key={a.profile?.id || idx}
-                    dataKey={`${a.profile?.first_name} ${a.profile?.last_name}`}
-                    fill={COLORS[idx % COLORS.length]}
-                    radius={[4, 4, 0, 0]}
-                  />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
+          {/* Comparative Multi-Chart Visualization */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
+              <div className="flex items-center gap-2">
+                <BarChart2 size={18} className="text-primary" />
+                <h3 className="text-sm font-bold text-foreground">
+                  Multi-Dimensional Comparative Visualization
+                </h3>
+              </div>
+
+              {/* 4 Chart Type Selector Tabs */}
+              <div className="inline-flex rounded-xl bg-secondary p-1 border border-border">
+                {[
+                  { id: 'bar', label: 'Bar Chart', icon: BarChart2 },
+                  { id: 'pie', label: 'Pie Chart', icon: PieChartIcon },
+                  { id: 'radar', label: 'Web Chart', icon: Activity },
+                  { id: 'line', label: 'The Graph', icon: TrendingUp },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const active = chartType === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setChartType(tab.id)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        active
+                          ? 'bg-primary text-primary-foreground shadow-xs'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                      }`}
+                    >
+                      <Icon size={13} />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 1. Bar Chart */}
+            {chartType === 'bar' && (
+              <div className="animate-in fade-in duration-200">
+                <ResponsiveContainer width="100%" height={340}>
+                  <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="metric" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickLine={false} axisLine={false} domain={[0, 100]} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v) => `${Number(v).toFixed(1)}%`} />
+                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                    {comparedAthletes.map((a, idx) => (
+                      <Bar
+                        key={a.profile?.id || idx}
+                        dataKey={`${a.profile?.first_name} ${a.profile?.last_name}`}
+                        fill={COLORS[idx % COLORS.length]}
+                        radius={[4, 4, 0, 0]}
+                      />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* 2. Pie Chart */}
+            {chartType === 'pie' && (
+              <div className="animate-in fade-in duration-200 space-y-4">
+                <div className="flex items-center justify-end gap-2 text-xs">
+                  <span className="text-muted-foreground font-medium">Metric Dimension:</span>
+                  <select
+                    value={pieMetric}
+                    onChange={(e) => setPieMetric(e.target.value)}
+                    className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="overall">Overall Potential / Score</option>
+                    <option value="Performance">Performance Score</option>
+                    <option value="Fitness">Fitness Score</option>
+                    <option value="Attendance">Attendance Rate</option>
+                  </select>
+                </div>
+                <div className="grid md:grid-cols-2 gap-6 items-center">
+                  <ResponsiveContainer width="100%" height={290}>
+                    <PieChart>
+                      <Tooltip contentStyle={tooltipStyle} formatter={(v, name) => [`${Number(v).toFixed(1)}%`, name]} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Pie
+                        data={comparedAthletes.map((a) => {
+                          let val = 0;
+                          if (pieMetric === 'overall') val = Number(a.potentialScore || a.ranking?.ranking_score || a.performance?.avg_perf || 0);
+                          else if (pieMetric === 'Performance') val = Number(a.performance?.avg_perf || 0);
+                          else if (pieMetric === 'Fitness') val = Number(a.fitness?.avg_fitness || 0);
+                          else if (pieMetric === 'Attendance') val = Number(a.attendance?.attendance_pct || 0);
+                          return {
+                            name: `${a.profile?.first_name} ${a.profile?.last_name}`,
+                            value: Math.max(1, Math.round(val)),
+                          };
+                        })}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={105}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {comparedAthletes.map((_, idx) => (
+                          <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="space-y-2.5">
+                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Dimension Breakdown ({pieMetric === 'overall' ? 'Potential Score' : pieMetric})
+                    </div>
+                    {comparedAthletes.map((a, idx) => {
+                      let val = 0;
+                      if (pieMetric === 'overall') val = Number(a.potentialScore || a.ranking?.ranking_score || a.performance?.avg_perf || 0);
+                      else if (pieMetric === 'Performance') val = Number(a.performance?.avg_perf || 0);
+                      else if (pieMetric === 'Fitness') val = Number(a.fitness?.avg_fitness || 0);
+                      else if (pieMetric === 'Attendance') val = Number(a.attendance?.attendance_pct || 0);
+                      return (
+                        <div key={a.profile?.id || idx} className="flex items-center justify-between p-2.5 rounded-xl bg-secondary/40 border border-border/50 text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="size-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                            <span className="font-semibold text-foreground">{a.profile?.first_name} {a.profile?.last_name}</span>
+                          </div>
+                          <span className="font-extrabold text-sm" style={{ color: COLORS[idx % COLORS.length] }}>
+                            {Number(val).toFixed(1)}%
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Web Chart / Radar Chart */}
+            {chartType === 'radar' && (
+              <div className="animate-in fade-in duration-200">
+                <ResponsiveContainer width="100%" height={340}>
+                  <RadarChart data={chartData} margin={{ top: 10, right: 20, left: 20, bottom: 10 }}>
+                    <PolarGrid stroke="var(--border)" />
+                    <PolarAngleAxis dataKey="metric" tick={{ fill: 'var(--muted-foreground)', fontSize: 12, fontWeight: 600 }} />
+                    <PolarRadiusAxis domain={[0, 100]} stroke="var(--border)" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v) => `${Number(v).toFixed(1)}%`} />
+                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                    {comparedAthletes.map((a, idx) => (
+                      <Radar
+                        key={a.profile?.id || idx}
+                        name={`${a.profile?.first_name} ${a.profile?.last_name}`}
+                        dataKey={`${a.profile?.first_name} ${a.profile?.last_name}`}
+                        stroke={COLORS[idx % COLORS.length]}
+                        fill={COLORS[idx % COLORS.length]}
+                        fillOpacity={0.25}
+                        strokeWidth={2}
+                      />
+                    ))}
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* 4. The Graph / Line Chart */}
+            {chartType === 'line' && (
+              <div className="animate-in fade-in duration-200">
+                <ResponsiveContainer width="100%" height={340}>
+                  <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="metric" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickLine={false} axisLine={false} domain={[0, 100]} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v) => `${Number(v).toFixed(1)}%`} />
+                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                    {comparedAthletes.map((a, idx) => (
+                      <Line
+                        key={a.profile?.id || idx}
+                        type="monotone"
+                        dataKey={`${a.profile?.first_name} ${a.profile?.last_name}`}
+                        stroke={COLORS[idx % COLORS.length]}
+                        strokeWidth={3}
+                        dot={{ r: 5, fill: COLORS[idx % COLORS.length] }}
+                        activeDot={{ r: 7 }}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
         </>
       ) : null}

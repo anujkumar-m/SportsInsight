@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Download, Upload, Trash2, Eye, Pencil, TrendingUp, TrendingDown,
-  BarChart2, ShieldAlert, Sparkles, Filter, RefreshCw
+  BarChart2, ShieldAlert, Sparkles, Filter, RefreshCw, X, MessageSquare, Calendar, Activity, CheckCircle2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { performanceService } from '../../services/performanceService';
@@ -25,6 +26,18 @@ const PerformanceList = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [loading, setLoading] = useState(true);
+
+  // Row Details Modal
+  const [selectedRecord, setSelectedRecord] = useState(null);
+
+  // Prevent background scroll when modal open
+  useEffect(() => {
+    if (selectedRecord) {
+      const orig = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = orig; };
+    }
+  }, [selectedRecord]);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -399,6 +412,7 @@ const PerformanceList = () => {
         columns={columns}
         data={records}
         loading={loading}
+        onRowClick={(row) => setSelectedRecord(row)}
         emptyMessage="No performance records found."
       />
 
@@ -438,77 +452,86 @@ const PerformanceList = () => {
             />
             <div className="flex justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={() => setImportModalOpen(false)}>Cancel</Button>
-              <Button size="sm" onClick={handleImportSubmit}>Submit Import</Button>
+              <Button size="sm" onClick={handleImportSubmit} loading={actionLoading}>Import</Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Custom Sport Metric Modal */}
+      {/* Custom Metric Definition Modal */}
       {customMetricModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <form onSubmit={handleCreateCustomMetric} className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-foreground">Create Custom Sport Metric</h3>
-            <div>
-              <label className="text-xs font-medium text-foreground">Sport</label>
-              <select
-                required
-                value={customMetricForm.sport_id}
-                onChange={(e) => setCustomMetricForm({ ...customMetricForm, sport_id: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-              >
-                <option value="">Select Sport</option>
-                {sports.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-foreground">Metric Label</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Free Throw Accuracy"
-                value={customMetricForm.metric_label}
-                onChange={(e) => setCustomMetricForm({
-                  ...customMetricForm,
-                  metric_label: e.target.value,
-                  metric_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_')
-                })}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleCreateMetric} className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
+            <h3 className="text-lg font-bold text-foreground">Define Custom Metric</h3>
+            <div className="space-y-3">
               <div>
-                <label className="text-xs font-medium text-foreground">Unit</label>
+                <label className="text-xs font-medium text-foreground">Sport</label>
+                <select
+                  required
+                  value={customMetricForm.sport_id}
+                  onChange={(e) => setCustomMetricForm({ ...customMetricForm, sport_id: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                >
+                  <option value="">Select Sport</option>
+                  {sports.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-foreground">Metric Key (e.g. max_sprint_speed)</label>
                 <input
                   type="text"
-                  placeholder="e.g. %, sec, pts"
+                  required
+                  value={customMetricForm.metric_key}
+                  onChange={(e) => setCustomMetricForm({ ...customMetricForm, metric_key: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
+                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-foreground">Metric Label (e.g. Max Sprint Speed)</label>
+                <input
+                  type="text"
+                  required
+                  value={customMetricForm.metric_label}
+                  onChange={(e) => setCustomMetricForm({ ...customMetricForm, metric_label: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-foreground">Unit (e.g. km/h, sec, reps)</label>
+                <input
+                  type="text"
                   value={customMetricForm.metric_unit}
                   onChange={(e) => setCustomMetricForm({ ...customMetricForm, metric_unit: e.target.value })}
                   className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
                 />
               </div>
-              <div>
-                <label className="text-xs font-medium text-foreground">Type</label>
-                <select
-                  value={customMetricForm.metric_type}
-                  onChange={(e) => setCustomMetricForm({ ...customMetricForm, metric_type: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-                >
-                  <option value="number">Number</option>
-                  <option value="percentage">Percentage</option>
-                  <option value="time">Time</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-foreground">Type</label>
+                  <select
+                    value={customMetricForm.metric_type}
+                    onChange={(e) => setCustomMetricForm({ ...customMetricForm, metric_type: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                  >
+                    <option value="number">Number</option>
+                    <option value="percentage">Percentage</option>
+                    <option value="time">Time</option>
+                  </select>
+                </div>
+                <div className="flex items-end pb-1">
+                  <label className="flex items-center gap-2 text-xs text-foreground font-medium cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={customMetricForm.is_higher_better}
+                      onChange={(e) => setCustomMetricForm({ ...customMetricForm, is_higher_better: e.target.checked })}
+                      className="rounded border-border text-primary focus:ring-primary"
+                    />
+                    Higher is better
+                  </label>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="higherBetter"
-                checked={customMetricForm.is_higher_better}
-                onChange={(e) => setCustomMetricForm({ ...customMetricForm, is_higher_better: e.target.checked })}
-                className="rounded border-border text-primary focus:ring-primary"
-              />
-              <label htmlFor="higherBetter" className="text-xs text-foreground font-medium">Higher value is better</label>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" size="sm" type="button" onClick={() => setCustomMetricModalOpen(false)}>Cancel</Button>
@@ -517,6 +540,138 @@ const PerformanceList = () => {
           </form>
         </div>
       )}
+
+      {/* Performance Record Details Modal Portal */}
+      {selectedRecord &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 w-screen h-screen overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Full-viewport edge-to-edge backdrop */}
+            <div
+              className="fixed inset-0 w-full h-full bg-black/60 backdrop-blur-xs transition-opacity"
+              onClick={() => setSelectedRecord(null)}
+              aria-hidden="true"
+            />
+
+            {/* Modal Dialog Box */}
+            <div className="relative z-10 w-full max-w-lg my-auto animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl space-y-5 text-gray-900">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3.5">
+                <div className="flex items-center gap-3">
+                  <div className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                    <Activity size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-gray-900">Performance Evaluation Details</h2>
+                    <p className="text-xs text-gray-500">
+                      {selectedRecord.first_name} {selectedRecord.last_name} · <span className="font-semibold text-gray-700">{selectedRecord.athlete_code}</span> ({selectedRecord.sport_name || 'Athletics'})
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRecord(null)}
+                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                  aria-label="Close"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Evaluation Metric</div>
+                  <div className="mt-1 text-base font-bold text-gray-900 capitalize">
+                    {selectedRecord.metric_name?.replace(/_/g, ' ')}
+                  </div>
+                  <div className="text-xs font-semibold text-blue-600 mt-0.5">
+                    {selectedRecord.metric_value} {selectedRecord.metric_unit || ''}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Performance Score</div>
+                  <div className="mt-1 text-base font-bold text-gray-900 flex items-center gap-1.5">
+                    {selectedRecord.performance_score || 'N/A'} <span className="text-xs font-normal text-gray-400">/ 100</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                    {Number(selectedRecord.improvement_rate) > 0 ? (
+                      <span className="text-emerald-600 font-semibold flex items-center gap-0.5">
+                        <TrendingUp size={12} /> +{selectedRecord.improvement_rate}%
+                      </span>
+                    ) : Number(selectedRecord.improvement_rate) < 0 ? (
+                      <span className="text-rose-600 font-semibold flex items-center gap-0.5">
+                        <TrendingDown size={12} /> {selectedRecord.improvement_rate}%
+                      </span>
+                    ) : (
+                      <span className="text-gray-500 font-medium">Stable</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Date Recorded</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                    <Calendar size={13} className="text-gray-400" />
+                    {selectedRecord.record_date ? new Date(selectedRecord.record_date).toLocaleDateString() : 'N/A'}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Session Context</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-800">
+                    {selectedRecord.session_type || 'Training Evaluation'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Coach Remarks Section */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700">
+                  <MessageSquare size={14} className="text-primary" /> Coach Remarks & Evaluation
+                </div>
+                <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50/60 text-xs text-gray-800 leading-relaxed italic">
+                  {selectedRecord.notes?.trim() ? (
+                    `"${selectedRecord.notes.trim()}"`
+                  ) : (
+                    <span className="text-gray-400 not-italic">No coach remarks recorded for this evaluation.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* AI Analysis / Insights */}
+              {selectedRecord.ai_analysis && (
+                <div className="p-3 rounded-xl border border-purple-100 bg-purple-50/60 space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-purple-700">
+                    <Sparkles size={13} /> AI Insights & Trend
+                  </div>
+                  <p className="text-xs text-purple-900 leading-relaxed">
+                    {typeof selectedRecord.ai_analysis === 'string'
+                      ? selectedRecord.ai_analysis
+                      : selectedRecord.ai_analysis.reason || selectedRecord.ai_analysis.trend || 'Consistent trajectory observed across recent records.'}
+                  </p>
+                </div>
+              )}
+
+              {/* Footer */}
+              <div className="flex justify-end pt-2 border-t border-gray-100">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedRecord(null)}
+                  className="border-gray-200 text-gray-700 hover:bg-gray-100"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

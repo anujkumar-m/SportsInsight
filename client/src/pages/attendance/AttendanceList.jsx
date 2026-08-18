@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar as CalendarIcon, FileText, Trash2, RefreshCw, X, UserCheck } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, FileText, Trash2, RefreshCw, X, UserCheck, MessageSquare, Clock, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { attendanceService } from '../../services/attendanceService';
 import { athleteService } from '../../services/athleteService';
@@ -33,6 +34,18 @@ const AttendanceList = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [loading, setLoading] = useState(true);
+
+  // Row Details Modal
+  const [selectedAttendance, setSelectedAttendance] = useState(null);
+
+  // Prevent background scroll when modal open
+  useEffect(() => {
+    if (selectedAttendance) {
+      const orig = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = orig; };
+    }
+  }, [selectedAttendance]);
 
   const [search, setSearch] = useState('');
   const [date, setDate] = useState('');
@@ -162,7 +175,7 @@ const AttendanceList = () => {
     {
       key: 'athlete',
       label: 'Athlete',
-      width: '32%',
+      width: role === 'athlete' ? '34%' : '30%',
       render: (_, row) => (
         <div className="flex items-center gap-3">
           {row.profile_photo ? (
@@ -182,13 +195,13 @@ const AttendanceList = () => {
     {
       key: 'attendance_date',
       label: 'Date',
-      width: '16%',
+      width: role === 'athlete' ? '22%' : '16%',
       render: (_, row) => <span className="text-xs text-muted-foreground">{new Date(row.attendance_date).toLocaleDateString()}</span>,
     },
     {
       key: 'session',
       label: 'Session',
-      width: '16%',
+      width: role === 'athlete' ? '22%' : '16%',
       render: (_, row) => (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-secondary text-foreground border border-border">
           {row.session || 'Morning'}
@@ -198,17 +211,17 @@ const AttendanceList = () => {
     {
       key: 'status',
       label: 'Status',
-      width: '16%',
+      width: role === 'athlete' ? '22%' : '16%',
       render: (_, row) => <AttendanceStatusBadge status={row.status} />,
-    },
-    {
-      key: 'remarks',
-      label: 'Remarks',
-      width: role !== 'athlete' ? '14%' : '20%',
-      render: (_, row) => <span className="text-xs text-muted-foreground italic">{row.remarks || '—'}</span>,
     },
     ...(role !== 'athlete'
       ? [
+          {
+            key: 'remarks',
+            label: 'Remarks',
+            width: '16%',
+            render: (_, row) => <span className="text-xs text-muted-foreground italic">{row.remarks || '—'}</span>,
+          },
           {
             key: 'actions',
             label: '',
@@ -254,14 +267,16 @@ const AttendanceList = () => {
               className="rounded-xl border-border bg-card/60 backdrop-blur-sm text-foreground hover:bg-secondary hover:text-primary transition-all duration-200"
               leftIcon={FileText}
             >Reports &amp; AI Alerts</Button>
-            <button
-              type="button"
-              onClick={openProvideModal}
-              className="inline-flex items-center justify-center gap-2 flex-nowrap whitespace-nowrap rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-semibold text-xs px-4 py-2.5 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 border border-emerald-400/30 cursor-pointer shrink-0"
-            >
-              <UserCheck size={16} className="shrink-0 text-emerald-100" />
-              <span className="whitespace-nowrap">Provide Attendance</span>
-            </button>
+            {role !== 'athlete' && (
+              <button
+                type="button"
+                onClick={openProvideModal}
+                className="inline-flex items-center justify-center gap-2 flex-nowrap whitespace-nowrap rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-semibold text-xs px-4 py-2.5 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 border border-emerald-400/30 cursor-pointer shrink-0"
+              >
+                <UserCheck size={16} className="shrink-0 text-emerald-100" />
+                <span className="whitespace-nowrap">Provide Attendance</span>
+              </button>
+            )}
           </div>
         }
       />
@@ -325,6 +340,7 @@ const AttendanceList = () => {
         columns={columns}
         data={records}
         loading={loading}
+        onRowClick={(row) => setSelectedAttendance(row)}
         emptyMessage="No attendance records found."
       />
 
@@ -514,6 +530,109 @@ const AttendanceList = () => {
         confirmText="Delete Record"
         loading={actionLoading}
       />
+
+      {/* Attendance Record Details Modal Portal */}
+      {selectedAttendance &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 w-screen h-screen overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Full-viewport edge-to-edge backdrop */}
+            <div
+              className="fixed inset-0 w-full h-full bg-black/60 backdrop-blur-xs transition-opacity"
+              onClick={() => setSelectedAttendance(null)}
+              aria-hidden="true"
+            />
+
+            {/* Modal Dialog Box */}
+            <div className="relative z-10 w-full max-w-lg my-auto animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl space-y-5 text-gray-900">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3.5">
+                <div className="flex items-center gap-3">
+                  <div className="grid size-10 place-items-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    <UserCheck size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-gray-900">Attendance Log Details</h2>
+                    <p className="text-xs text-gray-500">
+                      {selectedAttendance.first_name} {selectedAttendance.last_name} · <span className="font-semibold text-gray-700">{selectedAttendance.athlete_code}</span> ({selectedAttendance.sport_name || 'Athletics'})
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAttendance(null)}
+                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                  aria-label="Close"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Attendance Details Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Attendance Status</div>
+                  <div className="mt-1.5">
+                    <AttendanceStatusBadge status={selectedAttendance.status} />
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Session Time</div>
+                  <div className="mt-1 text-sm font-bold text-gray-900 capitalize flex items-center gap-1.5">
+                    <Clock size={13} className="text-gray-400" />
+                    {selectedAttendance.session || 'Morning Session'}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Attendance Date</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                    <CalendarIcon size={13} className="text-gray-400" />
+                    {selectedAttendance.attendance_date ? new Date(selectedAttendance.attendance_date).toLocaleDateString() : 'N/A'}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Sport / Squad</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-800">
+                    {selectedAttendance.sport_name || 'Athletics Team'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Remarks Section */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700">
+                  <MessageSquare size={14} className="text-primary" /> Attendance Remarks & Coach Notes
+                </div>
+                <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50/60 text-xs text-gray-800 leading-relaxed italic">
+                  {selectedAttendance.remarks?.trim() ? (
+                    `"${selectedAttendance.remarks.trim()}"`
+                  ) : (
+                    <span className="text-gray-400 not-italic">No specific remarks logged for this attendance record.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end pt-2 border-t border-gray-100">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedAttendance(null)}
+                  className="border-gray-200 text-gray-700 hover:bg-gray-100"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

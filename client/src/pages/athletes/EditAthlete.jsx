@@ -52,7 +52,7 @@ const EditAthlete = () => {
     sport_id: '', category_id: '', coach_id: '',
     address: '', city: '', state: '', district: '', pincode: '',
     academy_name: '', guardian_name: '', guardian_phone: '',
-    joining_date: '', medical_status: 'fit', current_status: 'active'
+    joining_date: '', medical_status: 'fit', medical_reason: '', current_status: 'active'
   });
 
   useEffect(() => {
@@ -72,6 +72,7 @@ const EditAthlete = () => {
         const res = await athleteService.getById(id);
         const data = res?.data || res;
         if (data) {
+          const latestMedical = data.medical_history && data.medical_history.length > 0 ? data.medical_history[0] : null;
           setForm({
             first_name: data.first_name || '',
             last_name: data.last_name || '',
@@ -94,6 +95,7 @@ const EditAthlete = () => {
             guardian_phone: data.guardian_phone || '',
             joining_date: data.joining_date ? data.joining_date.split('T')[0] : '',
             medical_status: data.medical_status || 'fit',
+            medical_reason: latestMedical?.notes || latestMedical?.condition_name || '',
             current_status: data.current_status || 'active',
           });
         }
@@ -116,6 +118,9 @@ const EditAthlete = () => {
     if (!form.date_of_birth) e.date_of_birth = 'Date of birth is required';
     if (form.height_cm && (Number(form.height_cm) < 50 || Number(form.height_cm) > 250)) e.height_cm = 'Height must be between 50–250 cm';
     if (form.weight_kg && (Number(form.weight_kg) < 20 || Number(form.weight_kg) > 200)) e.weight_kg = 'Weight must be between 20–200 kg';
+    if (form.medical_status !== 'fit' && !form.medical_reason?.trim()) {
+      e.medical_reason = 'Medical reason is required when status is not Fit';
+    }
     setErrors(e);
     return !Object.keys(e).length;
   };
@@ -245,6 +250,20 @@ const EditAthlete = () => {
                 <option value="transferred">Transferred</option>
               </select>
             </Field>
+            {form.medical_status !== 'fit' && (
+              <div className="sm:col-span-2 lg:col-span-3 animate-in fade-in duration-200">
+                <Field label="Medical Reason / Notes" error={errors.medical_reason} required>
+                  <textarea
+                    rows={2}
+                    required
+                    className={`${inputCls(errors.medical_reason)} resize-none`}
+                    placeholder={`Please specify diagnosis, condition, or reason for being ${form.medical_status.replace(/_/g, ' ')}...`}
+                    value={form.medical_reason}
+                    onChange={set('medical_reason')}
+                  />
+                </Field>
+              </div>
+            )}
           </div>
         </FormSection>
 

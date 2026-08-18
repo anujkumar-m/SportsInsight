@@ -1,14 +1,21 @@
-// ─── controllers/sport.controller.js ─────────────────────
-'use strict';
-
 const sportService = require('../services/sport.service');
+const selectorService = require('../services/selector.service');
 const { parsePagination } = require('../utils/helpers');
 
 // ─── Sports ─────────────────────────────────────────────────
 exports.listSports = async (req, res, next) => {
   try {
     const { page, limit } = parsePagination(req.query);
-    res.json({ success: true, ...(await sportService.listSports({ ...req.query, page, limit })) });
+    const queryParams = { ...req.query, page, limit };
+
+    if (req.user?.role?.toLowerCase() === 'selector' || req.user?.role?.toLowerCase() === 'state_selector') {
+      const sportIds = await selectorService.getSelectorSportIds(req.user.selector_id);
+      if (sportIds && sportIds.length > 0) {
+        queryParams.sport_ids = sportIds;
+      }
+    }
+
+    res.json({ success: true, ...(await sportService.listSports(queryParams)) });
   } catch (err) { next(err); }
 };
 

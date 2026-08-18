@@ -19,9 +19,9 @@ router.use(authenticate);
 
 // Dashboard routes (role-specific)
 router.get('/admin', requireRole('admin'), getAdminDashboard);
-router.get('/coach', requireRole('coach'), getCoachDashboard);
-router.get('/selector', requireRole('selector'), getSelectorDashboard);
-router.get('/athlete', requireRole('athlete'), getAthleteDashboard);
+router.get('/coach', requireRole('coach', 'head_coach', 'admin'), getCoachDashboard);
+router.get('/selector', requireRole('selector', 'state_selector', 'admin'), getSelectorDashboard);
+router.get('/athlete', requireRole('athlete', 'admin'), getAthleteDashboard);
 
 // AI Generate List (admin and coach only)
 router.post('/ai/generate', requireRole('admin', 'coach', 'selector'), generateAIList);

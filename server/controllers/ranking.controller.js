@@ -1,4 +1,5 @@
 const rankingService = require('../services/ranking.service');
+const selectorService = require('../services/selector.service');
 const { pool } = require('../config/database');
 
 async function getRankings(req, res, next) {
@@ -15,6 +16,17 @@ async function getRankings(req, res, next) {
         }
       } else {
         queryParams.sportId = -1;
+      }
+    } else if (req.user?.role?.toLowerCase() === 'selector' || req.user?.role?.toLowerCase() === 'state_selector') {
+      const sportIds = await selectorService.getSelectorSportIds(req.user.selector_id);
+      if (sportIds && sportIds.length > 0) {
+        if (queryParams.sportId) {
+          if (!sportIds.includes(Number(queryParams.sportId))) {
+            queryParams.sportId = -999;
+          }
+        } else {
+          queryParams.sportIds = sportIds;
+        }
       }
     }
     res.json({ success: true, data: await rankingService.getRankings(queryParams) });

@@ -1,13 +1,15 @@
 // ─── pages/athletes/AthleteList.jsx ──────────────────────
 import React, { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Download, Upload, Trash2, Archive, RefreshCw,
-  Sparkles, Eye, Pencil, MoreVertical, UserCheck,
+  Sparkles, Eye, Pencil, MoreVertical, UserCheck, MessageSquare, X, Star,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { athleteService } from '../../services/athleteService';
 import { sportService } from '../../services/sportService';
+import { coachService } from '../../services/coachService';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
@@ -36,36 +38,105 @@ const StatusBadge = ({ status }) => {
 };
 
 // ─── Row Action Menu ─────────────────────────────────────
-const RowActions = ({ athlete, onView, onEdit, onArchive, onDelete, role }) => {
+const RowActions = ({ athlete, onView, onEdit, onArchive, onDelete, onFeedback, role }) => {
   const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, right: 0 });
+  const btnRef = React.useRef(null);
+
+  const toggleOpen = (e) => {
+    e.stopPropagation();
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const menuHeight = 175;
+      const openUpward = rect.bottom + menuHeight > windowHeight;
+      setCoords({
+        top: openUpward ? Math.max(8, rect.top - menuHeight) : rect.bottom + 2,
+        right: Math.max(8, window.innerWidth - rect.right),
+      });
+    }
+    setOpen((o) => !o);
+  };
+
   return (
-    <div className="relative">
+    <div className="relative inline-block">
       <button
+        ref={btnRef}
         type="button"
-        onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
-        className="grid size-7 place-items-center rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
+        onClick={toggleOpen}
+        className="grid size-7 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+        title="Options"
       >
         <MoreVertical size={15} />
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-30" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
-          <div className="absolute right-0 top-8 z-40 min-w-[160px] rounded-xl border border-border bg-card p-1.5 shadow-xl">
-            <button onClick={(e) => { e.stopPropagation(); setOpen(false); onView(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-secondary">
-              <Eye size={13} /> View Profile
+          <div
+            className="fixed inset-0 z-[998]"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(false);
+            }}
+          />
+          <div
+            style={{ position: 'fixed', top: `${coords.top}px`, right: `${coords.right}px` }}
+            className="z-[999] min-w-[165px] rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-card p-1.5 shadow-xl space-y-0.5"
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(false);
+                onView(athlete);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-secondary text-gray-800 dark:text-foreground transition-colors"
+            >
+              <Eye size={13} className="text-gray-500 dark:text-muted-foreground" /> View Profile
             </button>
             {(role === 'admin' || role === 'coach') && (
-              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-secondary">
-                <Pencil size={13} /> Edit
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                  onEdit(athlete);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-secondary text-gray-800 dark:text-foreground transition-colors"
+              >
+                <Pencil size={13} className="text-gray-500 dark:text-muted-foreground" /> Edit
+              </button>
+            )}
+            {(role === 'admin' || role === 'coach') && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                  onFeedback(athlete);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs hover:bg-primary/10 text-primary font-medium transition-colors"
+              >
+                <MessageSquare size={13} /> Give Feedback
               </button>
             )}
             {role === 'admin' && athlete.current_status !== 'archived' && (
-              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onArchive(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-warning hover:bg-warning/10">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                  onArchive(athlete);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-warning hover:bg-warning/10 transition-colors"
+              >
                 <Archive size={13} /> Archive
               </button>
             )}
             {role === 'admin' && (
-              <button onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(athlete); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-destructive hover:bg-destructive/10">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                  onDelete(athlete);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+              >
                 <Trash2 size={13} /> Delete
               </button>
             )}
@@ -100,6 +171,51 @@ const AthleteList = () => {
 
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
+
+  // Feedback Modal State
+  const [feedbackAthlete, setFeedbackAthlete] = useState(null);
+  const [feedbackForm, setFeedbackForm] = useState({
+    remark_type: 'performance',
+    remarks: '',
+    rating: 8.0,
+  });
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (feedbackAthlete) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [feedbackAthlete]);
+
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    if (!feedbackForm.remarks.trim()) {
+      toast.error('Please enter feedback content.');
+      return;
+    }
+    setSubmittingFeedback(true);
+    try {
+      await coachService.createRemark({
+        athlete_id: feedbackAthlete.id,
+        remark_type: feedbackForm.remark_type,
+        remarks: feedbackForm.remarks.trim(),
+        rating: Number(feedbackForm.rating) || 8.0,
+        remark_date: new Date().toISOString().split('T')[0],
+      });
+      toast.success(`Feedback recorded for ${feedbackAthlete.full_name || 'athlete'}!`);
+      setFeedbackAthlete(null);
+      setFeedbackForm({ remark_type: 'performance', remarks: '', rating: 8.0 });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to submit feedback.');
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
 
   // fetch athletes
   const fetchData = useCallback(async () => {
@@ -204,6 +320,10 @@ const AthleteList = () => {
           role={role}
           onView={(a) => navigate(`/athletes/${a.id}`)}
           onEdit={(a) => navigate(`/athletes/${a.id}/edit`)}
+          onFeedback={(a) => {
+            setFeedbackAthlete(a);
+            setFeedbackForm({ remark_type: 'Performance', remarks: '', rating: 8.0 });
+          }}
           onArchive={(a) => setConfirmArchive(a)}
           onDelete={(a) => setConfirmDelete(a)}
         />
@@ -362,6 +482,135 @@ const AthleteList = () => {
         onClose={() => setImportModalOpen(false)}
         onSuccess={fetchData}
       />
+
+      {/* Give Feedback Modal Portal */}
+      {feedbackAthlete &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 w-screen h-screen overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Full-viewport edge-to-edge backdrop */}
+            <div
+              className="fixed inset-0 w-full h-full bg-black/60 backdrop-blur-xs transition-opacity"
+              onClick={() => setFeedbackAthlete(null)}
+              aria-hidden="true"
+            />
+
+            {/* Modal Dialog Box */}
+            <div className="relative z-10 w-full max-w-lg my-auto animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl space-y-4 text-gray-900">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div>
+                  <h2 className="text-base font-bold text-gray-900">Give Athlete Feedback</h2>
+                  <p className="text-xs text-gray-500">
+                    Provide evaluation for <span className="font-semibold text-gray-800">{feedbackAthlete.full_name}</span> ({feedbackAthlete.athlete_code || feedbackAthlete.sport_name})
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFeedbackAthlete(null)}
+                  className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                  aria-label="Close"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleFeedbackSubmit} className="space-y-4">
+                {/* Category selector */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Feedback Category <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'performance', label: 'Performance', desc: 'Skill, tactics & match play' },
+                      { key: 'fitness', label: 'Fitness', desc: 'Strength, stamina & recovery' },
+                      { key: 'behavior', label: 'Behavior & Discipline', desc: 'Punctuality, teamwork & mindset' },
+                      { key: 'general', label: 'General Feedback', desc: 'Overall guidance & notes' },
+                    ].map((cat) => {
+                      const selected = feedbackForm.remark_type === cat.key;
+                      return (
+                        <button
+                          key={cat.key}
+                          type="button"
+                          onClick={() => setFeedbackForm((prev) => ({ ...prev, remark_type: cat.key }))}
+                          className={`text-left p-2.5 rounded-xl border transition-all text-xs ${
+                            selected
+                              ? 'border-primary bg-primary/10 text-gray-900 font-semibold shadow-xs ring-1 ring-primary'
+                              : 'border-gray-200 bg-gray-50/70 text-gray-600 hover:border-gray-300 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="font-bold text-gray-800">{cat.label}</div>
+                          <div className="text-[10px] text-gray-500 mt-0.5">{cat.desc}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Rating slider / score */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-gray-700">
+                      Performance / Attitude Rating
+                    </label>
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                      <Star size={12} className="fill-primary text-primary" /> {feedbackForm.rating} / 10
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    step="0.5"
+                    value={feedbackForm.rating}
+                    onChange={(e) => setFeedbackForm((prev) => ({ ...prev, rating: parseFloat(e.target.value) }))}
+                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                  />
+                </div>
+
+                {/* Remarks content */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                    Feedback Content <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={feedbackForm.remarks}
+                    onChange={(e) => setFeedbackForm((prev) => ({ ...prev, remarks: e.target.value }))}
+                    placeholder={`Write detailed ${feedbackForm.remark_type} remarks, instructions, or encouragement for ${feedbackAthlete.full_name}...`}
+                    className="w-full rounded-xl border border-gray-300 bg-white p-3 text-xs text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-100">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFeedbackAthlete(null)}
+                    disabled={submittingFeedback}
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    loading={submittingFeedback}
+                    leftIcon={MessageSquare}
+                  >
+                    Submit Feedback
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

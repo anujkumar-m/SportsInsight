@@ -39,7 +39,17 @@ const buildAthleteBaseQuery = (filters = {}) => {
   let whereConditions = ['a.is_active = TRUE'];
   const params = [];
 
-  if (filters.sportId) {
+  if (filters.sportIds && Array.isArray(filters.sportIds) && filters.sportIds.length > 0) {
+    if (filters.sportId && filters.sportIds.includes(Number(filters.sportId))) {
+      whereConditions.push('a.sport_id = ?');
+      params.push(filters.sportId);
+    } else if (filters.sportId) {
+      whereConditions.push('a.sport_id = -999');
+    } else {
+      whereConditions.push(`a.sport_id IN (${filters.sportIds.map(() => '?').join(',')})`);
+      params.push(...filters.sportIds);
+    }
+  } else if (filters.sportId) {
     whereConditions.push('a.sport_id = ?');
     params.push(filters.sportId);
   }

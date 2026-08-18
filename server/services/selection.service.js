@@ -7,10 +7,16 @@ function calcSelectionScore({ perf = 0, fitness = 0, attendance = 0, coachRating
 
 // ─── Generate Recommendations ─────────────────────────────────────────────────
 async function generateRecommendations(filters = {}) {
-  const { sportId, categoryId, gender, limit = 20 } = filters;
+  const { sportId, sportIds, categoryId, gender, limit = 20 } = filters;
   const params = [];
   let where = 'WHERE a.is_active = 1';
-  if (sportId)    { where += ' AND a.sport_id = ?';    params.push(sportId); }
+  if (sportIds && Array.isArray(sportIds) && sportIds.length > 0) {
+    where += ` AND a.sport_id IN (${sportIds.map(() => '?').join(',')})`;
+    params.push(...sportIds);
+  } else if (sportId) {
+    where += ' AND a.sport_id = ?';
+    params.push(sportId);
+  }
   if (categoryId) { where += ' AND a.category_id = ?'; params.push(categoryId); }
   if (gender)     { where += ' AND a.gender = ?';      params.push(gender); }
 
@@ -48,28 +54,26 @@ async function generateRecommendations(filters = {}) {
     const isAvailable = ath.availability_status !== 'unfit' && ath.medical_status !== 'injured';
 
     let recommendation = 'not_recommended';
-    if (selectionScore >= 80) recommendation = 'selected';
-    else if (selectionScore >= 65) recommendation = 'recommended';
-    else if (selectionScore >= 50) recommendation = 'shortlisted';
+    let recommendationReason = 'Performance metrics below baseline threshold';
 
-    const strengths = [];
-    const weaknesses = [];
-    if ((ath.avg_performance || 0) >= 80) strengths.push('High Performance');
-    else weaknesses.push('Needs Performance Improvement');
-    if ((ath.avg_fitness || 0) >= 80) strengths.push('Excellent Fitness');
-    else weaknesses.push('Fitness Below Standard');
-    if ((ath.attendance_pct || 0) >= 85) strengths.push('Consistent Attendance');
-    else weaknesses.push('Low Attendance');
+    if (selectionScore >= 85 && isAvailable) {
+      recommendation = 'strongly_recommended';
+      recommendationReason = 'Exceptional multi-dimensional performance, high consistency and fitness';
+    } else if (selectionScore >= 70 && isAvailable) {
+      recommendation = 'recommended';
+      recommendationReason = 'Solid performance across all scoring pillars, cleared for selection';
+    } else if (selectionScore >= 55) {
+      recommendation = 'consider_with_reservation';
+      recommendationReason = 'Moderate scores; needs monitoring in fitness or attendance';
+    }
 
     return {
       ...ath,
       selectionScore,
       confidenceScore,
       recommendation,
+      recommendationReason,
       isAvailable,
-      strengths,
-      weaknesses,
-      suggestedImprovements: weaknesses.map(w => `Focus on: ${w}`),
     };
   });
 
@@ -81,12 +85,18 @@ async function generateRecommendations(filters = {}) {
 
 // ─── Get All Selections ───────────────────────────────────────────────────────
 async function getSelections(query = {}) {
-  const { status, sportId, limit = 50, page = 1 } = query;
+  const { status, sportId, sportIds, limit = 50, page = 1 } = query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
   const params = [];
   let where = 'WHERE 1=1';
   if (status)  { where += ' AND sel.status = ?';      params.push(status); }
-  if (sportId) { where += ' AND a.sport_id = ?';       params.push(sportId); }
+  if (sportIds && Array.isArray(sportIds) && sportIds.length > 0) {
+    where += ` AND a.sport_id IN (${sportIds.map(() => '?').join(',')})`;
+    params.push(...sportIds);
+  } else if (sportId) {
+    where += ' AND a.sport_id = ?';
+    params.push(sportId);
+  }
 
   const [[{ total }]] = await pool.query(
     `SELECT COUNT(*) AS total FROM selections sel JOIN athletes a ON sel.athlete_id = a.id ${where}`, params);

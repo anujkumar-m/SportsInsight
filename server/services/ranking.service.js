@@ -20,14 +20,12 @@ async function calculateRankings() {
            ROUND(AVG(fa.overall_fitness_score), 2) AS avg_fitness,
            ROUND(SUM(att.status='present')/NULLIF(COUNT(DISTINCT att.id),0)*100, 2) AS attendance_pct,
            ROUND(AVG(pr.improvement_rate), 2) AS avg_improvement,
-           ROUND(AVG(cr.rating), 2) AS coach_rating,
-           MAX(inj.availability_status) AS availability
+           ROUND(AVG(cr.rating), 2) AS coach_rating
     FROM athletes a
     LEFT JOIN performance_records pr ON pr.athlete_id = a.id
     LEFT JOIN fitness_assessments fa ON fa.athlete_id = a.id
     LEFT JOIN attendance att ON att.athlete_id = a.id
     LEFT JOIN coach_remarks cr ON cr.athlete_id = a.id
-    LEFT JOIN injuries inj ON inj.athlete_id = a.id
     WHERE a.is_active = 1
     GROUP BY a.id`);
 
@@ -132,11 +130,17 @@ async function calculateRankings() {
 
 // ─── Get Rankings List ────────────────────────────────────────────────────────
 async function getRankings(query = {}) {
-  const { rankType = 'overall', sportId, categoryId, categoryIds, limit = 100, page = 1 } = query;
+  const { rankType = 'overall', sportId, sportIds, categoryId, categoryIds, limit = 100, page = 1 } = query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
   const params = [rankType, rankType];
   let where = 'WHERE r.rank_type = ?';
-  if (sportId) { where += ' AND r.sport_id = ?'; params.push(sportId); }
+  if (sportIds && Array.isArray(sportIds) && sportIds.length > 0) {
+    where += ` AND r.sport_id IN (${sportIds.map(() => '?').join(',')})`;
+    params.push(...sportIds);
+  } else if (sportId) {
+    where += ' AND r.sport_id = ?';
+    params.push(sportId);
+  }
   
   const parsedCatIds = categoryIds
     ? (Array.isArray(categoryIds) ? categoryIds : String(categoryIds).split(',')).map(Number).filter(Boolean)

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, Pencil, Trash2, Activity, Heart, Zap, Award, BarChart2, FileText, RefreshCw } from 'lucide-react';
+import { Plus, Eye, Pencil, Trash2, Activity, Heart, Zap, Award, BarChart2, FileText, RefreshCw, X, MessageSquare, Calendar, ShieldCheck, Flame, Dumbbell } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fitnessService } from '../../services/fitnessService';
 import { athleteService } from '../../services/athleteService';
@@ -21,6 +22,18 @@ const FitnessList = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [loading, setLoading] = useState(true);
+
+  // Row Details Modal
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
+
+  // Prevent background scroll when modal open
+  useEffect(() => {
+    if (selectedAssessment) {
+      const orig = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = orig; };
+    }
+  }, [selectedAssessment]);
 
   const [search, setSearch] = useState('');
   const [athleteId, setAthleteId] = useState('');
@@ -282,6 +295,7 @@ const FitnessList = () => {
         columns={columns}
         data={assessments}
         loading={loading}
+        onRowClick={(row) => setSelectedAssessment(row)}
         emptyMessage="No fitness assessments found."
       />
 
@@ -304,6 +318,144 @@ const FitnessList = () => {
         confirmVariant="danger"
         loading={actionLoading}
       />
+
+      {/* Fitness Assessment Details Modal Portal */}
+      {selectedAssessment &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 w-screen h-screen overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Full-viewport edge-to-edge backdrop */}
+            <div
+              className="fixed inset-0 w-full h-full bg-black/60 backdrop-blur-xs transition-opacity"
+              onClick={() => setSelectedAssessment(null)}
+              aria-hidden="true"
+            />
+
+            {/* Modal Dialog Box */}
+            <div className="relative z-10 w-full max-w-lg my-auto animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl space-y-5 text-gray-900">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3.5">
+                <div className="flex items-center gap-3">
+                  <div className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                    <Activity size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-gray-900">Fitness Assessment Details</h2>
+                    <p className="text-xs text-gray-500">
+                      {selectedAssessment.first_name} {selectedAssessment.last_name} · <span className="font-semibold text-gray-700">{selectedAssessment.athlete_code}</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAssessment(null)}
+                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                  aria-label="Close"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Core Score & Vitals Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Overall Fitness Score</div>
+                  <div className="mt-1 text-base font-bold text-emerald-600 flex items-center gap-1.5">
+                    {Math.round(selectedAssessment.overall_fitness_score || 0)} <span className="text-xs font-normal text-gray-400">/ 100</span>
+                  </div>
+                  <div className="text-xs text-gray-600 mt-0.5 font-medium">
+                    Grade {selectedAssessment.overall_fitness_score >= 85 ? 'A (Excellent)' : selectedAssessment.overall_fitness_score >= 70 ? 'B (Good)' : 'C (Needs Work)'}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Body Vitals</div>
+                  <div className="mt-1 text-sm font-bold text-gray-900">
+                    BMI: <span className="text-primary font-semibold">{selectedAssessment.bmi ? Number(selectedAssessment.bmi).toFixed(1) : '22.0'}</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    Body Fat: <span className="font-semibold text-gray-700">{selectedAssessment.body_fat_percentage ? `${selectedAssessment.body_fat_percentage}%` : 'N/A'}</span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Date Assessed</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                    <Calendar size={13} className="text-gray-400" />
+                    {selectedAssessment.assessment_date ? new Date(selectedAssessment.assessment_date).toLocaleDateString() : 'N/A'}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                  <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Injury & Recovery</div>
+                  <div className="mt-1 text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                    <ShieldCheck size={13} /> {selectedAssessment.ai_analysis?.injuryRisk ? `Risk: ${selectedAssessment.ai_analysis.injuryRisk}` : 'Low Injury Risk'}
+                  </div>
+                  <div className="text-[11px] text-gray-500 mt-0.5">
+                    {selectedAssessment.ai_analysis?.recoveryReadiness ? `Recovery: ${selectedAssessment.ai_analysis.recoveryReadiness}` : 'Ready for high intensity'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Key Physical Test Results if available */}
+              {(selectedAssessment.cooper_test_distance || selectedAssessment.pushups_count || selectedAssessment.plank_seconds) && (
+                <div className="p-3 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2">
+                  <div className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">Physical Breakdown</div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    {selectedAssessment.cooper_test_distance && (
+                      <div className="p-2 rounded-lg bg-white border border-gray-200">
+                        <div className="text-[10px] text-gray-400">Cooper Run</div>
+                        <div className="text-xs font-bold text-gray-800">{selectedAssessment.cooper_test_distance}m</div>
+                      </div>
+                    )}
+                    {selectedAssessment.pushups_count && (
+                      <div className="p-2 rounded-lg bg-white border border-gray-200">
+                        <div className="text-[10px] text-gray-400">Pushups</div>
+                        <div className="text-xs font-bold text-gray-800">{selectedAssessment.pushups_count} reps</div>
+                      </div>
+                    )}
+                    {selectedAssessment.plank_seconds && (
+                      <div className="p-2 rounded-lg bg-white border border-gray-200">
+                        <div className="text-[10px] text-gray-400">Plank Time</div>
+                        <div className="text-xs font-bold text-gray-800">{selectedAssessment.plank_seconds}s</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Coach Remarks Section */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700">
+                  <MessageSquare size={14} className="text-primary" /> Fitness Coach Remarks & Notes
+                </div>
+                <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50/60 text-xs text-gray-800 leading-relaxed italic">
+                  {selectedAssessment.notes?.trim() ? (
+                    `"${selectedAssessment.notes.trim()}"`
+                  ) : (
+                    <span className="text-gray-400 not-italic">No coach remarks recorded for this fitness assessment.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end pt-2 border-t border-gray-100">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedAssessment(null)}
+                  className="border-gray-200 text-gray-700 hover:bg-gray-100"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

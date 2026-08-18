@@ -77,21 +77,65 @@ const createSelector = async (data, createdBy) => {
       [data.email, data.email, hash, data.first_name, data.last_name, data.phone || null]
     );
 
+    let sportExpertise = data.sport_expertise || null;
+    let sportIds = Array.isArray(data.sport_ids) ? data.sport_ids.map(Number).filter(Boolean) : [];
+
+    if (sportIds.length > 0) {
+      const [sportRows] = await conn.query(
+        `SELECT id, name FROM sports WHERE id IN (${sportIds.map(() => '?').join(',')})`,
+        sportIds
+      );
+      sportExpertise = sportRows.map(s => s.name).join(', ');
+    } else if (sportExpertise) {
+      const names = sportExpertise.split(',').map(s => s.trim()).filter(Boolean);
+      if (names.length > 0) {
+        const [sportRows] = await conn.query(
+          `SELECT id, name FROM sports WHERE name IN (${names.map(() => '?').join(',')})`,
+          names
+        );
+        sportIds = sportRows.map(s => s.id);
+      }
+    }
+
     const [selRes] = await conn.query(
       `INSERT INTO selectors (user_id, selector_code, designation, organization, sport_expertise, years_experience, is_active)
        VALUES (?,?,?,?,?,?,1)`,
       [userRes.insertId, selector_code, data.designation || null, data.organization || null,
-       data.sport_expertise || null, data.years_experience || 0]
+       sportExpertise, data.years_experience || 0]
     );
 
+    const selectorId = selRes.insertId;
+
+    if (sportIds.length > 0) {
+      for (const spId of sportIds) {
+        await conn.query(
+          `INSERT INTO selector_sports (selector_id, sport_id, is_active) VALUES (?, ?, 1)
+           ON DUPLICATE KEY UPDATE is_active = 1`,
+          [selectorId, spId]
+        );
+      }
+    }
+
     await conn.commit();
-    return { id: selRes.insertId, selector_code };
+    return { id: selectorId, selector_code };
   } catch (err) { await conn.rollback(); throw err; }
   finally { conn.release(); }
 };
 
 const updateSelector = async (id, data) => {
   const allowed = ['designation','organization','sport_expertise','years_experience','is_active'];
+  let sportIds = Array.isArray(data.sport_ids) ? data.sport_ids.map(Number).filter(Boolean) : null;
+  let sportExpertise = data.sport_expertise;
+
+  if (sportIds !== null && sportIds.length > 0) {
+    const [sportRows] = await pool.query(
+      `SELECT id, name FROM sports WHERE id IN (${sportIds.map(() => '?').join(',')})`,
+      sportIds
+    );
+    sportExpertise = sportRows.map(s => s.name).join(', ');
+    data.sport_expertise = sportExpertise;
+  }
+
   const fields = []; const vals = [];
   for (const k of allowed) {
     if (data[k] !== undefined) {
@@ -110,6 +154,16 @@ const updateSelector = async (id, data) => {
   if (uFields.length) {
     uVals.push(id);
     await pool.query(`UPDATE users SET ${uFields.join(',')} WHERE id=(SELECT user_id FROM selectors WHERE id=?)`, uVals);
+  }
+
+  if (sportIds !== null) {
+    await pool.query(`DELETE FROM selector_sports WHERE selector_id = ?`, [id]);
+    for (const spId of sportIds) {
+      await pool.query(
+        `INSERT INTO selector_sports (selector_id, sport_id, is_active) VALUES (?, ?, 1)`,
+        [id, spId]
+      );
+    }
   }
 };
 
@@ -157,4 +211,40 @@ const getRecommendationDashboard = async (selector_id) => {
   return { pending_recommendations: pendingRecs };
 };
 
-module.exports = { listSelectors, getSelectorById, createSelector, updateSelector, deleteSelector, assignSport, removeSport, getSelectionHistory, getRecommendationDashboard };
+const getSelectorSportIds = async (selectorId) => {
+  if (!selectorId) return [];
+  const [ssRows] = await pool.query(
+    'SELECT sport_id FROM selector_sports WHERE selector_id = ? AND is_active = 1',
+    [selectorId]
+  );
+  if (ssRows.length > 0) return ssRows.map(r => r.sport_id);
+
+  const [selRows] = await pool.query(
+    'SELECT sport_expertise FROM selectors WHERE id = ?',
+    [selectorId]
+  );
+  if (selRows.length > 0 && selRows[0].sport_expertise) {
+    const names = selRows[0].sport_expertise.split(',').map(s => s.trim()).filter(Boolean);
+    if (names.length > 0) {
+      const [sportRows] = await pool.query(
+        `SELECT id FROM sports WHERE name IN (${names.map(() => '?').join(',')})`,
+        names
+      );
+      return sportRows.map(r => r.id);
+    }
+  }
+  return [];
+};
+
+module.exports = {
+  listSelectors,
+  getSelectorById,
+  createSelector,
+  updateSelector,
+  deleteSelector,
+  assignSport,
+  removeSport,
+  getSelectionHistory,
+  getRecommendationDashboard,
+  getSelectorSportIds
+};

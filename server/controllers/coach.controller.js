@@ -97,11 +97,21 @@ exports.createRemark = async (req, res, next) => {
     if (!athlete_id || !remarks) {
       return res.status(400).json({ success: false, message: 'athlete_id and remarks are required' });
     }
+    let resolvedCoachId = req.user?.coach_id || coach_id;
+    if (!resolvedCoachId) {
+      const [coachRows] = await pool.query('SELECT id FROM coaches WHERE user_id = ? LIMIT 1', [req.user?.id || 0]);
+      if (coachRows && coachRows.length > 0) {
+        resolvedCoachId = coachRows[0].id;
+      } else {
+        const [anyCoach] = await pool.query('SELECT id FROM coaches LIMIT 1');
+        resolvedCoachId = anyCoach?.[0]?.id || 1;
+      }
+    }
     const result = await coachService.createCoachRemark({
       athlete_id,
-      coach_id: coach_id || 1,
-      remark_type,
-      rating,
+      coach_id: resolvedCoachId,
+      remark_type: remark_type || 'general',
+      rating: rating || 8.0,
       remarks,
       remark_date,
     });
