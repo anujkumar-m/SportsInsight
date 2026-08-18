@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Activity, CalendarCheck, Gauge, MessageSquare, Users } from 'lucide-react';
 import {
   CartesianGrid,
@@ -13,8 +12,6 @@ import {
 } from 'recharts';
 import dashboardAPI from '../../services/dashboard.service';
 import { Panel, ScoreBar, StatCard, StatusPill } from '../../components/widgets';
-import { AiGenerateList } from '../../components/AiGenerateList';
-import QuickActionModal from '../../components/common/QuickActionModal';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import PageHeader from '../../components/common/PageHeader';
 import { toNum } from '../../theme';
@@ -37,8 +34,6 @@ function mapAthleteStatus(perf) {
 export default function CoachDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [modalState, setModalState] = useState({ isOpen: false, title: '', type: '' });
-  const navigate = useNavigate();
 
   useEffect(() => {
     dashboardAPI
@@ -126,7 +121,7 @@ export default function CoachDashboard() {
     <div className="fade-in space-y-6">
       <PageHeader
         title="Coach Workspace"
-        subtitle="Monitor your assigned squad and act on AI-flagged priorities."
+        subtitle="Monitor your assigned squad and key priorities."
         breadcrumb="Coach Dashboard"
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -141,30 +136,6 @@ export default function CoachDashboard() {
           tone="warning"
         />
       </div>
-
-      <Panel title="Quick Actions">
-        <div className="flex flex-wrap gap-2">
-          {[
-            { label: 'Add Performance', type: 'performance', title: 'Record Athlete Performance' },
-            { label: 'Add Fitness', type: 'fitness', title: 'Record Fitness Assessment' },
-            { label: 'Mark Attendance', type: 'attendance', title: 'Mark Today Attendance' },
-            { label: 'View Athlete', path: '/athletes' },
-            { label: 'Generate AI Athlete List', path: '/ai-generate' },
-          ].map((a) => (
-            <button
-              key={a.label}
-              type="button"
-              onClick={() => {
-                if (a.path) navigate(a.path);
-                else setModalState({ isOpen: true, title: a.title, type: a.type });
-              }}
-              className="h-9 rounded-lg border border-border px-3 text-xs font-medium transition hover:bg-secondary"
-            >
-              {a.label}
-            </button>
-          ))}
-        </div>
-      </Panel>
 
       <div className="grid gap-5 xl:grid-cols-3">
         <Panel title="Performance, Fitness & Attendance Trend" className="xl:col-span-2">
@@ -253,17 +224,6 @@ export default function CoachDashboard() {
           </ul>
         </Panel>
       </div>
-
-      <div id="ai-generator">
-        <AiGenerateList scopeNote={`Analysis restricted to the ${athletes.length} athletes in your assigned squad.`} />
-      </div>
-
-      <QuickActionModal
-        isOpen={modalState.isOpen}
-        onClose={() => setModalState({ ...modalState, isOpen: false })}
-        title={modalState.title}
-        type={modalState.type}
-      />
     </div>
   );
 }

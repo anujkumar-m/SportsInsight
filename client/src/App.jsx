@@ -113,15 +113,15 @@ const Loader = () => (
 const DASHBOARD_META = {
   admin: {
     title: 'Academy Command Centre',
-    subtitle: 'Academy-wide performance, selection and AI intelligence overview.',
+    subtitle: 'Academy-wide performance, selection and academy overview.',
   },
   coach: {
     title: 'Coach Workspace',
-    subtitle: 'Monitor your assigned squad and act on AI-flagged priorities.',
+    subtitle: 'Monitor your assigned squad and key priorities.',
   },
   selector: {
     title: 'Selection Intelligence',
-    subtitle: 'Rank, compare and shortlist athletes with AI confidence scoring.',
+    subtitle: 'Rank, compare and shortlist athletes.',
   },
   athlete: {
     title: 'My Performance',

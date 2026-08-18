@@ -52,8 +52,19 @@ async function calculateRankings() {
       return { ...ath, perf, fitness, consistency, overall };
     });
 
+    // Helper function to assign ranks with ties (same score gets same rank, next rank skipped e.g. 1, 1, 3, 4)
+    const assignRanksWithTies = (list) => {
+      let currentRank = 1;
+      return list.map((item, idx) => {
+        if (idx > 0 && item.overall < list[idx - 1].overall) {
+          currentRank = idx + 1;
+        }
+        return { ...item, rank_position: currentRank };
+      });
+    };
+
     // Sort by overall desc → assign overall rank
-    const overallSorted = [...scored].sort((a, b) => b.overall - a.overall);
+    const overallSorted = assignRanksWithTies([...scored].sort((a, b) => b.overall - a.overall));
     for (let i = 0; i < overallSorted.length; i++) {
       const ath = overallSorted[i];
       await conn.query(`
@@ -61,7 +72,7 @@ async function calculateRankings() {
           performance_score, fitness_score, consistency_score, overall_ranking_score,
           rank_type, rank_date)
         VALUES (?,?,?,?,?,?,?,?,'overall',?)`,
-        [ath.athlete_id, ath.sport_id, ath.category_id, i + 1,
+        [ath.athlete_id, ath.sport_id, ath.category_id, ath.rank_position,
          ath.perf, ath.fitness, ath.consistency, ath.overall, rankDate]);
     }
 
@@ -74,7 +85,7 @@ async function calculateRankings() {
       }
     });
     for (const [sportId, group] of Object.entries(sportGroups)) {
-      const sorted = group.sort((a, b) => b.overall - a.overall);
+      const sorted = assignRanksWithTies(group.sort((a, b) => b.overall - a.overall));
       for (let i = 0; i < sorted.length; i++) {
         const ath = sorted[i];
         await conn.query(`
@@ -82,7 +93,7 @@ async function calculateRankings() {
             performance_score, fitness_score, consistency_score, overall_ranking_score,
             rank_type, rank_date)
           VALUES (?,?,?,?,?,?,?,?,'sport',?)`,
-          [ath.athlete_id, ath.sport_id, ath.category_id, i + 1,
+          [ath.athlete_id, ath.sport_id, ath.category_id, ath.rank_position,
            ath.perf, ath.fitness, ath.consistency, ath.overall, rankDate]);
       }
     }
@@ -96,7 +107,7 @@ async function calculateRankings() {
       }
     });
     for (const [catId, group] of Object.entries(categoryGroups)) {
-      const sorted = group.sort((a, b) => b.overall - a.overall);
+      const sorted = assignRanksWithTies(group.sort((a, b) => b.overall - a.overall));
       for (let i = 0; i < sorted.length; i++) {
         const ath = sorted[i];
         await conn.query(`
@@ -104,7 +115,7 @@ async function calculateRankings() {
             performance_score, fitness_score, consistency_score, overall_ranking_score,
             rank_type, rank_date)
           VALUES (?,?,?,?,?,?,?,?,'category',?)`,
-          [ath.athlete_id, ath.sport_id, ath.category_id, i + 1,
+          [ath.athlete_id, ath.sport_id, ath.category_id, ath.rank_position,
            ath.perf, ath.fitness, ath.consistency, ath.overall, rankDate]);
       }
     }
@@ -121,18 +132,34 @@ async function calculateRankings() {
 
 // ─── Get Rankings List ────────────────────────────────────────────────────────
 async function getRankings(query = {}) {
-  const { rankType = 'overall', sportId, categoryId, limit = 50, page = 1 } = query;
+  const { rankType = 'overall', sportId, categoryId, categoryIds, limit = 100, page = 1 } = query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
-  const params = [rankType];
+  const params = [rankType, rankType];
   let where = 'WHERE r.rank_type = ?';
-  if (sportId)    { where += ' AND r.sport_id = ?';    params.push(sportId); }
-  if (categoryId) { where += ' AND r.category_id = ?'; params.push(categoryId); }
+  if (sportId) { where += ' AND r.sport_id = ?'; params.push(sportId); }
+  
+  const parsedCatIds = categoryIds
+    ? (Array.isArray(categoryIds) ? categoryIds : String(categoryIds).split(',')).map(Number).filter(Boolean)
+    : (categoryId ? [Number(categoryId)] : []);
+
+  if (parsedCatIds.length > 0) {
+    where += ` AND r.category_id IN (${parsedCatIds.map(() => '?').join(',')})`;
+    params.push(...parsedCatIds);
+  }
 
   const [[{ total }]] = await pool.query(
-    `SELECT COUNT(*) AS total FROM rankings r ${where}`, params);
+    `SELECT COUNT(DISTINCT r.athlete_id) AS total
+     FROM rankings r
+     INNER JOIN (
+       SELECT athlete_id, MAX(id) AS max_id
+       FROM rankings
+       WHERE rank_type = ?
+       GROUP BY athlete_id
+     ) latest ON r.id = latest.max_id
+     ${where}`, params);
 
-  const [rankings] = await pool.query(`
-    SELECT r.rank_position, r.overall_ranking_score AS ranking_score,
+  const [rawRankings] = await pool.query(`
+    SELECT r.id, r.athlete_id, r.rank_position, r.overall_ranking_score AS ranking_score,
            r.performance_score, r.fitness_score, r.consistency_score,
            r.rank_type, r.rank_date,
            u.first_name, u.last_name, u.profile_photo,
@@ -140,12 +167,32 @@ async function getRankings(query = {}) {
            TIMESTAMPDIFF(YEAR, a.date_of_birth, CURDATE()) AS age,
            s.name AS sport, cat.name AS category
     FROM rankings r
+    INNER JOIN (
+       SELECT athlete_id, MAX(id) AS max_id
+       FROM rankings
+       WHERE rank_type = ?
+       GROUP BY athlete_id
+    ) latest ON r.id = latest.max_id
     JOIN athletes a ON r.athlete_id = a.id
     JOIN users u ON a.user_id = u.id
     LEFT JOIN sports s ON r.sport_id = s.id
     LEFT JOIN categories cat ON r.category_id = cat.id
-    ${where} ORDER BY r.rank_position ASC
+    ${where}
+    ORDER BY r.overall_ranking_score DESC, r.rank_position ASC
     LIMIT ? OFFSET ?`, [...params, parseInt(limit), offset]);
+
+  // Compute dynamic ranking with tie-handling (same score gets same rank, next rank skips)
+  let currentRank = offset + 1;
+  const rankings = rawRankings.map((r, idx) => {
+    const score = Number(r.ranking_score || 0);
+    if (idx > 0) {
+      const prevScore = Number(rawRankings[idx - 1].ranking_score || 0);
+      if (score < prevScore) {
+        currentRank = offset + idx + 1;
+      }
+    }
+    return { ...r, rank_position: currentRank };
+  });
 
   return { rankings, total, page: parseInt(page), limit: parseInt(limit) };
 }

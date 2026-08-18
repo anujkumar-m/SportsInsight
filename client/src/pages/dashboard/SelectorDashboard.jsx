@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Download, GitCompareArrows, Medal, Sparkles, Trophy } from 'lucide-react';
+import { Medal, Sparkles, Trophy } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -14,11 +13,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { toast } from 'react-hot-toast';
 import dashboardAPI from '../../services/dashboard.service';
 import { Panel, ScoreBar, StatCard, StatusPill } from '../../components/widgets';
-import { AiGenerateList } from '../../components/AiGenerateList';
-import QuickActionModal from '../../components/common/QuickActionModal';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import PageHeader from '../../components/common/PageHeader';
 import { toNum } from '../../theme';
@@ -42,10 +38,8 @@ function mapStatus(status) {
 export default function SelectorDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [modalState, setModalState] = useState({ isOpen: false, title: '', type: '' });
   const [left, setLeft] = useState(0);
   const [right, setRight] = useState(1);
-  const navigate = useNavigate();
 
   useEffect(() => {
     dashboardAPI
@@ -105,7 +99,7 @@ export default function SelectorDashboard() {
     <div className="fade-in space-y-6">
       <PageHeader
         title="Selection Intelligence"
-        subtitle="Rank, compare and shortlist athletes with AI confidence scoring."
+        subtitle="Rank, compare and shortlist athletes."
         breadcrumb="Selector Workspace"
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -119,38 +113,6 @@ export default function SelectorDashboard() {
         <StatCard label="Avg Confidence" value={`${avgConfidence}%`} icon={Medal} tone="info" />
         <StatCard label="Recent Selections" value={stats.totalSelections || 0} icon={Medal} delta={9} tone="warning" />
       </div>
-
-      <Panel title="Quick Actions">
-        <div className="flex flex-wrap gap-2">
-          {[
-            {
-              label: 'Compare Athletes',
-              action: () => setModalState({ isOpen: true, title: 'Athlete Performance Comparison', type: 'compare' }),
-              icon: GitCompareArrows,
-            },
-            {
-              label: 'Generate Selection List',
-              action: () => navigate('/ai-generate'),
-              icon: Download,
-            },
-            {
-              label: 'Export Selection Report',
-              action: () => toast.success('Exporting Selection Intelligence Report (PDF)...'),
-              icon: Download,
-            },
-          ].map((q) => (
-            <button
-              key={q.label}
-              type="button"
-              onClick={q.action}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium transition hover:bg-secondary"
-            >
-              <q.icon className="size-3.5" />
-              {q.label}
-            </button>
-          ))}
-        </div>
-      </Panel>
 
       <div className="grid gap-5 xl:grid-cols-3">
         <Panel title="Top Ranked Athletes & Recommendation Scores" className="xl:col-span-2">
@@ -252,17 +214,6 @@ export default function SelectorDashboard() {
           </div>
         </Panel>
       )}
-
-      <div id="ai-generator">
-        <AiGenerateList scopeNote="Selection-focused intelligence with confidence scoring across the full athlete pool." />
-      </div>
-
-      <QuickActionModal
-        isOpen={modalState.isOpen}
-        onClose={() => setModalState({ ...modalState, isOpen: false })}
-        title={modalState.title}
-        type={modalState.type}
-      />
     </div>
   );
 }

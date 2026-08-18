@@ -106,7 +106,54 @@ const createAthlete = async (data, createdBy) => {
 
     const athlete_code = data.athlete_code || await generateCode('ATH', conn);
 
-    // 1. Create user account
+    // Resolve sport_id from sport_name if needed
+    let sport_id = data.sport_id ? Number(data.sport_id) : null;
+    if (!sport_id && (data.sport_name || data.sport)) {
+      const sportSearch = (data.sport_name || data.sport).trim();
+      const [sports] = await conn.query(`SELECT id FROM sports WHERE LOWER(name) = LOWER(?) LIMIT 1`, [sportSearch]);
+      if (sports.length > 0) sport_id = sports[0].id;
+    }
+
+    // Resolve category_id from category_name if needed
+    let category_id = data.category_id ? Number(data.category_id) : null;
+    if (!category_id && (data.category_name || data.category)) {
+      const catSearch = (data.category_name || data.category).trim();
+      const [cats] = await conn.query(`SELECT id FROM categories WHERE LOWER(name) = LOWER(?) LIMIT 1`, [catSearch]);
+      if (cats.length > 0) category_id = cats[0].id;
+    }
+
+    // Resolve coach_id from coach_name / coach_email if needed
+    let coach_id = data.coach_id ? Number(data.coach_id) : null;
+    if (!coach_id && (data.coach_name || data.coach_email)) {
+      const [coaches] = await conn.query(
+        `SELECT c.id FROM coaches c
+         JOIN users u ON c.user_id = u.id
+         WHERE LOWER(CONCAT(u.first_name, ' ', u.last_name)) = LOWER(?) OR LOWER(u.email) = LOWER(?) LIMIT 1`,
+        [data.coach_name || '', data.coach_email || '']
+      );
+      if (coaches.length > 0) coach_id = coaches[0].id;
+    }
+
+    // 1. Prepare and validate email
+    let email = data.email?.trim();
+    if (!email || !email.includes('@')) {
+      const cleanFirst = (data.first_name || 'athlete').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const cleanLast = (data.last_name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      email = `${cleanFirst}.${cleanLast}.${randomSuffix}@sportsinsight.academy`;
+    }
+
+    // Check if email already exists; if so, generate unique alias to avoid import failure
+    const [existingUser] = await conn.query(`SELECT id FROM users WHERE email = ?`, [email]);
+    if (existingUser.length > 0) {
+      const [namePart, domain] = email.split('@');
+      email = `${namePart}.${Math.floor(100 + Math.random() * 900)}@${domain || 'sportsinsight.academy'}`;
+    }
+
+    const firstName = (data.first_name || 'Athlete').trim();
+    const lastName = (data.last_name || '').trim();
+    const phone = data.phone ? String(data.phone).trim() : null;
+
     const bcrypt = require('bcryptjs');
     const defaultPassword = `Sports@${new Date().getFullYear()}`;
     const hash = await bcrypt.hash(defaultPassword, 12);
@@ -114,9 +161,35 @@ const createAthlete = async (data, createdBy) => {
     const [userResult] = await conn.query(
       `INSERT INTO users (role_id, username, email, password_hash, first_name, last_name, phone, is_active)
        VALUES ((SELECT id FROM roles WHERE name='athlete' LIMIT 1), ?, ?, ?, ?, ?, ?, 1)`,
-      [data.email, data.email, hash, data.first_name, data.last_name, data.phone || null]
+      [email, email, hash, firstName, lastName, phone]
     );
     const userId = userResult.insertId;
+
+    // Normalize gender
+    const validGenders = ['male', 'female', 'other'];
+    const gender = validGenders.includes((data.gender || '').toLowerCase()) ? data.gender.toLowerCase() : 'male';
+
+    // Normalize medical status
+    const validMed = ['fit', 'unfit', 'injured', 'under_observation'];
+    const medStatus = validMed.includes((data.medical_status || '').toLowerCase().replace(/ /g, '_'))
+      ? data.medical_status.toLowerCase().replace(/ /g, '_')
+      : 'fit';
+
+    // Normalize dates
+    const parseDbDate = (d) => {
+      if (!d) return null;
+      if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d)) return d.substring(0, 10);
+      try {
+        const dt = new Date(d);
+        if (!isNaN(dt.getTime())) return dt.toISOString().split('T')[0];
+      } catch (_) {}
+      return null;
+    };
+
+    const dob = parseDbDate(data.date_of_birth || data.dob);
+    const joiningDate = parseDbDate(data.joining_date) || new Date().toISOString().split('T')[0];
+    const heightCm = data.height_cm ? parseFloat(data.height_cm) || null : null;
+    const weightKg = data.weight_kg ? parseFloat(data.weight_kg) || null : null;
 
     // 2. Create athlete record
     const [athResult] = await conn.query(
@@ -126,13 +199,12 @@ const createAthlete = async (data, createdBy) => {
         registration_date, joining_date, medical_status, current_status, is_active)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURDATE(),?,?,?,1)`,
       [
-        userId, data.coach_id || null, data.sport_id || null, data.category_id || null, athlete_code,
-        data.date_of_birth || null, data.gender || 'male',
-        data.height_cm || null, data.weight_kg || null, data.blood_group || null,
+        userId, coach_id, sport_id, category_id, athlete_code,
+        dob, gender, heightCm, weightKg, data.blood_group || null,
         data.address || null, data.city || null, data.state || null,
-        data.district || null, data.pincode || null, data.academy_name || null,
+        data.district || null, data.pincode || null, data.academy_name || 'State Sports Academy',
         data.guardian_name || null, data.guardian_phone || null,
-        data.joining_date || null, data.medical_status || 'fit',
+        joiningDate, medStatus,
         data.current_status || 'active',
       ]
     );
@@ -141,11 +213,11 @@ const createAthlete = async (data, createdBy) => {
     // 3. History
     await conn.query(
       `INSERT INTO athlete_history (athlete_id, action_type, description, changed_by) VALUES (?,?,?,?)`,
-      [athleteId, 'created', `Athlete profile created with code ${athlete_code}`, createdBy]
+      [athleteId, 'created', `Athlete profile created with code ${athlete_code}`, createdBy || null]
     );
 
     await conn.commit();
-    return { id: athleteId, athlete_code, defaultPassword };
+    return { id: athleteId, athlete_code, email, defaultPassword };
   } catch (err) {
     await conn.rollback();
     throw err;

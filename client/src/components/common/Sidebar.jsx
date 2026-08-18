@@ -28,7 +28,6 @@ const navByRole = {
     { label: 'Coaches', icon: Shield, path: '/coaches' },
     { label: 'Selectors', icon: ClipboardList, path: '/selectors' },
     { label: 'Sports & Categories', icon: Trophy, path: '/sports' },
-    { label: 'Analytics', icon: BarChart3, path: '/analytics' },
     { label: 'Rankings', icon: Medal, path: '/rankings' },
     { label: 'AI Generate List', icon: Sparkles, path: '/ai-generate' },
     { label: 'Reports', icon: FileText, path: '/reports' },

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Activity,
   CalendarCheck,
@@ -7,10 +6,8 @@ import {
   ChevronUp,
   HeartPulse,
   Medal,
-  Plus,
   ShieldCheck,
   Trophy,
-  UserPlus,
   Users,
 } from "lucide-react";
 import {
@@ -33,8 +30,6 @@ import {
 import dashboardAPI from '../../services/dashboard.service';
 import authAPI from '../../services/auth.service';
 import { Panel, ScoreBar, StatCard, StatusPill } from '../../components/widgets';
-import { AiGenerateList } from '../../components/AiGenerateList';
-import QuickActionModal from '../../components/common/QuickActionModal';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import PageHeader from '../../components/common/PageHeader';
 
@@ -51,13 +46,11 @@ const tooltipStyle = {
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [modalState, setModalState] = useState({ isOpen: false, title: '', type: '' });
   const [googleUsers, setGoogleUsers] = useState([]);
   const [googleUsersLoading, setGoogleUsersLoading] = useState(false);
   const [googlePanelOpen, setGooglePanelOpen] = useState(false);
   const [roleAssigning, setRoleAssigning] = useState({});
   const [pendingRoles, setPendingRoles] = useState({});
-  const navigate = useNavigate();
 
   const ASSIGNABLE_ROLES = [
     { id: 2, name: 'coach', label: 'Coach' },
@@ -171,16 +164,6 @@ export default function AdminDashboard() {
 
   const topRanked = [...topAthletes].sort((a, b) => Number(b.overall_ranking_score) - Number(a.overall_ranking_score)).slice(0, 6);
 
-  const handleActionClick = (action) => {
-    if (action === 'Add Athlete') setModalState({ isOpen: true, title: 'Add New Athlete', type: 'user' });
-    else if (action === 'Add Coach') setModalState({ isOpen: true, title: 'Add New Coach', type: 'user' });
-    else if (action === 'Generate Report') setModalState({ isOpen: true, title: 'Generate Academy Report', type: 'report' });
-    else if (action === 'View Rankings') navigate('/rankings');
-    else if (action === 'Generate AI Athlete List') {
-      const el = document.getElementById('ai-generator');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   return (
     <div className="fade-in space-y-6">
@@ -211,20 +194,6 @@ export default function AdminDashboard() {
         <StatCard label="Academy Performance" value={"86.4"} icon={Activity} delta={4} />
       </div>
 
-      <Panel title="Quick Actions">
-        <div className="flex flex-wrap gap-2">
-          {["Add Athlete", "Add Coach", "Generate Report", "View Rankings", "Generate AI Athlete List"].map((a) => (
-            <button
-              key={a}
-              onClick={() => handleActionClick(a)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium transition hover:bg-secondary"
-            >
-              {a.startsWith("Add") ? <UserPlus className="size-3.5" /> : <Plus className="size-3.5" />}
-              {a}
-            </button>
-          ))}
-        </div>
-      </Panel>
 
       <div className="grid gap-5 xl:grid-cols-3">
         <Panel title="Performance, Fitness & Attendance Trend" className="xl:col-span-2">
@@ -347,9 +316,6 @@ export default function AdminDashboard() {
         </Panel>
       </div>
 
-      <div id="ai-generator">
-        <AiGenerateList scopeNote="Academy-wide analysis across all historical athlete records." />
-      </div>
 
       {/* ─── Google User Management ──────────────────────── */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -467,12 +433,6 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      <QuickActionModal
-        isOpen={modalState.isOpen}
-        onClose={() => setModalState({ ...modalState, isOpen: false })}
-        title={modalState.title}
-        type={modalState.type}
-      />
     </div>
   );
 }

@@ -17,6 +17,7 @@ import SearchFilterBar from '../../components/common/SearchFilterBar';
 import PageHeader from '../../components/common/PageHeader';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import AiAthleteListModal from './AiAthleteListModal';
+import ImportAthleteModal from './ImportAthleteModal';
 
 // ─── Status Badge Helper ─────────────────────────────────
 const MedicalBadge = ({ status }) => {
@@ -98,6 +99,7 @@ const AthleteList = () => {
   const [actionLoading, setActionLoading] = useState(false);
 
   const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   // fetch athletes
   const fetchData = useCallback(async () => {
@@ -166,22 +168,6 @@ const AthleteList = () => {
       fetchData();
     } catch { toast.error('Bulk delete failed'); }
     finally { setActionLoading(false); }
-  };
-
-  const handleExport = async () => {
-    try {
-      toast.loading('Preparing export…');
-      const res = await athleteService.exportData(filters);
-      const csv = [
-        Object.keys(res.data[0] || {}).join(','),
-        ...(res.data || []).map((r) => Object.values(r).map((v) => `"${v ?? ''}"`).join(',')),
-      ].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'athletes.csv'; a.click();
-      toast.dismiss();
-      toast.success('Export ready');
-    } catch { toast.error('Export failed'); }
   };
 
   const COLUMNS = [
@@ -253,11 +239,8 @@ const AthleteList = () => {
           <>
             {role === 'admin' && (
               <>
-                <Button variant="outline" size="sm" leftIcon={Upload} onClick={() => navigate('/athletes/import')}>
+                <Button variant="outline" size="sm" leftIcon={Upload} onClick={() => setImportModalOpen(true)}>
                   Import
-                </Button>
-                <Button variant="outline" size="sm" leftIcon={Download} onClick={handleExport}>
-                  Export
                 </Button>
                 <Button size="sm" leftIcon={Plus} onClick={() => navigate('/athletes/add')}>
                   Add Athlete
@@ -372,6 +355,13 @@ const AthleteList = () => {
 
       {/* AI Generate Modal */}
       <AiAthleteListModal open={aiModalOpen} onClose={() => setAiModalOpen(false)} sports={sports} />
+
+      {/* Import Athletes Modal */}
+      <ImportAthleteModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onSuccess={fetchData}
+      />
     </div>
   );
 };
