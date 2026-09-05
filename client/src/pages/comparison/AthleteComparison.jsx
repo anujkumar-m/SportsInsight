@@ -32,30 +32,12 @@ function useToast() {
   return { toasts, show };
 }
 
-const DEFAULT_SPORTS = [
-  { id: 1, name: 'Athletics' },
-  { id: 2, name: 'Swimming' },
-  { id: 3, name: 'Football' },
-  { id: 4, name: 'Cricket' },
-  { id: 5, name: 'Badminton' },
-  { id: 6, name: 'Wrestling' },
-  { id: 7, name: 'Boxing' },
-  { id: 8, name: 'Gymnastics' },
-  { id: 9, name: 'Volleyball' },
-  { id: 10, name: 'Table Tennis' },
-];
-
-const FALLBACK_ATHLETES = [
-  { id: 1, sport_id: 1, first_name: 'Arjun', last_name: 'Nair', athlete_code: 'ATH-2024-001' },
-  { id: 3, sport_id: 1, first_name: 'Rohit', last_name: 'Sharma', athlete_code: 'ATH-2024-003' },
-  { id: 2, sport_id: 2, first_name: 'Sneha', last_name: 'Patel', athlete_code: 'ATH-2024-002' },
-  { id: 4, sport_id: 2, first_name: 'Kavya', last_name: 'Menon', athlete_code: 'ATH-2024-004' },
-  { id: 5, sport_id: 3, first_name: 'Kiran', last_name: 'Rao', athlete_code: 'ATH-2024-005' },
-];
+// No hardcoded fallback data — all sports and athletes come from the API
 
 const AthleteComparison = () => {
-  const [sports, setSports]               = useState(DEFAULT_SPORTS);
-  const [selectedSport, setSelectedSport] = useState(DEFAULT_SPORTS[0]);
+  const [sports, setSports]               = useState([]);
+  const [sportsLoading, setSportsLoading] = useState(true);
+  const [selectedSport, setSelectedSport] = useState(null);
   const [athletes, setAthletes]           = useState([]);
   const [athletesLoading, setAthletesLoading] = useState(false);
   const [selectedIds, setSelectedIds]     = useState([]);
@@ -100,6 +82,7 @@ const AthleteComparison = () => {
         setSports(normalized);
         setSelectedSport(normalized[0] || null);
       }
+      setSportsLoading(false);
     };
 
     loadSportsFromDB();
@@ -122,15 +105,12 @@ const AthleteComparison = () => {
 
     athleteService.getAthletes({ sport_id: selectedSport.id, limit: 100 })
       .then((r) => {
-        let list = r?.data || r?.athletes || (Array.isArray(r) ? r : []);
-        if (!Array.isArray(list) || list.length === 0) {
-          list = FALLBACK_ATHLETES.filter((a) => Number(a.sport_id) === Number(selectedSport.id));
-        }
-        setAthletes(list);
+        const list = r?.data || r?.athletes || (Array.isArray(r) ? r : []);
+        setAthletes(Array.isArray(list) ? list : []);
       })
       .catch(() => {
-        const fallback = FALLBACK_ATHLETES.filter((a) => Number(a.sport_id) === Number(selectedSport.id));
-        setAthletes(fallback);
+        showToast('Failed to load athletes. Please check your connection.', 'error');
+        setAthletes([]);
       })
       .finally(() => setAthletesLoading(false));
   }, [selectedSport]);

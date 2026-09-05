@@ -54,18 +54,9 @@ const AddSelector = () => {
         setSports(Array.isArray(list) ? list : []);
       })
       .catch(() => {
-        setSports([
-          { id: 1, name: 'Athletics' },
-          { id: 2, name: 'Swimming' },
-          { id: 3, name: 'Football' },
-          { id: 4, name: 'Cricket' },
-          { id: 5, name: 'Badminton' },
-          { id: 6, name: 'Wrestling' },
-          { id: 7, name: 'Boxing' },
-          { id: 8, name: 'Gymnastics' },
-          { id: 9, name: 'Volleyball' },
-          { id: 10, name: 'Table Tennis' },
-        ]);
+        setSports([]);
+        // Toast or console — sports must come from DB, not hardcoded
+        console.error('Failed to load sports list from server.');
       });
   }, []);
 
