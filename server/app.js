@@ -63,6 +63,23 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // ─── Routes ───────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    name: 'Sports Academy Performance System API',
+    version: '1.0.0',
+    status: '🟢 Online',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      athletes: '/api/athletes',
+      coaches: '/api/coaches',
+      dashboard: '/api/dashboard',
+    },
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
