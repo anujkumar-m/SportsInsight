@@ -164,7 +164,6 @@ const Login = () => {
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
-                  width="100%"
                   size="large"
                   shape="rectangular"
                   theme="outline"
