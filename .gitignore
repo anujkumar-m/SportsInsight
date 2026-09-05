@@ -1,0 +1,50 @@
+# ============================================================
+# Root .gitignore — SportsInsight
+# ============================================================
+
+# ── Environment / Secrets ───────────────────────────────────
+.env
+.env.*
+!.env.example        # keep the example template
+
+# ── Node ────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Build outputs ───────────────────────────────────────────
+dist/
+dist-ssr/
+build/
+.vite/
+
+# ── Database / SQL dumps ────────────────────────────────────
+# Schema migrations can live here but never production dumps
+database/*.sql
+*.sql.gz
+*.dump
+
+# ── Logs ────────────────────────────────────────────────────
+logs/
+*.log
+
+# ── OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor ──────────────────────────────────────────────────
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Misc ────────────────────────────────────────────────────
+hash.txt
+*.local

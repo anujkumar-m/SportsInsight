@@ -1,0 +1,8 @@
+# ── Server-level safety net ─────────────────────────────────
+.env
+.env.*
+!.env.example
+node_modules/
+hash.txt
+*.log
+logs/
