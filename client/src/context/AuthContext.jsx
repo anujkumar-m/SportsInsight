@@ -3,13 +3,6 @@ import authAPI from '../services/auth.service';
 
 const AuthContext = createContext(null);
 
-const MOCK_USERS = {
-  admin: { id: 1, role: 'admin', firstName: 'Super', lastName: 'Admin', email: 'admin@sportsacademy.com', username: 'admin' },
-  coach: { id: 2, role: 'coach', firstName: 'Rajesh', lastName: 'Kumar', email: 'rajesh.kumar@sportsacademy.com', username: 'coach.rajesh' },
-  selector: { id: 5, role: 'selector', firstName: 'Vikram', lastName: 'Singh', email: 'vikram.singh@sportsacademy.com', username: 'selector.vikram' },
-  athlete: { id: 7, role: 'athlete', firstName: 'Arjun', lastName: 'Nair', email: 'arjun.nair@sportsacademy.com', username: 'athlete.arjun' },
-};
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user');
@@ -24,6 +17,8 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('accessToken');
     if (!token) {
       setLoading(false);
+      setIsAuthenticated(false);
+      setUser(null);
       return;
     }
     try {
@@ -65,31 +60,20 @@ export const AuthProvider = ({ children }) => {
 
       if (token && userObj) {
         localStorage.setItem('accessToken', token);
-        localStorage.setItem('refreshToken', refreshToken || 'demo_refresh_token');
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('user', JSON.stringify(userObj));
         setUser(userObj);
         setIsAuthenticated(true);
         return userObj;
       }
 
-      throw new Error('Invalid login payload');
+      throw new Error('Invalid response received from authentication server.');
     } catch (err) {
-      // Fallback demo login match based on identifier
-      let selectedMock = MOCK_USERS.admin;
-      if (identifier.includes('coach')) selectedMock = MOCK_USERS.coach;
-      else if (identifier.includes('selector')) selectedMock = MOCK_USERS.selector;
-      else if (identifier.includes('athlete')) selectedMock = MOCK_USERS.athlete;
-
-      localStorage.setItem('accessToken', `demo_access_token_${selectedMock.role}`);
-      localStorage.setItem('refreshToken', 'demo_refresh_token');
-      localStorage.setItem('user', JSON.stringify(selectedMock));
-      setUser(selectedMock);
-      setIsAuthenticated(true);
-      return selectedMock;
+      const msg = err?.response?.data?.message || err?.message || 'Invalid credentials or server connection failed.';
+      throw new Error(msg);
     }
   };
 
-  // Google Sign-In — no demo fallback; real Google token must succeed
   const googleLogin = async (credential) => {
     const res = await authAPI.googleLogin(credential);
     const payload = res?.data || res;
@@ -102,7 +86,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     localStorage.setItem('accessToken', token);
-    localStorage.setItem('refreshToken', refreshToken || '');
+    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
     localStorage.setItem('user', JSON.stringify(userObj));
     setUser(userObj);
     setIsAuthenticated(true);
@@ -137,7 +121,7 @@ export const AuthProvider = ({ children }) => {
     googleLogin,
     logout,
     updateUser,
-    role: user?.role || 'admin',
+    role: user?.role || null,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -150,4 +134,3 @@ export const useAuth = () => {
 };
 
 export default AuthContext;
-

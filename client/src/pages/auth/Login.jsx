@@ -6,13 +6,6 @@ import { Activity, BarChart3, Loader2, Lock, Sparkles } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
-const DEMO_ACCOUNTS = [
-  { label: 'Administrator', email: 'admin@sportsacademy.com', password: 'Admin@123' },
-  { label: 'Head Coach', email: 'coach.rajesh@sportsacademy.com', password: 'Admin@123' },
-  { label: 'State Selector', email: 'selector.vikram@sportsacademy.com', password: 'Admin@123' },
-  { label: 'Athlete', email: 'athlete.arjun@sportsacademy.com', password: 'Admin@123' },
-];
-
 /** Determine where to navigate after any login based on role */
 function getDestination(role, from) {
   if (role === 'unassigned') return '/pending-role';
@@ -20,7 +13,7 @@ function getDestination(role, from) {
 }
 
 const Login = () => {
-  const { register, handleSubmit, setValue, formState } = useForm();
+  const { register, handleSubmit, formState } = useForm();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { login, googleLogin } = useAuth();
@@ -181,26 +174,6 @@ const Login = () => {
               </div>
             )}
           </div>
-
-          <div className="mt-8 rounded-xl border border-dashed border-border p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Demo accounts</p>
-            <div className="mt-3 grid gap-2">
-              {DEMO_ACCOUNTS.map((u) => (
-                <button
-                  key={u.email}
-                  type="button"
-                  onClick={() => {
-                    setValue('identifier', u.email);
-                    setValue('password', u.password);
-                  }}
-                  className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2 text-left text-xs transition hover:bg-secondary/70"
-                >
-                  <span className="font-medium">{u.label}</span>
-                  <span className="text-muted-foreground">{u.email}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
     </main>
@@ -208,4 +181,3 @@ const Login = () => {
 };
 
 export default Login;
-
