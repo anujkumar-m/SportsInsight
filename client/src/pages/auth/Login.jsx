@@ -153,14 +153,14 @@ const Login = () => {
           </div>
 
           {/* ─── Google Sign-In ─────────────────────────── */}
-          <div>
+          <div className="w-full">
             {googleLoading ? (
               <div className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-card text-sm text-muted-foreground">
                 <Loader2 className="size-4 animate-spin" />
                 Signing in with Google…
               </div>
             ) : (
-              <div id="google-signin-btn" className="w-full">
+              <div id="google-signin-btn" className="flex w-full justify-center">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
@@ -169,6 +169,7 @@ const Login = () => {
                   theme="outline"
                   text="signin_with"
                   logo_alignment="left"
+                  width="384"
                 />
               </div>
             )}
