@@ -115,13 +115,7 @@ export default function AdminDashboard() {
   };
 
   if (loading || !data) {
-    return (
-      <div className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => <LoadingSkeleton key={i} type="stat" />)}
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton type="dashboard" />;
   }
 
   const { stats = {}, topAthletes = [], charts = {}, recentActivities = [] } = data;
@@ -205,7 +199,7 @@ export default function AdminDashboard() {
       </div>
 
 
-      <div className="grid gap-5 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <Panel title="Performance, Fitness & Attendance Trend" className="xl:col-span-2">
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={performanceTrendData}>
@@ -275,9 +269,9 @@ export default function AdminDashboard() {
         </Panel>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <Panel title="Top Ranked Athletes" className="xl:col-span-2">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <table className="w-full min-w-[620px] text-left text-sm">
               <thead>
                 <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
@@ -362,7 +356,7 @@ export default function AdminDashboard() {
                 No Google users have signed in yet.
               </p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto w-full">
                 <table className="w-full min-w-[640px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">

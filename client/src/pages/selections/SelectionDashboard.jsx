@@ -50,8 +50,8 @@ const SelectionDashboard = () => {
 
       {/* Formula & Filters Header */}
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-4">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-4 overflow-x-auto">
+          <div className="flex items-center gap-2 min-w-max sm:min-w-0">
             <Filter size={14} className="text-muted-foreground" />
             <select
               value={status}
@@ -102,7 +102,7 @@ const SelectionDashboard = () => {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[720px] text-sm">
             <thead className="border-b border-border bg-secondary/50">
               <tr>
                 {['Athlete', 'Sport / Category', 'Selection Score', 'Confidence', 'Perf (40%)', 'Fitness (30%)', 'Att (20%)', 'Status'].map(h => (

@@ -99,9 +99,9 @@ export default function SelectorDashboard() {
         <StatCard label="Recent Selections" value={stats.totalSelections || 0} icon={Medal} delta={9} tone="warning" />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <Panel title="Top Ranked Athletes & Recommendation Scores" className="xl:col-span-2">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <table className="w-full min-w-[680px] text-left text-sm">
               <thead>
                 <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">

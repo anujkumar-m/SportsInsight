@@ -221,41 +221,43 @@ const InjuryList = () => {
       />
 
       {/* Filter Bar */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-wrap items-center gap-3">
-        <div className="flex-1 min-w-[200px]">
-          <input
-            type="text"
-            placeholder="Search athlete, injury type, body part..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          />
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm overflow-x-auto">
+        <div className="flex flex-wrap items-center gap-3 min-w-max sm:min-w-0">
+          <div className="flex-1 min-w-[200px]">
+            <input
+              type="text"
+              placeholder="Search athlete, injury type, body part..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <select
+            value={severity}
+            onChange={(e) => { setSeverity(e.target.value); setPage(1); }}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+          >
+            <option value="">All Severities</option>
+            <option value="minor">Minor</option>
+            <option value="moderate">Moderate</option>
+            <option value="severe">Severe</option>
+            <option value="critical">Critical</option>
+          </select>
+          <select
+            value={availabilityStatus}
+            onChange={(e) => { setAvailabilityStatus(e.target.value); setPage(1); }}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+          >
+            <option value="">All Availability Statuses</option>
+            <option value="fit">Fit for Play</option>
+            <option value="unfit">Unfit / Out</option>
+            <option value="restricted">Restricted Training</option>
+            <option value="under_observation">Under Observation</option>
+          </select>
+          <Button variant="ghost" size="sm" leftIcon={RefreshCw} onClick={() => { setSearch(''); setSeverity(''); setAvailabilityStatus(''); setAthleteId(''); }}>
+            Reset
+          </Button>
         </div>
-        <select
-          value={severity}
-          onChange={(e) => { setSeverity(e.target.value); setPage(1); }}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-        >
-          <option value="">All Severities</option>
-          <option value="minor">Minor</option>
-          <option value="moderate">Moderate</option>
-          <option value="severe">Severe</option>
-          <option value="critical">Critical</option>
-        </select>
-        <select
-          value={availabilityStatus}
-          onChange={(e) => { setAvailabilityStatus(e.target.value); setPage(1); }}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-        >
-          <option value="">All Availability Statuses</option>
-          <option value="fit">Fit for Play</option>
-          <option value="unfit">Unfit / Out</option>
-          <option value="restricted">Restricted Training</option>
-          <option value="under_observation">Under Observation</option>
-        </select>
-        <Button variant="ghost" size="sm" leftIcon={RefreshCw} onClick={() => { setSearch(''); setSeverity(''); setAvailabilityStatus(''); setAthleteId(''); }}>
-          Reset
-        </Button>
       </div>
 
       <DataTable

@@ -121,9 +121,6 @@ const Login = () => {
                 <label className="text-sm font-medium" htmlFor="password">
                   Password
                 </label>
-                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                  Forgot password?
-                </Link>
               </div>
               <input
                 id="password"

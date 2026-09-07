@@ -160,7 +160,7 @@ export default function AthleteDashboard() {
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <Panel title="Performance & Fitness Growth" className="xl:col-span-2">
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={performanceTrendData}>
@@ -207,7 +207,7 @@ export default function AthleteDashboard() {
         </Panel>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <Panel title="Coach Feedback" className="xl:col-span-2">
           {coachRemarks.length === 0 ? (
              <p className="text-sm text-muted-foreground py-4">No recent feedback from coaches.</p>

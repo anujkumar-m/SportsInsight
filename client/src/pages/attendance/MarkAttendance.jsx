@@ -346,8 +346,8 @@ const MarkAttendance = () => {
             )}
 
             {/* Students Table */}
-            <div className="flex-1 overflow-y-auto rounded-xl border border-border">
-              <table className="w-full text-left text-sm">
+            <div className="flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-border">
+              <table className="w-full min-w-[480px] text-left text-sm">
                 <thead className="bg-secondary/60 text-xs font-semibold text-muted-foreground uppercase border-b border-border sticky top-0 bg-card z-10">
                   <tr>
                     <th className="px-4 py-3">#</th>

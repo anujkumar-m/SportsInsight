@@ -6,7 +6,6 @@ import {
   Sun,
   Moon,
   Bell,
-  ShieldCheck,
   Smartphone,
   Globe,
   Sliders,
@@ -41,7 +40,7 @@ export default function SettingsPage() {
     <div className="fade-in space-y-6 max-w-5xl">
       <PageHeader
         title="Application Settings"
-        subtitle="Customize display theme, notification preferences, security protocols, and system diagnostics."
+        subtitle="Customize display theme, notification preferences, and system diagnostics."
         breadcrumb="Settings"
       />
 
@@ -169,59 +168,30 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Security & System Info Section */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-          <div className="flex items-center gap-3 border-b border-border pb-4">
-            <div className="grid size-9 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600">
-              <ShieldCheck className="size-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-card-foreground">Security Protocols</h3>
-              <p className="text-xs text-muted-foreground">Active security and authentication parameters</p>
-            </div>
+      {/* System Info Section */}
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+        <div className="flex items-center gap-3 border-b border-border pb-4">
+          <div className="grid size-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600">
+            <Cpu className="size-5" />
           </div>
-
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between items-center bg-secondary/30 p-3 rounded-lg">
-              <span className="font-medium text-muted-foreground">Session Timeout</span>
-              <span className="font-semibold text-card-foreground">7 Days (JWT Refresh)</span>
-            </div>
-            <div className="flex justify-between items-center bg-secondary/30 p-3 rounded-lg">
-              <span className="font-medium text-muted-foreground">Encryption Level</span>
-              <span className="font-semibold text-card-foreground">BCrypt 12 Rounds</span>
-            </div>
-            <div className="flex justify-between items-center bg-secondary/30 p-3 rounded-lg">
-              <span className="font-medium text-muted-foreground">Role-Based Access Control</span>
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">Enforced (RBAC)</span>
-            </div>
+          <div>
+            <h3 className="text-base font-bold text-card-foreground">System Information</h3>
+            <p className="text-xs text-muted-foreground">SportsInsight Engine & API status</p>
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-          <div className="flex items-center gap-3 border-b border-border pb-4">
-            <div className="grid size-9 place-items-center rounded-lg bg-amber-500/10 text-amber-600">
-              <Cpu className="size-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-card-foreground">System Information</h3>
-              <p className="text-xs text-muted-foreground">SportsInsight Engine & API status</p>
-            </div>
+        <div className="grid gap-4 sm:grid-cols-3 text-xs">
+          <div className="flex flex-col justify-between bg-secondary/30 p-3.5 rounded-lg space-y-1">
+            <span className="font-medium text-muted-foreground">Application Version</span>
+            <span className="font-semibold text-card-foreground text-sm">v3.2.0 (Integrated)</span>
           </div>
-
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between items-center bg-secondary/30 p-3 rounded-lg">
-              <span className="font-medium text-muted-foreground">Application Version</span>
-              <span className="font-semibold text-card-foreground">v3.2.0 (Integrated)</span>
-            </div>
-            <div className="flex justify-between items-center bg-secondary/30 p-3 rounded-lg">
-              <span className="font-medium text-muted-foreground">Backend API Engine</span>
-              <span className="font-semibold text-card-foreground">Express + Node.js</span>
-            </div>
-            <div className="flex justify-between items-center bg-secondary/30 p-3 rounded-lg">
-              <span className="font-medium text-muted-foreground">Database Backend</span>
-              <span className="font-semibold text-card-foreground">MySQL 8.0 (sports_acadmey)</span>
-            </div>
+          <div className="flex flex-col justify-between bg-secondary/30 p-3.5 rounded-lg space-y-1">
+            <span className="font-medium text-muted-foreground">Backend API Engine</span>
+            <span className="font-semibold text-card-foreground text-sm">Express + Node.js</span>
+          </div>
+          <div className="flex flex-col justify-between bg-secondary/30 p-3.5 rounded-lg space-y-1">
+            <span className="font-medium text-muted-foreground">Database Backend</span>
+            <span className="font-semibold text-card-foreground text-sm">MySQL 8.0 (sports_acadmey)</span>
           </div>
         </div>
       </div>

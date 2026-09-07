@@ -8,8 +8,6 @@ import RoleRoute from './routes/RoleRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
 const Login = React.lazy(() => import('./pages/auth/Login'));
-const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
-const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
 const PendingRole = React.lazy(() => import('./pages/auth/PendingRole'));
 const Unauthorized = React.lazy(() => import('./pages/Unauthorized'));
 const UserProfile = React.lazy(() => import('./pages/auth/UserProfile'));
@@ -97,19 +95,62 @@ const SelectionHistory = React.lazy(() => import('./pages/selections/SelectionHi
 // Comparison Page
 const AthleteComparison = React.lazy(() => import('./pages/comparison/AthleteComparison'));
 
-const Loader = () => (
-  <div className="min-h-screen bg-background p-8">
-    <div className="mx-auto max-w-5xl space-y-4">
-      <div className="h-10 w-64 animate-pulse rounded-lg bg-secondary" />
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="h-28 animate-pulse rounded-xl bg-secondary" />
-        <div className="h-28 animate-pulse rounded-xl bg-secondary" />
-        <div className="h-28 animate-pulse rounded-xl bg-secondary" />
+import { getRouteMeta } from './utils/routeMeta';
+
+const RouteSuspenseLoader = () => {
+  const meta = getRouteMeta(typeof window !== 'undefined' ? window.location.pathname : '');
+  const Icon = meta.icon;
+
+  return (
+    <div className="min-h-screen min-h-dvh bg-background flex flex-col antialiased overflow-hidden w-full relative">
+      {/* Top Animated Progress Bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-secondary/60 overflow-hidden">
+        <div className="h-full bg-gradient-to-r from-primary via-blue-500 to-accent animate-pulse" style={{ width: '70%' }} />
       </div>
-      <div className="h-80 animate-pulse rounded-xl bg-secondary" />
+
+      {/* Blurred background preview */}
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 filter blur-[3.5px] opacity-35 pointer-events-none select-none">
+        <div className="space-y-6">
+          <div className="h-9 w-64 rounded-xl bg-secondary animate-pulse" />
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+            <div className="h-28 rounded-xl bg-secondary animate-pulse" />
+            <div className="h-28 rounded-xl bg-secondary animate-pulse" />
+            <div className="h-28 rounded-xl bg-secondary animate-pulse" />
+            <div className="h-28 rounded-xl bg-secondary animate-pulse" />
+          </div>
+          <div className="h-14 rounded-xl bg-secondary animate-pulse" />
+          <div className="h-80 rounded-xl bg-secondary animate-pulse" />
+        </div>
+      </div>
+
+      {/* Floating Glassmorphic Indicator Centerpiece */}
+      <div className="absolute inset-0 z-40 flex items-center justify-center p-4 bg-background/25 backdrop-blur-xs">
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-border/80 bg-card/95 px-8 py-6 shadow-2xl backdrop-blur-md max-w-sm text-center animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative flex items-center justify-center">
+            <div className="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+              {Icon ? <Icon size={26} className="animate-pulse" /> : <div className="size-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />}
+            </div>
+            <div className="absolute -inset-1.5 rounded-2xl border-2 border-primary/30 border-t-primary animate-spin" />
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-base font-bold text-foreground">
+              Loading {meta.title || 'Page'}...
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {meta.subtitle || 'Preparing athlete intelligence records...'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-[11px] font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
+            <span className="size-1.5 rounded-full bg-primary animate-ping" />
+            <span>Loading interface</span>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const DASHBOARD_META = {
   admin: {
@@ -163,11 +204,9 @@ const App = () => {
       <ThemeProvider>
         <AuthProvider>
           <ErrorBoundary>
-            <Suspense fallback={<Loader />}>
+            <Suspense fallback={<RouteSuspenseLoader />}>
               <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
               <Route path="/pending-role" element={<ProtectedRoute><PendingRole /></ProtectedRoute>} />
 

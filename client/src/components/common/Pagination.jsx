@@ -2,10 +2,20 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const Pagination = ({ page = 1, limit = 10, total = 0, onPageChange, onLimitChange }) => {
-  const safePage = Math.max(1, parseInt(page, 10) || 1);
+const Pagination = ({
+  page = 1,
+  limit = 10,
+  total = 0,
+  onPageChange,
+  onLimitChange,
+  currentPage,
+  totalEntries,
+}) => {
+  const activePage = currentPage !== undefined ? currentPage : page;
+  const activeTotal = totalEntries !== undefined ? totalEntries : total;
+  const safePage = Math.max(1, parseInt(activePage, 10) || 1);
   const safeLimit = Math.max(1, parseInt(limit, 10) || 10);
-  const safeTotal = Math.max(0, parseInt(total, 10) || 0);
+  const safeTotal = Math.max(0, parseInt(activeTotal, 10) || 0);
 
   const totalPages = Math.max(1, Math.ceil(safeTotal / safeLimit));
   const start = safeTotal === 0 ? 0 : (safePage - 1) * safeLimit + 1;

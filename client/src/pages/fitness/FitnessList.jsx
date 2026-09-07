@@ -184,30 +184,30 @@ const FitnessList = () => {
     },
     ...(['admin', 'coach'].includes(role)
       ? [
-          {
-            key: 'actions',
-            label: 'Actions',
-            width: '8%',
-            render: (_, row) => (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={(e) => { e.stopPropagation(); navigate(`/fitness/${row.id}/edit`); }}
-                  title="Edit Assessment"
-                  className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                >
-                  <Pencil size={15} />
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}
-                  title="Delete Assessment"
-                  className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            ),
-          },
-        ]
+        {
+          key: 'actions',
+          label: 'Actions',
+          width: '8%',
+          render: (_, row) => (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); navigate(`/fitness/${row.id}/edit`); }}
+                title="Edit Assessment"
+                className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              >
+                <Pencil size={15} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}
+                title="Delete Assessment"
+                className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
+          ),
+        },
+      ]
       : []),
   ];
 
@@ -286,23 +286,27 @@ const FitnessList = () => {
             ))}
           </select>
         )}
-          <Button variant="ghost" size="sm" leftIcon={RefreshCw} onClick={() => { setSearch(''); setSportId(''); setAthleteId(''); }}>
-            Reset
-          </Button>
+        <Button variant="ghost" size="sm" leftIcon={RefreshCw} onClick={() => { setSearch(''); setSportId(''); setAthleteId(''); }}>
+          Reset
+        </Button>
       </div>
 
       <DataTable
         columns={columns}
         data={assessments}
         loading={loading}
+        pageTitle="Fitness Assessments"
+        page={page}
         onRowClick={(row) => setSelectedAssessment(row)}
         emptyMessage="No fitness assessments found."
       />
 
       <Pagination
+        page={page}
         currentPage={page}
         totalPages={Math.ceil(total / limit) || 1}
         onPageChange={setPage}
+        total={total}
         totalEntries={total}
         limit={limit}
         onLimitChange={setLimit}

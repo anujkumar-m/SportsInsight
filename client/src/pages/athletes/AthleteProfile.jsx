@@ -119,20 +119,20 @@ const AthleteProfile = () => {
     .toUpperCase() || 'AP';
 
   const athleteTabs = [
-    { id: 'overview',     label: 'Overview',                                                                icon: User },
+    { id: 'overview', label: 'Overview', icon: User },
     { id: 'achievements', label: `Achievements (${(athlete.achievements?.length || 0) + (athlete.selections?.length || 0)})`, icon: Award },
-    { id: 'history',      label: 'Activity Log',                                                            icon: Calendar },
+    { id: 'history', label: 'Activity Log', icon: Calendar },
   ];
 
   const adminCoachTabs = [
-    { id: 'overview',     label: 'Overview',                                                                icon: User },
-    { id: 'performance',  label: `Performance (${athlete.performance_records?.length || 0})`,               icon: TrendingUp },
-    { id: 'fitness',      label: `Fitness (${athlete.fitness_assessments?.length || 0})`,                    icon: Gauge },
-    { id: 'attendance',   label: 'Attendance Stats',                                                        icon: CalendarCheck },
-    { id: 'medical',      label: `Medical & Injuries (${(athlete.medical_history?.length || 0) + (athlete.injuries?.length || 0)})`, icon: HeartPulse },
-    { id: 'feedback',     label: `Coach Feedback (${athlete.coach_remarks?.length || 0})`,                  icon: MessageSquare },
+    { id: 'overview', label: 'Overview', icon: User },
+    { id: 'performance', label: `Performance (${athlete.performance_records?.length || 0})`, icon: TrendingUp },
+    { id: 'fitness', label: `Fitness (${athlete.fitness_assessments?.length || 0})`, icon: Gauge },
+    { id: 'attendance', label: 'Attendance Stats', icon: CalendarCheck },
+    { id: 'medical', label: `Medical & Injuries (${(athlete.medical_history?.length || 0) + (athlete.injuries?.length || 0)})`, icon: HeartPulse },
+    { id: 'feedback', label: `Coach Feedback (${athlete.coach_remarks?.length || 0})`, icon: MessageSquare },
     { id: 'achievements', label: `Achievements & Trials (${(athlete.achievements?.length || 0) + (athlete.selections?.length || 0)})`, icon: Award },
-    { id: 'history',      label: 'Activity Log',                                                            icon: Calendar },
+    { id: 'history', label: 'Activity Log', icon: Calendar },
   ];
 
   const TABS = role === 'athlete' ? athleteTabs : adminCoachTabs;
@@ -198,9 +198,8 @@ const AthleteProfile = () => {
                 </div>
               )}
               <span
-                className={`absolute -bottom-1 -right-1 size-5 rounded-full border-2 border-card ${
-                  athlete.current_status === 'active' ? 'bg-success' : 'bg-muted-foreground'
-                }`}
+                className={`absolute -bottom-1 -right-1 size-5 rounded-full border-2 border-card ${athlete.current_status === 'active' ? 'bg-success' : 'bg-muted-foreground'
+                  }`}
                 title={`Status: ${athlete.current_status}`}
               />
             </div>
@@ -255,8 +254,8 @@ const AthleteProfile = () => {
                     athlete.medical_status === 'fit'
                       ? 'success'
                       : athlete.medical_status === 'injured'
-                      ? 'danger'
-                      : 'warning'
+                        ? 'danger'
+                        : 'warning'
                   }
                 >
                   Medical: {athlete.medical_status?.replace(/_/g, ' ') || 'Fit'}
@@ -304,11 +303,10 @@ const AthleteProfile = () => {
             <button
               key={tid}
               onClick={() => setActiveTab(tid)}
-              className={`flex items-center gap-2 whitespace-nowrap rounded-t-xl border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition-all ${
-                active
+              className={`flex items-center gap-2 whitespace-nowrap rounded-t-xl border-b-2 px-4 py-3 text-xs sm:text-sm font-semibold transition-all ${active
                   ? 'border-primary bg-primary/5 text-primary'
                   : 'border-transparent text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
-              }`}
+                }`}
             >
               <Icon size={15} />
               {label}
@@ -431,9 +429,8 @@ const AthleteProfile = () => {
                         <td className="p-3 font-bold text-primary">{p.metric_name}</td>
                         <td className="p-3">{p.metric_value} {p.metric_unit || ''}</td>
                         <td className="p-3">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-bold text-xs ${
-                            p.performance_score >= 80 ? 'bg-success/10 text-success' : p.performance_score >= 60 ? 'bg-info/10 text-info' : 'bg-warning/10 text-warning'
-                          }`}>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-bold text-xs ${p.performance_score >= 80 ? 'bg-success/10 text-success' : p.performance_score >= 60 ? 'bg-info/10 text-info' : 'bg-warning/10 text-warning'
+                            }`}>
                             {p.performance_score}/100
                           </span>
                         </td>

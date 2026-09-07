@@ -282,58 +282,60 @@ const AttendanceList = () => {
       />
 
       {/* Filter Bar */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-wrap items-center gap-3">
-        <div className="flex-1 min-w-[200px]">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm overflow-x-auto">
+        <div className="flex flex-wrap items-center gap-3 min-w-max sm:min-w-0">
+          <div className="flex-1 min-w-[200px]">
+            <input
+              type="text"
+              placeholder="Search date, status..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
           <input
-            type="text"
-            placeholder="Search date, status..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            type="date"
+            value={date}
+            onChange={(e) => { setDate(e.target.value); setPage(1); }}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
           />
-        </div>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => { setDate(e.target.value); setPage(1); }}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-        />
-        <select
-          value={sessionFilter}
-          onChange={(e) => { setSessionFilter(e.target.value); setPage(1); }}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-        >
-          <option value="">All Sessions</option>
-          <option value="Morning">Morning</option>
-          <option value="Evening">Evening</option>
-        </select>
-        <select
-          value={status}
-          onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-        >
-          <option value="">All Statuses</option>
-          <option value="present">Present</option>
-          <option value="absent">Absent</option>
-          <option value="leave">Leave</option>
-          <option value="half_day">Half Day</option>
-          <option value="late">Late</option>
-        </select>
-        {athletes.length > 0 && (
           <select
-            value={athleteId}
-            onChange={(e) => { setAthleteId(e.target.value); setPage(1); }}
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground min-w-[160px]"
+            value={sessionFilter}
+            onChange={(e) => { setSessionFilter(e.target.value); setPage(1); }}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
           >
-            <option value="">All Athletes</option>
-            {athletes.map((a) => (
-              <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>
-            ))}
+            <option value="">All Sessions</option>
+            <option value="Morning">Morning</option>
+            <option value="Evening">Evening</option>
           </select>
-        )}
+          <select
+            value={status}
+            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+          >
+            <option value="">All Statuses</option>
+            <option value="present">Present</option>
+            <option value="absent">Absent</option>
+            <option value="leave">Leave</option>
+            <option value="half_day">Half Day</option>
+            <option value="late">Late</option>
+          </select>
+          {athletes.length > 0 && (
+            <select
+              value={athleteId}
+              onChange={(e) => { setAthleteId(e.target.value); setPage(1); }}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground min-w-[160px]"
+            >
+              <option value="">All Athletes</option>
+              {athletes.map((a) => (
+                <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>
+              ))}
+            </select>
+          )}
           <Button variant="ghost" size="sm" leftIcon={RefreshCw} onClick={() => { setSearch(''); setDate(''); setSessionFilter(''); setStatus(''); setAthleteId(''); }}>
             Reset
           </Button>
+        </div>
       </div>
 
       <DataTable
@@ -433,8 +435,8 @@ const AttendanceList = () => {
             )}
 
             {/* Students Table */}
-            <div className="flex-1 overflow-y-auto rounded-xl border border-border">
-              <table className="w-full text-left text-sm">
+            <div className="flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-border">
+              <table className="w-full min-w-[480px] text-left text-sm">
                 <thead className="bg-secondary/60 text-xs font-semibold text-muted-foreground uppercase border-b border-border sticky top-0 bg-card z-10">
                   <tr>
                     <th className="px-4 py-3">#</th>

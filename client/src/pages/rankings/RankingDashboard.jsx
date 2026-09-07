@@ -238,8 +238,8 @@ const RankingDashboard = () => {
       {/* Filter Bar (Sports Dropdown & Category Multi-Select Checkbox Dropdown) - Hidden for athlete */}
       {role !== 'athlete' && (
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-4">
-          <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-4 overflow-x-auto">
+          <div className="flex flex-wrap items-center gap-4 min-w-max sm:min-w-0">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
               <Filter size={14} className="text-primary" /> Filter Rankings:
             </span>
@@ -436,7 +436,7 @@ const RankingDashboard = () => {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead className="border-b border-border bg-secondary/50">
               <tr>
                 {['Rank', 'Athlete', 'Sport / Category', 'Perf (50%)', 'Fitness (30%)', 'Consistency (20%)', 'Overall Score', 'Status'].map(h => (

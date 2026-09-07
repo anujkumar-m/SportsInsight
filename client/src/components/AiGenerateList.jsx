@@ -280,7 +280,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
       )}
 
       {rows && rows.length > 0 && (
-        <div className="mt-5 overflow-x-auto">
+        <div className="mt-5 overflow-x-auto w-full">
           <p className="mb-3 text-xs text-muted-foreground">
             {rows.length} athletes ranked based on current filters.
           </p>

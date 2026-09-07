@@ -1,6 +1,8 @@
 // ─── components/common/DataTable.jsx ─────────────────────
 import React, { useState } from 'react';
-import { ChevronUp, ChevronDown, ChevronsUpDown, Columns3 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { ChevronUp, ChevronDown, ChevronsUpDown, Columns3, Loader2 } from 'lucide-react';
+import { getRouteMeta } from '../../utils/routeMeta';
 
 /**
  * Reusable advanced data table with sorting, column visibility,
@@ -19,7 +21,14 @@ const DataTable = ({
   emptyText = 'No records found',
   rowKey = 'id',
   onRowClick,
+  pageTitle,
+  loadingText,
+  page,
 }) => {
+  const location = useLocation();
+  const routeMeta = getRouteMeta(location?.pathname || '');
+  const activeTitle = pageTitle || routeMeta.title || 'records';
+  const RouteIcon = routeMeta.icon;
   const [hiddenCols, setHiddenCols] = useState([]);
   const [colMenuOpen, setColMenuOpen] = useState(false);
 
@@ -66,12 +75,17 @@ const DataTable = ({
     <div className="space-y-2">
       {/* ── Toolbar: sits entirely ABOVE the table, never overlaps ── */}
       <div className="flex items-center justify-between px-0.5">
-        <div className="text-xs font-medium text-muted-foreground">
-          {!loading && data.length > 0 && (
+        <div className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+          {loading ? (
+            <span className="inline-flex items-center gap-1.5 text-primary font-semibold animate-pulse">
+              <Loader2 size={13} className="animate-spin" />
+              Loading {activeTitle}{page ? ` (Page ${page})` : ''}...
+            </span>
+          ) : data.length > 0 ? (
             <span>
               Showing <strong className="font-bold text-foreground">{data.length}</strong> record{data.length !== 1 ? 's' : ''}
             </span>
-          )}
+          ) : null}
         </div>
 
         <div className="relative">
@@ -121,7 +135,24 @@ const DataTable = ({
       </div>
 
       {/* ── Main Table Container ── */}
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-sm min-h-[220px]">
+        {/* Floating Glass Loading Card on Blurred Background */}
+        {loading && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-4 bg-background/35 backdrop-blur-[2.5px] transition-all duration-300">
+            <div className="flex items-center gap-3.5 rounded-2xl border border-border/90 bg-card/95 px-5 py-3.5 shadow-2xl backdrop-blur-md text-foreground animate-in fade-in zoom-in-95 duration-150">
+              <div className="size-5 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-foreground">
+                  {loadingText || `Loading ${activeTitle}${page ? ` (Page ${page})` : ''}...`}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  Fetching updated records & metrics
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
@@ -153,8 +184,12 @@ const DataTable = ({
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {loading ? (
+            <tbody
+              className={`divide-y divide-border transition-all duration-300 ${
+                loading ? 'filter blur-[2.5px] opacity-40 select-none pointer-events-none' : ''
+              }`}
+            >
+              {loading && data.length === 0 ? (
                 <Skeleton />
               ) : data.length === 0 ? (
                 <tr>

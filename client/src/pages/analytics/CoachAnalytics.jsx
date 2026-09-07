@@ -30,7 +30,7 @@ const CoachAnalytics = () => {
         </ResponsiveContainer>
       </div>
       <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[600px] text-sm">
           <thead className="border-b border-border bg-secondary/50">
             <tr>{['Coach','Sport','Athletes','Avg Perf','Avg Fitness','Attendance %'].map(h=>(
               <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">{h}</th>

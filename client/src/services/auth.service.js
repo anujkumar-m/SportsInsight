@@ -16,15 +16,6 @@ const authAPI = {
   updateProfile: (data) =>
     api.put('/auth/profile', data).then((r) => r.data),
 
-  changePassword: (currentPassword, newPassword) =>
-    api.put('/auth/change-password', { currentPassword, newPassword }).then((r) => r.data),
-
-  forgotPassword: (email) =>
-    api.post('/auth/forgot-password', { email }),
-
-  resetPassword: (token, password) =>
-    api.post('/auth/reset-password', { token, password }),
-
   // Google OAuth
   googleLogin: (credential) =>
     api.post('/auth/google', { credential }).then((r) => r.data),

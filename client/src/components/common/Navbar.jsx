@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Search, User, Settings, CheckCheck, Trash2, Info, AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Bell, Search, User, Settings, CheckCheck, Trash2, Info, AlertTriangle, CheckCircle2, ShieldAlert, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import dashboardAPI from '../../services/dashboard.service';
 import { ROLE_LABELS } from '../../theme';
@@ -29,12 +29,14 @@ const BREADCRUMB_MAP = {
 };
 
 const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
-  const { user, role } = useAuth();
+  const { user, role, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
 
   const crumb = BREADCRUMB_MAP[location.pathname] || title;
   const initials = `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase() || 'U';
@@ -46,7 +48,7 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
         const list = d?.data?.notifications || d?.notifications || [];
         setNotifications(list);
       })
-      .catch(() => {});
+      .catch(() => { });
   };
 
   useEffect(() => {
@@ -56,15 +58,18 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
   }, []);
 
   useEffect(() => {
-    const close = () => {
-      setNotifOpen(false);
-      setProfileOpen(false);
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
     };
-    if (notifOpen || profileOpen) {
-      window.addEventListener('click', close);
-      return () => window.removeEventListener('click', close);
-    }
-  }, [notifOpen, profileOpen]);
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleMarkRead = async (id, link) => {
     try {
@@ -76,14 +81,14 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
         setNotifOpen(false);
         navigate(link);
       }
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const handleMarkAllRead = async () => {
     try {
       await dashboardAPI.markAllNotificationsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: 1 })));
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const handleDeleteNotif = async (e, id) => {
@@ -91,7 +96,15 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
     try {
       await dashboardAPI.deleteNotification(id);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    } catch (_) {}
+    } catch (_) { }
+  };
+
+  const handleLogout = async () => {
+    setProfileOpen(false);
+    try {
+      await logout();
+    } catch (_) { }
+    navigate('/login');
   };
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -110,7 +123,7 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center gap-3 border-b border-border bg-card/90 px-3.5 backdrop-blur sm:px-6 overflow-x-hidden">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center gap-3 border-b border-border bg-card/90 px-3.5 backdrop-blur sm:px-6">
       <MobileMenuButton onClick={onMenuOpen} />
 
       <div className="flex items-center gap-2 flex-1 min-w-0 md:hidden">
@@ -128,11 +141,10 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
       </div>
 
       <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-        <div className="relative" onClick={(e) => e.stopPropagation()}>
+        <div className="relative" ref={notifRef}>
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
+            onClick={() => {
               setNotifOpen((v) => !v);
               setProfileOpen(false);
             }}
@@ -178,9 +190,8 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
                     <div
                       key={n.id}
                       onClick={() => handleMarkRead(n.id, n.link)}
-                      className={`flex items-start gap-3 p-3.5 transition-colors cursor-pointer hover:bg-secondary/40 ${
-                        !n.is_read ? 'bg-primary/5' : ''
-                      }`}
+                      className={`flex items-start gap-3 p-3.5 transition-colors cursor-pointer hover:bg-secondary/40 ${!n.is_read ? 'bg-primary/5' : ''
+                        }`}
                     >
                       <div className="mt-0.5">{renderTypeIcon(n.type)}</div>
                       <div className="flex-1 min-w-0">
@@ -217,11 +228,10 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
           )}
         </div>
 
-        <div className="relative" onClick={(e) => e.stopPropagation()}>
+        <div className="relative" ref={profileRef}>
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
+            onClick={() => {
               setProfileOpen((v) => !v);
               setNotifOpen(false);
             }}
@@ -269,6 +279,15 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
               >
                 <Settings className="size-3.5 text-muted-foreground" /> Account Settings
               </Link>
+              <div className="border-t border-border mt-1 pt-1 lg:hidden">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/10 transition text-left"
+                >
+                  <LogOut className="size-3.5 text-destructive" /> Sign out
+                </button>
+              </div>
             </div>
           )}
         </div>

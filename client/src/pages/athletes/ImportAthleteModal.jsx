@@ -367,7 +367,7 @@ export default function ImportAthleteModal({ isOpen, onClose, onSuccess }) {
                 </span>
               </div>
               <div className="overflow-x-auto rounded-xl border border-border bg-background">
-                <table className="w-full text-xs text-left border-collapse">
+                <table className="w-full min-w-[560px] text-xs text-left border-collapse">
                   <thead className="bg-secondary/70 border-b border-border text-muted-foreground font-semibold">
                     <tr>
                       <th className="px-3 py-2">Athlete Name</th>

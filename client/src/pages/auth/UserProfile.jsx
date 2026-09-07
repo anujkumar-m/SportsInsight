@@ -3,19 +3,17 @@ import { useAuth } from '../../context/AuthContext';
 import authAPI from '../../services/auth.service';
 import PageHeader from '../../components/common/PageHeader';
 import { toast } from 'react-hot-toast';
-import { User, Key, Shield, Phone, Mail, CheckCircle2, Lock, Sparkles, Activity } from 'lucide-react';
+import { User, Shield, Phone, Mail, CheckCircle2, Sparkles, Activity } from 'lucide-react';
 import { ROLE_LABELS } from '../../theme';
 import AthleteProfile from '../athletes/AthleteProfile';
 
 export default function UserProfile() {
   const { user, role, setUser } = useAuth();
-  const [activeTab, setActiveTab] = useState('personal');
 
   if (role === 'athlete') {
     return <AthleteProfile />;
   }
 
-  // Profile Form State
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -23,14 +21,6 @@ export default function UserProfile() {
     email: user?.email || '',
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
-
-  // Password Form State
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -69,33 +59,6 @@ export default function UserProfile() {
       toast.error(err.message || 'Failed to update profile');
     } finally {
       setUpdatingProfile(false);
-    }
-  };
-
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    if (!passwordData.currentPassword) {
-      toast.error('Please enter your current password');
-      return;
-    }
-    if (passwordData.newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters long');
-      return;
-    }
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('New passwords do not match');
-      return;
-    }
-
-    try {
-      setChangingPassword(true);
-      await authAPI.changePassword(passwordData.currentPassword, passwordData.newPassword);
-      toast.success('Password changed successfully! Please log in with your new password.');
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (err) {
-      toast.error(err.message || 'Failed to change password');
-    } finally {
-      setChangingPassword(false);
     }
   };
 
@@ -166,167 +129,80 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Right Column - Tabs & Forms */}
+        {/* Right Column - Personal Details Form */}
         <div className="lg:col-span-2">
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-            {/* Tabs Header */}
-            <div className="flex border-b border-border bg-secondary/30">
-              <button
-                type="button"
-                onClick={() => setActiveTab('personal')}
-                className={`flex items-center gap-2 px-6 py-3.5 text-sm font-semibold border-b-2 transition ${
-                  activeTab === 'personal'
-                    ? 'border-primary text-primary bg-card'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <User className="size-4" /> Personal Details
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('security')}
-                className={`flex items-center gap-2 px-6 py-3.5 text-sm font-semibold border-b-2 transition ${
-                  activeTab === 'security'
-                    ? 'border-primary text-primary bg-card'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Key className="size-4" /> Security & Password
-              </button>
+            {/* Header */}
+            <div className="flex items-center gap-2 border-b border-border bg-secondary/30 px-6 py-4">
+              <User className="size-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">Personal Details</h3>
             </div>
 
-            {/* Tab Body */}
+            {/* Form Body */}
             <div className="p-6">
-              {activeTab === 'personal' && (
-                <form onSubmit={handleProfileSubmit} className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                        First Name
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                        Last Name
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                        required
-                      />
-                    </div>
-                  </div>
-
+              <form onSubmit={handleProfileSubmit} className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                      Email Address (Read-only)
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      disabled
-                      className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm text-muted-foreground cursor-not-allowed"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                      Phone Number
+                      First Name
                     </label>
                     <input
                       type="text"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+91 9876543210"
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                       className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                      required
                     />
                   </div>
-
-                  <div className="pt-4 flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={updatingProfile}
-                      className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow transition hover:bg-primary/90 disabled:opacity-50"
-                    >
-                      {updatingProfile ? 'Saving...' : 'Save Changes'}
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {activeTab === 'security' && (
-                <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-md">
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                      Current Password
+                      Last Name
                     </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                      <input
-                        type="password"
-                        value={passwordData.currentPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                        placeholder="Enter current password"
-                        className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                        required
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                      required
+                    />
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                      New Password
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                      <input
-                        type="password"
-                        value={passwordData.newPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                        placeholder="At least 8 characters"
-                        className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                        required
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Email Address (Read-only)
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    disabled
+                    className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm text-muted-foreground cursor-not-allowed"
+                  />
+                </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                      Confirm New Password
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                      <input
-                        type="password"
-                        value={passwordData.confirmPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                        placeholder="Re-enter new password"
-                        className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                        required
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+91 9876543210"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
 
-                  <div className="pt-4 flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={changingPassword}
-                      className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow transition hover:bg-primary/90 disabled:opacity-50"
-                    >
-                      {changingPassword ? 'Updating...' : 'Update Password'}
-                    </button>
-                  </div>
-                </form>
-              )}
+                <div className="pt-4 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={updatingProfile}
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow transition hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {updatingProfile ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

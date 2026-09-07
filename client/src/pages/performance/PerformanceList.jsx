@@ -260,30 +260,30 @@ const PerformanceList = () => {
     },
     ...(['admin', 'coach'].includes(role)
       ? [
-          {
-            key: 'actions',
-            label: 'Actions',
-            width: '8%',
-            render: (_, row) => (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={(e) => { e.stopPropagation(); navigate(`/performance/${row.id}/edit`); }}
-                  title="Edit Record"
-                  className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                >
-                  <Pencil size={15} />
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}
-                  title="Delete Record"
-                  className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            ),
-          },
-        ]
+        {
+          key: 'actions',
+          label: 'Actions',
+          width: '8%',
+          render: (_, row) => (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); navigate(`/performance/${row.id}/edit`); }}
+                title="Edit Record"
+                className="p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              >
+                <Pencil size={15} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(row); }}
+                title="Delete Record"
+                className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
+          ),
+        },
+      ]
       : []),
   ];
 
@@ -412,14 +412,18 @@ const PerformanceList = () => {
         columns={columns}
         data={records}
         loading={loading}
+        pageTitle="Performance Monitoring"
+        page={page}
         onRowClick={(row) => setSelectedRecord(row)}
         emptyMessage="No performance records found."
       />
 
       <Pagination
+        page={page}
         currentPage={page}
         totalPages={Math.ceil(total / limit) || 1}
         onPageChange={setPage}
+        total={total}
         totalEntries={total}
         limit={limit}
         onLimitChange={setLimit}

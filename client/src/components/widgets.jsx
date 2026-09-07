@@ -36,7 +36,7 @@ export function StatCard({ label, value, icon: Icon, delta, tone = 'primary' }) 
 
 export function Panel({ title, description, action, children, className = '' }) {
   return (
-    <section className={`surface-card p-5 ${className}`}>
+    <section className={`surface-card p-5 min-w-0 max-w-full ${className}`}>
       <header className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
