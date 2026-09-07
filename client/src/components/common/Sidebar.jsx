@@ -137,17 +137,19 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
 
   return (
     <>
+      {/* Desktop sidebar — fixed positioned, only visible on lg+ */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex">{panel}</div>
 
+      {/* Mobile drawer overlay — rendered as a portal-style fixed layer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden animate-in fade-in duration-200" role="dialog" aria-modal="true">
           <button
             type="button"
             aria-label="Close navigation"
             onClick={onMobileClose}
-            className="fixed inset-0 bg-navy/60 backdrop-blur-xs cursor-pointer"
+            className="fixed inset-0 bg-navy/60 backdrop-blur-sm cursor-pointer"
           />
-          <div className="relative z-10 h-full max-w-[85vw] shadow-2xl animate-in slide-in-from-left duration-200">{panel}</div>
+          <div className="relative z-10 h-full w-[280px] max-w-[85vw] shadow-2xl animate-in slide-in-from-left duration-200 flex-shrink-0">{panel}</div>
         </div>
       )}
     </>

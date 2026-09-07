@@ -81,8 +81,14 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ─── Logging ──────────────────────────────────────────────
-if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+if (process.env.NODE_ENV === 'production') {
+  // Full combined log in production for monitoring
+  app.use(morgan('combined'));
+} else if (process.env.NODE_ENV !== 'test') {
+  // In dev: only log slow requests (>200ms) or errors (4xx/5xx)
+  app.use(morgan('dev', {
+    skip: (req, res) => res.statusCode < 400,
+  }));
 }
 
 // ─── Routes ───────────────────────────────────────────────

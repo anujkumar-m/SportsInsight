@@ -110,10 +110,10 @@ const Navbar = ({ title = 'Dashboard', subtitle, onMenuOpen }) => {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-card/90 px-3.5 backdrop-blur sm:px-6">
+    <header className="sticky top-0 z-20 flex h-16 w-full items-center gap-3 border-b border-border bg-card/90 px-3.5 backdrop-blur sm:px-6 overflow-x-hidden">
       <MobileMenuButton onClick={onMenuOpen} />
 
-      <div className="flex items-center gap-2 min-w-0 md:hidden">
+      <div className="flex items-center gap-2 flex-1 min-w-0 md:hidden">
         <span className="truncate text-sm font-bold text-foreground">
           {crumb}
         </span>
