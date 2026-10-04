@@ -56,10 +56,10 @@ const Login = () => {
       <section className="relative hidden flex-col justify-between bg-gradient-navy p-12 text-navy-foreground lg:flex">
         <div className="flex items-center gap-3">
           <span className="grid size-11 place-items-center rounded-xl bg-gradient-primary text-sm font-bold text-primary-foreground">
-            AP
+            SI
           </span>
           <div>
-            <p className="text-sm font-semibold">Athlete Intelligence</p>
+            <p className="text-sm font-semibold">Sports Insight</p>
             <p className="text-xs text-navy-foreground/70">State Sports Academies</p>
           </div>
         </div>

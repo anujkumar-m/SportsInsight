@@ -79,10 +79,10 @@ const Sidebar = ({ mobileOpen, onMobileClose }) => {
     <aside className="flex h-full w-72 flex-col bg-gradient-navy text-sidebar-foreground">
       <div className="flex items-center gap-3 border-b border-sidebar-border px-6 py-5">
         <span className="grid size-10 place-items-center rounded-xl bg-gradient-primary text-sm font-bold text-primary-foreground">
-          AP
+          SI
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">Athlete Intelligence</p>
+          <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">Sports Insight</p>
           <p className="truncate text-xs text-sidebar-foreground/70">State Sports Academy</p>
         </div>
         {mobileOpen && (

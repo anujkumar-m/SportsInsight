@@ -138,7 +138,7 @@ const RouteSuspenseLoader = () => {
               Loading {meta.title || 'Page'}...
             </h2>
             <p className="text-xs text-muted-foreground">
-              {meta.subtitle || 'Preparing athlete intelligence records...'}
+              {meta.subtitle || 'Preparing sports insight records...'}
             </p>
           </div>
 
