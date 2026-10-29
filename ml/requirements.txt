@@ -1,0 +1,7 @@
+# Standalone Athlete Eligibility Simulator Dependencies
+# Minimal, lightweight dependencies for MySQL connectivity and mathematical modeling
+
+PyMySQL>=1.1.0
+python-dotenv>=1.0.0
+numpy>=1.24.0
+certifi>=2023.7.22
