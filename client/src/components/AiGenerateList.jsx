@@ -34,7 +34,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
   const [sport, setSport] = useState("");
   const [category, setCategory] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
-  const [from, setFrom] = useState("");
+  const [from] = useState("2026-01-01");
   const [to, setTo] = useState("");
   const [gender, setGender] = useState("");
   const [typeId, setTypeId] = useState("");
@@ -51,7 +51,6 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
     setCategory("");
     setAgeGroup("");
     setGender("");
-    setFrom("");
     setTo("");
     setRows(null);
   };
@@ -226,16 +225,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
         <Select label="Age group" value={ageGroup} onChange={setAgeGroup} options={ageGroupOptions} />
         <Select label="Gender" value={gender} onChange={setGender} options={genderOptions} />
         <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">From Date</span>
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-2.5 text-sm outline-none focus:border-primary"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">To Date</span>
+          <span className="text-xs font-medium text-muted-foreground">Event Date</span>
           <input
             type="date"
             value={to}
@@ -343,7 +333,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
                   <td className="py-3 pr-3">
                     <p className="font-medium text-foreground">{r.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {r.sport} {r.category ? `· ${r.category}` : ''} {r.age ? `· Age ${r.age}` : ''} {r.gender ? `· ${r.gender}` : ''}
+                      {r.sport} {r.category ? `Â· ${r.category}` : ''} {r.age ? `Â· Age ${r.age}` : ''} {r.gender ? `Â· ${r.gender}` : ''}
                     </p>
                   </td>
                   <td className="py-3 pr-3">
