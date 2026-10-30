@@ -42,7 +42,9 @@ const PerformanceList = () => {
   // Filters
   const [search, setSearch] = useState('');
   const [sportId, setSportId] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [sports, setSports] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [athletes, setAthletes] = useState([]);
   const [athleteId, setAthleteId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -77,6 +79,24 @@ const PerformanceList = () => {
     }
   };
 
+  const fetchCategories = useCallback(async (currentSportId) => {
+    try {
+      const res = await sportService.listCategories({
+        ...(currentSportId ? { sport_id: currentSportId } : {}),
+        limit: 100,
+      });
+      const list = res?.data?.data || res?.data?.categories || res?.data || [];
+      setCategories(Array.isArray(list) ? list : []);
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCategories(sportId);
+    setCategoryId('');
+  }, [sportId, fetchCategories]);
+
   const fetchRecords = useCallback(async () => {
     setLoading(true);
     try {
@@ -85,6 +105,7 @@ const PerformanceList = () => {
         limit,
         search,
         sportId: sportId || undefined,
+        categoryId: categoryId || undefined,
         athleteId: athleteId || undefined,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
@@ -98,7 +119,7 @@ const PerformanceList = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, search, sportId, athleteId, dateFrom, dateTo]);
+  }, [page, limit, search, sportId, categoryId, athleteId, dateFrom, dateTo]);
 
   const fetchAnalytics = useCallback(async () => {
     try {
@@ -136,7 +157,7 @@ const PerformanceList = () => {
 
   const handleExport = async () => {
     try {
-      const res = await performanceService.exportRecords({ sportId, athleteId, dateFrom, dateTo });
+      const res = await performanceService.exportRecords({ sportId, categoryId, athleteId, dateFrom, dateTo });
       const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -377,6 +398,18 @@ const PerformanceList = () => {
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
+          <select
+            value={categoryId}
+            onChange={(e) => { setCategoryId(e.target.value); setPage(1); }}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}{!sportId && c.sport_name ? ` (${c.sport_name})` : ''}
+              </option>
+            ))}
+          </select>
           {role !== 'athlete' && (
             <select
               value={athleteId}
@@ -401,7 +434,7 @@ const PerformanceList = () => {
             onChange={(e) => setDateTo(e.target.value)}
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none"
           />
-          <Button variant="ghost" size="sm" leftIcon={RefreshCw} onClick={() => { setSearch(''); setSportId(''); setAthleteId(''); setDateFrom(''); setDateTo(''); }}>
+          <Button variant="ghost" size="sm" leftIcon={RefreshCw} onClick={() => { setSearch(''); setSportId(''); setCategoryId(''); setAthleteId(''); setDateFrom(''); setDateTo(''); }}>
             Reset
           </Button>
         </div>

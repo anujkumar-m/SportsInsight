@@ -175,6 +175,10 @@ async function getPerformanceRecords(filters = {}) {
     whereClauses.push('pr.sport_id = ?');
     params.push(filters.sportId);
   }
+  if (filters.categoryId) {
+    whereClauses.push('a.category_id = ?');
+    params.push(filters.categoryId);
+  }
   if (filters.metricName) {
     whereClauses.push('pr.metric_name = ?');
     params.push(filters.metricName);

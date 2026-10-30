@@ -82,7 +82,7 @@ const buildAthleteBaseQuery = (filters = {}) => {
 const getAthleteScores = async (filters = {}) => {
   const { where, params } = buildAthleteBaseQuery(filters);
   const dateFrom = filters.dateFrom || '2020-01-01';
-  const dateTo = filters.dateTo || new Date().toISOString().split('T')[0];
+  const dateTo = filters.dateTo || '2099-12-31';
 
   const query = `
     SELECT
@@ -92,22 +92,26 @@ const getAthleteScores = async (filters = {}) => {
       TIMESTAMPDIFF(YEAR, a.date_of_birth, CURDATE()) AS age,
       s.name AS sport_name, cat.name AS category_name,
       co_u.first_name AS coach_first, co_u.last_name AS coach_last,
-      -- Performance Score (avg of recent records)
+      -- Performance Score (avg of recent records in range)
       COALESCE(
         (SELECT AVG(pr.performance_score)
          FROM performance_records pr
          WHERE pr.athlete_id = a.id AND pr.record_date BETWEEN ? AND ?),
         0
       ) AS performance_score,
-      -- Fitness Score (latest assessment)
+      -- Fitness Score (latest assessment in range, fallback to latest overall)
       COALESCE(
+        (SELECT fa.overall_fitness_score
+         FROM fitness_assessments fa
+         WHERE fa.athlete_id = a.id AND fa.assessment_date BETWEEN ? AND ?
+         ORDER BY fa.assessment_date DESC LIMIT 1),
         (SELECT fa.overall_fitness_score
          FROM fitness_assessments fa
          WHERE fa.athlete_id = a.id
          ORDER BY fa.assessment_date DESC LIMIT 1),
         0
       ) AS fitness_score,
-      -- Attendance Score (percentage)
+      -- Attendance Score (percentage in range)
       COALESCE(
         (SELECT ROUND(
            SUM(CASE WHEN att.status = 'present' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2
@@ -175,7 +179,7 @@ const getAthleteScores = async (filters = {}) => {
     ORDER BY a.id
   `;
 
-  const allParams = [dateFrom, dateTo, dateFrom, dateTo, ...params];
+  const allParams = [dateFrom, dateTo, dateFrom, dateTo, dateFrom, dateTo, ...params];
   const [rows] = await pool.query(query, allParams);
   return rows;
 };

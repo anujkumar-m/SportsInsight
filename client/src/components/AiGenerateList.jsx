@@ -41,6 +41,21 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
   const [rows, setRows] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const handleSportChange = (newSport) => {
+    setSport(newSport);
+    setCategory("");
+  };
+
+  const handleResetFilters = () => {
+    setSport("");
+    setCategory("");
+    setAgeGroup("");
+    setGender("");
+    setFrom("");
+    setTo("");
+    setRows(null);
+  };
+
   useEffect(() => {
     sportService.listSports({ limit: 100 })
       .then((res) => {
@@ -59,7 +74,15 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
     sportService.listCategories({ ...(sport ? { sport_id: sport } : {}), limit: 100 })
       .then((res) => {
         const list = res.data?.data || res.data?.categories || res.data || [];
-        if (Array.isArray(list)) setCategories(list);
+        if (Array.isArray(list)) {
+          setCategories(list);
+          setCategory((prev) => {
+            if (prev && !list.some((c) => String(c.id) === String(prev))) {
+              return "";
+            }
+            return prev;
+          });
+        }
       })
       .catch(() => {});
   }, [sport]);
@@ -172,7 +195,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
           <span className="text-xs font-medium text-muted-foreground">Sport</span>
           <select
             value={sport}
-            onChange={(e) => setSport(e.target.value)}
+            onChange={(e) => handleSportChange(e.target.value)}
             className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/30"
           >
             <option value="">{sports.length > 1 ? "All Assigned Sports" : "-- Select Sport --"}</option>
@@ -194,7 +217,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
             <option value="">All Categories</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {c.name}{!sport && c.sport_name ? ` (${c.sport_name})` : ''}
               </option>
             ))}
           </select>
@@ -203,7 +226,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
         <Select label="Age group" value={ageGroup} onChange={setAgeGroup} options={ageGroupOptions} />
         <Select label="Gender" value={gender} onChange={setGender} options={genderOptions} />
         <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">From</span>
+          <span className="text-xs font-medium text-muted-foreground">From Date</span>
           <input
             type="date"
             value={from}
@@ -212,7 +235,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
           />
         </label>
         <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">To</span>
+          <span className="text-xs font-medium text-muted-foreground">To Date</span>
           <input
             type="date"
             value={to}
@@ -246,7 +269,14 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
           className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
         >
           {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-          Generate
+          Generate List
+        </button>
+        <button
+          onClick={handleResetFilters}
+          type="button"
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+        >
+          Reset Filters
         </button>
         {listTypeObj && (
           <span className="text-xs text-muted-foreground">
@@ -281,9 +311,17 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
 
       {rows && rows.length > 0 && (
         <div className="mt-5 overflow-x-auto w-full">
-          <p className="mb-3 text-xs text-muted-foreground">
-            {rows.length} athletes ranked based on current filters.
-          </p>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{rows.length}</span> athletes ranked based on current filters.
+            </p>
+            <div className="flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
+              {sport && <span className="rounded bg-primary/10 px-2 py-0.5 font-medium text-primary">Sport: {sports.find(s => String(s.id) === String(sport))?.name || sport}</span>}
+              {category && <span className="rounded bg-accent/15 px-2 py-0.5 font-medium text-accent">Category: {categories.find(c => String(c.id) === String(category))?.name || category}</span>}
+              {from && <span className="rounded bg-secondary px-2 py-0.5">From: {from}</span>}
+              {to && <span className="rounded bg-secondary px-2 py-0.5">To: {to}</span>}
+            </div>
+          </div>
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
               <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
@@ -300,12 +338,12 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id || r.athleteId || r.name} className="border-b border-border/60 last:border-0">
+                <tr key={r.id || r.athleteId || r.name} className="border-b border-border/60 last:border-0 hover:bg-secondary/20">
                   <td className="py-3 pr-3 tabular-nums text-muted-foreground">{r.rank}</td>
                   <td className="py-3 pr-3">
-                    <p className="font-medium">{r.name}</p>
+                    <p className="font-medium text-foreground">{r.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {r.sport} {r.ageGroup ? `· ${r.ageGroup}` : ''} {r.gender ? `· ${r.gender}` : ''}
+                      {r.sport} {r.category ? `· ${r.category}` : ''} {r.age ? `· Age ${r.age}` : ''} {r.gender ? `· ${r.gender}` : ''}
                     </p>
                   </td>
                   <td className="py-3 pr-3">
@@ -317,7 +355,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
                   <td className="py-3 pr-3">
                     <ScoreBar value={r.attendanceScore || r.attendance || 0} tone="warning" />
                   </td>
-                  <td className="py-3 pr-3 font-semibold tabular-nums">{r.selectionScore || 0}</td>
+                  <td className="py-3 pr-3 font-semibold tabular-nums text-foreground">{r.selectionScore || 0}</td>
                   <td className="py-3 pr-3 tabular-nums text-accent">{(r.confidenceScore || r.confidence || 0)}%</td>
                   <td className="max-w-[220px] py-3 pr-3 text-xs text-muted-foreground">{r.reason}</td>
                   <td className="max-w-[200px] py-3 text-xs text-muted-foreground">{r.suggestedImprovement || r.suggestion}</td>
