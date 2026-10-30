@@ -301,17 +301,6 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
 
       {rows && rows.length > 0 && (
         <div className="mt-5 overflow-x-auto w-full">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs text-muted-foreground">
-              <span className="font-semibold text-foreground">{rows.length}</span> athletes ranked based on current filters.
-            </p>
-            <div className="flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
-              {sport && <span className="rounded bg-primary/10 px-2 py-0.5 font-medium text-primary">Sport: {sports.find(s => String(s.id) === String(sport))?.name || sport}</span>}
-              {category && <span className="rounded bg-accent/15 px-2 py-0.5 font-medium text-accent">Category: {categories.find(c => String(c.id) === String(category))?.name || category}</span>}
-              {from && <span className="rounded bg-secondary px-2 py-0.5">From: {from}</span>}
-              {to && <span className="rounded bg-secondary px-2 py-0.5">To: {to}</span>}
-            </div>
-          </div>
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
               <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
