@@ -77,7 +77,7 @@ const Login = () => {
             {[
               { icon: Activity, label: 'Performance monitoring' },
               { icon: BarChart3, label: 'Analytics & rankings' },
-              { icon: Sparkles, label: 'AI generated lists' },
+              { icon: Sparkles, label: 'Generate lists' },
             ].map((f) => (
               <div key={f.label} className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <f.icon className="size-5 text-accent" />

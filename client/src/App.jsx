@@ -227,7 +227,7 @@ const App = () => {
                   <ProtectedRoute>
                     <RoleRoute roles={['admin', 'coach', 'selector']}>
                       <DashboardLayout
-                        title="AI Selection Intelligence"
+                        title="Generate  List"
                         subtitle="Generate ranked athlete lists with confidence scoring and export options."
                       >
                         <AIGenerateList />

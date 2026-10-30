@@ -8,7 +8,7 @@ import { MobileMenuButton } from './Sidebar';
 
 const BREADCRUMB_MAP = {
   '/dashboard': 'Dashboard',
-  '/ai-generate': 'AI Generate List',
+  '/ai-generate': 'Generate  List',
   '/athletes': 'Athletes',
   '/coaches': 'Coaches',
   '/selectors': 'Selectors',

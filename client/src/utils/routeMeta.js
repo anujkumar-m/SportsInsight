@@ -18,7 +18,7 @@ import {
 
 export const ROUTE_META_MAP = [
   { prefix: '/dashboard', title: 'Dashboard', subtitle: 'Academy Command Centre & Overview', icon: LayoutDashboard },
-  { prefix: '/ai-generate', title: 'AI Selection Intelligence', subtitle: 'Ranked athlete generation with AI confidence', icon: Sparkles },
+  { prefix: '/ai-generate', title: 'Generate  List', subtitle: 'Ranked athlete generation with confidence scoring', icon: Sparkles },
   
   // Performance
   { prefix: '/performance/compare', title: 'Performance Comparison', subtitle: 'Side-by-side metric comparison', icon: Sparkles },

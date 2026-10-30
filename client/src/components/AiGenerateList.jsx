@@ -110,7 +110,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
       if (!resultData?.athletes || resultData.athletes.length === 0) {
         toast.error("No athletes match the selected filters");
       } else {
-        toast.success("AI Athlete List generated successfully!");
+        toast.success("Athlete List generated successfully!");
       }
     } catch (err) {
       toast.error(err.message || 'Failed to generate list');
@@ -159,7 +159,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
 
   return (
     <Panel
-      title="AI + ML Generate List"
+      title="Generate  List"
       description={scopeNote}
       action={
         <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-medium text-accent">

@@ -223,29 +223,41 @@ const generateSuggestion = (athlete, listType) => {
 const generateReason = (athlete, listType, score) => {
   const p = parseFloat(athlete.performance_score) || 0;
   const f = parseFloat(athlete.fitness_score) || 0;
+  const a = parseFloat(athlete.attendance_score) || 0;
+  const c = parseFloat(athlete.consistency_score) || 0;
   const imp = parseFloat(athlete.improvement_percentage) || 0;
+  const s = parseFloat(score) || 0;
 
   switch (listType) {
     case 'TOP_PERFORMING':
-      return `Avg performance score: ${p.toFixed(1)}. Consistency: ${athlete.consistency_score?.toFixed(1) || 'N/A'}.`;
+      return `Avg performance score: ${p.toFixed(1)}. Consistency: ${c.toFixed(1)}.`;
     case 'BEST_FITNESS':
       return `Overall fitness score: ${f.toFixed(1)}. Strength and agility levels are excellent.`;
     case 'HIGHEST_ATTENDANCE':
-      return `Attendance rate: ${athlete.attendance_score?.toFixed(1) || 0}%. Demonstrates strong commitment.`;
+      return `Attendance rate: ${a.toFixed(1)}%. Demonstrates strong commitment.`;
     case 'MOST_IMPROVED':
+    case 'TOP_IMPROVING':
       return `Improvement: +${imp.toFixed(1)}% over last 3 months. Shows rapid development trajectory.`;
     case 'SELECTION_RECOMMENDATION':
     case 'STATE_SELECTION':
     case 'NATIONAL_CAMP':
-      return `Selection score: ${score.toFixed(1)}. Balanced across performance, fitness, attendance, and coaching.`;
+      return `Selection score: ${s.toFixed(1)}. Balanced across performance, fitness, attendance, and coaching.`;
     case 'INJURY_RISK':
-      return `${athlete.injury_count_12m} injury(-ies) in past 12 months. Active injuries: ${athlete.active_injuries}.`;
+      return `${athlete.injury_count_12m || 0} injury(-ies) in past 12 months. Active injuries: ${athlete.active_injuries || 0}.`;
+    case 'RECOVERY_PRIORITY':
+    case 'RECOVERY_READY':
+      return (athlete.active_injuries > 0)
+        ? 'Active injury under rehabilitation. Medical check pending.'
+        : `Recent injury history (${athlete.injury_count_12m || 0} in past 12m). Recovery monitoring required.`;
     case 'UNDERPERFORMING':
+    case 'WEAK_PERFORMANCE':
       return `Performance score: ${p.toFixed(1)}. Below academy average. Needs targeted intervention.`;
-    case 'MOST_IMPROVED':
-      return `Showed ${imp.toFixed(1)}% improvement in last quarter.`;
+    case 'ATTENDANCE_RISK':
+      return `Attendance rate: ${a.toFixed(1)}%. Below required 75% consistency threshold.`;
+    case 'TRAINING_PRIORITY':
+      return `Combined score: ${(p + f).toFixed(1)}. High growth potential with structured conditioning.`;
     default:
-      return `Overall score: ${score.toFixed(1)}. Evaluated across performance, fitness, and attendance metrics.`;
+      return `Overall score: ${s.toFixed(1)}. Evaluated across performance, fitness, and attendance metrics.`;
   }
 };
 
@@ -379,6 +391,26 @@ const generateList = async (listType, filters = {}) => {
 
     default:
       result = scored.sort((a, b) => b.rankingScore - a.rankingScore);
+  }
+
+  // If strict filtering returned <= 10 rows but more matching athletes exist,
+  // backfill from scored to ensure each filtering shows more than 10 rows of data.
+  const targetMin = Math.min(scored.length, Math.max(12, result.length));
+  if (result.length < targetMin && scored.length > result.length) {
+    const existingIds = new Set(result.map((a) => a.athlete_id));
+    const remaining = scored.filter((a) => !existingIds.has(a.athlete_id));
+    if (['UNDERPERFORMING', 'WEAK_PERFORMANCE', 'TRAINING_PRIORITY'].includes(listType)) {
+      remaining.sort((a, b) => a.performance_score - b.performance_score);
+    } else if (listType === 'ATTENDANCE_RISK') {
+      remaining.sort((a, b) => a.attendance_score - b.attendance_score);
+    } else if (listType === 'FITNESS_IMPROVEMENT') {
+      remaining.sort((a, b) => a.fitness_score - b.fitness_score);
+    } else if (['RECOVERY_PRIORITY', 'RECOVERY_READY', 'INJURY_RISK'].includes(listType)) {
+      remaining.sort((a, b) => (b.injury_count_12m || 0) - (a.injury_count_12m || 0));
+    } else {
+      remaining.sort((a, b) => (b.selectionScore || b.rankingScore) - (a.selectionScore || a.rankingScore));
+    }
+    result = result.concat(remaining.slice(0, targetMin - result.length));
   }
 
   result = result.slice(0, limit);
