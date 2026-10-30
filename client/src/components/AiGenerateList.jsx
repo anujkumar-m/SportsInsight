@@ -36,6 +36,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
   const [ageGroup, setAgeGroup] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [gender, setGender] = useState("");
   const [typeId, setTypeId] = useState("");
   const [rows, setRows] = useState(null);
   const [loading, setLoading] = useState(false);
