@@ -35,7 +35,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
   const [category, setCategory] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
   const [gender, setGender] = useState("");
-  const [from, setFrom] = useState("");
+  const from = "2026-01-01"; // Fixed start date — hidden from UI
   const [to, setTo] = useState("");
   const [typeId, setTypeId] = useState("");
   const [rows, setRows] = useState(null);
@@ -202,17 +202,9 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
 
         <Select label="Age group" value={ageGroup} onChange={setAgeGroup} options={ageGroupOptions} />
         <Select label="Gender" value={gender} onChange={setGender} options={genderOptions} />
+                {/* From date fixed to 2026-01-01 — hidden from UI */}
         <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">From</span>
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-2.5 text-sm outline-none focus:border-primary"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-medium text-muted-foreground">To</span>
+          <span className="text-xs font-medium text-muted-foreground">Event Date</span>
           <input
             type="date"
             value={to}
