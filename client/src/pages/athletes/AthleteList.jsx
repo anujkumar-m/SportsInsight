@@ -408,7 +408,7 @@ const AthleteList = () => {
               leftIcon={Sparkles}
               onClick={() => setAiModalOpen(true)}
             >
-              AI Generate List
+              Generate  List
             </Button>
           </>
         }

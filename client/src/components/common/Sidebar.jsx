@@ -30,7 +30,7 @@ const navByRole = {
     { label: 'Selectors', icon: ClipboardList, path: '/selectors' },
     { label: 'Sports & Categories', icon: Trophy, path: '/sports' },
     { label: 'Rankings', icon: Medal, path: '/rankings' },
-    { label: 'AI Generate List', icon: Sparkles, path: '/ai-generate' },
+    { label: 'Generate  List', icon: Sparkles, path: '/ai-generate' },
     { label: 'Reports', icon: FileText, path: '/reports' },
   ],
   coach: [
@@ -39,14 +39,14 @@ const navByRole = {
     { label: 'Performance', icon: Activity, path: '/performance' },
     { label: 'Fitness', icon: Gauge, path: '/fitness' },
     { label: 'Attendance', icon: CalendarCheck, path: '/attendance' },
-    { label: 'AI Generate List', icon: Sparkles, path: '/ai-generate' },
+    { label: 'Generate  List', icon: Sparkles, path: '/ai-generate' },
   ],
   selector: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { label: 'Rankings', icon: Medal, path: '/rankings' },
     { label: 'Compare Athletes', icon: BarChart3, path: '/compare' },
     { label: 'Selection Lists', icon: ClipboardList, path: '/selections' },
-    { label: 'AI Recommendations', icon: Sparkles, path: '/ai-generate' },
+    { label: 'Generate  List', icon: Sparkles, path: '/ai-generate' },
   ],
   athlete: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },

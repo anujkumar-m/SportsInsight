@@ -35,7 +35,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
   const [category, setCategory] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
   const [gender, setGender] = useState("");
-  const [from, setFrom] = useState("");
+  const from = "2026-01-01"; // Fixed start date — hidden from UI
   const [to, setTo] = useState("");
   const [typeId, setTypeId] = useState("");
   const [rows, setRows] = useState(null);
@@ -133,7 +133,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
       if (!resultData?.athletes || resultData.athletes.length === 0) {
         toast.error("No athletes match the selected filters");
       } else {
-        toast.success("AI Athlete List generated successfully!");
+        toast.success("Athlete List generated successfully!");
       }
     } catch (err) {
       toast.error(err.message || 'Failed to generate list');
@@ -182,7 +182,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
 
   return (
     <Panel
-      title="AI + ML Generate List"
+      title="Generate  List"
       description={scopeNote}
       action={
         <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-medium text-accent">

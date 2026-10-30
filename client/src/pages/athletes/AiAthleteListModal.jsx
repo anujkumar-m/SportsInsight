@@ -99,7 +99,7 @@ const AiAthleteListModal = ({ open, onClose, sports = [] }) => {
             <Sparkles size={20} className="text-white" />
           </span>
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-white">AI Generate Athlete List</h2>
+            <h2 className="text-lg font-bold text-white">Generate  List</h2>
             <p className="text-sm text-white/70">AI analyzes performance, fitness, attendance, rankings, and coach ratings</p>
           </div>
           <button type="button" onClick={onClose} className="grid size-8 place-items-center rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors">
