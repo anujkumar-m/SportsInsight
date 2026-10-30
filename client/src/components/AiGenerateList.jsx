@@ -34,8 +34,7 @@ export function AiGenerateList({ scopeNote, predefinedListTypes }) {
   const [sport, setSport] = useState("");
   const [category, setCategory] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
-  const [gender, setGender] = useState("");
-  const from = "2026-01-01"; // Fixed start date — hidden from UI
+  const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [typeId, setTypeId] = useState("");
   const [rows, setRows] = useState(null);
